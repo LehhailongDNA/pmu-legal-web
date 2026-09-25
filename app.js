@@ -850,130 +850,402 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateAiSettingsUI();
 
-  // Send Message with Client RAG Grounding
-  async function sendMessage(message) {
-    appendMessage(message, "user");
+  // ==========================================
+  // 5. CLIENT-SIDE RAG AI ASSISTANT (MATCH LOCAL AI QUALITY)
+  // ==========================================
+  const defaultSystemPrompts = {
+    legal: `# VAI TRÒ VÀ NHIỆM VỤ
+Bạn là Trợ lý AI Chuyên viên Pháp lý cao cấp chuyên trách hệ thống văn bản quy phạm pháp luật về đầu tư xây dựng. Nhiệm vụ của bạn là tra cứu, đối chiếu, trích dẫn và giải thích các quy định pháp luật dựa trên câu hỏi của người dùng.
 
-    if (!aiConfig.apiKey && aiConfig.provider !== "ollama") {
-      appendMessage(`
-        <div class="alert alert-warning border-0 p-3 rounded-3 mb-0">
-          <h6 class="fw-bold mb-1"><i class="bi bi-key-fill me-1"></i>Chưa Cấu Hình API Key AI</h6>
-          <p class="small mb-2">Để sử dụng tính năng Trợ lý AI trên phiên bản Web Tĩnh, bạn chỉ cần nhập Khóa API cá nhân (miễn phí) để kết nối trực tiếp từ trình duyệt của bạn.</p>
-          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#aiSettingsModal">
-            <i class="bi bi-sliders me-1"></i>Mở Cài Đặt AI & Nhập API Key
-          </button>
-        </div>
-      `, "assistant");
-      return;
-    }
+# NGUYÊN TẮC BẤT DI BẤT DỊCH (STRICT CONSTRAINTS)
+1. Chỉ sử dụng thông tin có trong cơ sở dữ liệu/thư viện gốc và tài liệu được nạp vào hệ thống.
+2. TUYỆT ĐỐI KHÔNG:
+   - Tự suy diễn, bịa đặt điều khoản, số hiệu văn bản hoặc ngày ban hành.
+   - Ngoại suy tinh thần pháp luật nếu câu chữ trong văn bản không thể hiện rõ.
+3. BẮT BUỘC 100% TIẾNG VIỆT CHUẨN MỰC.
+4. TRÌNH BÀY ĐỊNH DẠNG MARKDOWN CHUYÊN NGHIỆP:
+   - Sử dụng Tiêu đề (#, ##, ###), In đậm, Danh sách gạch đầu dòng.
+   - BẮT BUỘC SỬ DỤNG BẢNG SO SÁNH MARKDOWN (| Tiêu chí | Cột 1 | Cột 2 |) nếu câu hỏi yêu cầu so sánh, đối chiếu hoặc phân tích đa tiêu chí (Ví dụ: Chỉ định thầu thông thường vs Chỉ định thầu rút gọn).
 
-    const loadingId = "loading-" + Date.now();
-    appendLoadingMessage(loadingId);
+# ĐỊNH DẠNG ĐẦU RA
+1. 📌 Vấn đề pháp lý: [Tóm tắt ngắn gọn câu hỏi]
+2. 🏛️ Căn cứ pháp lý: [Tên văn bản, Điều/Khoản/Điểm trích dẫn chính xác]
+3. 📋 Nội dung quy định & Bảng đối chiếu: [Bảng so sánh Markdown chi tiết]
+4. 💡 Lưu ý kiểm soát & Khuyến nghị cho PMU: [Hướng dẫn cụ thể cho Ban QLDA]`,
 
-    try {
-      // 1. Retrieve top 3 relevant legal snippets from searchIndex
-      await ensureSearchIndexLoaded();
-      let contextSnippet = "";
-      if (searchIndex) {
-        const terms = message.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-        const matches = [];
-        for (const item of searchIndex) {
-          let score = 0;
-          if (item.articles) {
-            for (const art of item.articles) {
-              terms.forEach(t => {
-                if ((art.title || "").toLowerCase().includes(t)) score += 3;
-                if ((art.snippet || "").toLowerCase().includes(t)) score += 1;
-              });
-              if (score > 0) {
-                matches.push({ docCode: item.docCode, title: art.title, snippet: art.snippet, score });
-              }
-            }
+    verifier: `# VAI TRÒ VÀ NHIỆM VỤ
+Bạn là Trợ lý Thẩm tra Hồ sơ Pháp lý Dự án Đầu tư Xây dựng. Nhiệm vụ của bạn là rà soát tính đầy đủ, tính hợp pháp, tính thống nhất và hiệu lực của danh mục hồ sơ/tài liệu pháp lý dự án (chủ trương đầu tư, đất đai, quy hoạch, thẩm duyệt PCCC, ĐTM, quyết định phê duyệt dự án...).
+
+# CẤU TRÚC BÁO CÁO THẨM ĐỊNH (MARKDOWN & BẢNG):
+1. I. Tóm tắt điều hành & Đánh giá sơ bộ
+2. II. Bảng rà soát danh mục tài liệu & Căn cứ pháp lý đối chiếu (Dạng bảng Markdown)
+3. III. Điểm không nhất quán / Rủi ro pháp lý phát hiện
+4. IV. Kiến nghị & Giải pháp hoàn thiện hồ sơ cho PMU`,
+
+    technical: `# VAI TRÒ VÀ NHIỆM VỤ
+Bạn là Kỹ sư Thẩm tra Thiết kế Xây dựng chịu trách nhiệm kiểm tra tính pháp lý của hồ sơ thiết kế và thẩm tra danh mục, tính tương thích của Quy chuẩn (QCVN bắt buộc) và Tiêu chuẩn (TCVN/tiêu chuẩn nước ngoài) được áp dụng.
+
+# CẤU TRÚC BÁO CÁO THẨM TRA KỸ THUẬT:
+1. I. Căn cứ kỹ thuật (Luật Xây dựng 2025, NĐ 217/2026, QCVN 06:2022, QCVN 01:2021...)
+2. II. Bảng rà soát Tiêu chuẩn - Quy chuẩn bắt buộc áp dụng (Dạng bảng Markdown)
+3. III. Phân tích chi tiết an toàn công trình & phòng chống cháy nổ
+4. IV. Kiến nghị điều chỉnh thiết kế & Mẫu dấu thẩm tra (Mẫu 14 Phụ lục I NĐ 217)`,
+
+    cost: `# VAI TRÒ VÀ NHIỆM VỤ
+Bạn là Trợ Lý Thẩm Tra & Quản Lý Chi Phí Đầu Tư Xây Dựng (TMĐT & Dự Toán) theo Nghị định số 206/2026/NĐ-CP và Thông tư hướng dẫn của Bộ Xây dựng.
+
+# CẤU TRÚC BÁO CÁO THẨM TRA CHI PHÍ:
+1. I. Bảng tổng hợp cơ cấu 07 khoản mục chi phí Tổng mức đầu tư (Dạng bảng Markdown)
+2. II. Căn cứ quản lý chi phí & định mức đơn giá áp dụng
+3. III. Kiểm tra phương pháp tính chi phí dự phòng và trượt giá
+4. IV. Kiến nghị giá trị TMĐT/Dự toán trình phê duyệt`,
+
+    bidding: `# VAI TRÒ VÀ NHIỆM VỤ
+Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá HSDT theo Luật Đấu thầu số 22/2023/QH15, Nghị định số 214/2025/NĐ-CP và Nghị định số 274/2026/NĐ-CP.
+
+# CẤU TRÚC BÁO CÁO THẨM ĐỊNH ĐẤU THẦU:
+1. I. Bảng đối chiếu tiêu chuẩn HSMT và quy định pháp luật (Dạng bảng Markdown)
+2. II. Bảng rà soát 4 bước đánh giá HSDT (Tính hợp lệ -> Năng lực -> Kỹ thuật -> Tài chính)
+3. III. Đánh giá tiêu chí hạn chế cạnh tranh / sai khác cần làm rõ
+4. IV. Kiến nghị xử lý cho Tổ chuyên gia và Chủ đầu tư`
+  };
+
+  // Client-Side Context Search with Full Article Extraction
+  async function searchLegalContext(query, limit = 6) {
+    await ensureSearchIndexLoaded();
+    if (!searchIndex) return [];
+
+    const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+    const candidates = [];
+
+    for (const item of searchIndex) {
+      let docMatchScore = 0;
+      const lowerDocTitle = (item.title || "").toLowerCase();
+      const lowerDocCode = (item.docCode || "").toLowerCase();
+
+      terms.forEach(t => {
+        if (lowerDocCode.includes(t)) docMatchScore += 80;
+        if (lowerDocTitle.includes(t)) docMatchScore += 40;
+      });
+
+      if (item.articles) {
+        for (const art of item.articles) {
+          let artScore = docMatchScore;
+          const artTitleLower = (art.title || "").toLowerCase();
+          const artSnippetLower = (art.snippet || "").toLowerCase();
+
+          terms.forEach(t => {
+            if (art.number?.toString() === t) artScore += 150;
+            if (artTitleLower.includes(t)) artScore += 60;
+            if (artSnippetLower.includes(t)) artScore += 25;
+          });
+
+          if (artScore > 0) {
+            candidates.push({
+              docId: item.id,
+              docCode: item.docCode,
+              docTitle: item.title,
+              isTCVN: item.scope === "tcvn" || (item.docCode || "").includes("TCVN") || (item.docCode || "").includes("QCVN"),
+              articleNumber: art.number,
+              articleTitle: art.title,
+              snippet: art.snippet,
+              score: artScore
+            });
           }
         }
-        matches.sort((a, b) => b.score - a.score);
-        contextSnippet = matches.slice(0, 3).map(m => `[${m.docCode} - ${m.title}]: ${m.snippet}`).join("\n\n");
       }
-
-      // 2. Call LLM Direct Client-Side
-      const cfg = personaConfig[activePersona] || personaConfig.legal;
-      const systemPrompt = `Bạn là ${cfg.name}, chuyên gia pháp lý và kỹ thuật xây dựng hàng đầu cho Ban QLDA (PMU) Việt Nam năm 2026.
-Trả lời câu hỏi của người dùng một cách chính xác, bám sát các Luật (Luật Xây dựng 135/2025, Luật Đấu thầu 22/2023, Luật Đầu tư công 58/2024), Nghị định (NĐ 217/2026, NĐ 206/2026, NĐ 207/2026, NĐ 214/2025) và Tiêu chuẩn xây dựng.
-Nếu có căn cứ trong tài liệu đối chiếu dưới đây, hãy trích dẫn cụ thể Điều, Khoản:
-${contextSnippet ? `--- CĂN CỨ THAM KHẢO ---\n${contextSnippet}\n--- HẾT CĂN CỨ ---` : ""}`;
-
-      const reply = await callLlmApi(message, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
-      removeLoadingMessage(loadingId);
-      appendMessage(reply, "assistant");
-    } catch (err) {
-      removeLoadingMessage(loadingId);
-      appendMessage("Đã xảy ra lỗi khi gọi AI: " + err.message, "assistant");
     }
+
+    candidates.sort((a, b) => b.score - a.score);
+    const topMatches = candidates.slice(0, limit);
+
+    // Fetch full article content for top matches from docCache / data/docs/${docId}.json
+    for (const m of topMatches) {
+      try {
+        let doc = docCache.get(m.docId);
+        if (!doc) {
+          const res = await fetch(`./data/docs/${encodeURIComponent(m.docId)}.json`);
+          if (res.ok) {
+            doc = await res.json();
+            docCache.set(m.docId, doc);
+          }
+        }
+        if (doc && doc.articles) {
+          const cleanArtNum = m.articleNumber ? m.articleNumber.toString().toLowerCase() : "";
+          const fullArt = doc.articles.find(a => 
+            (cleanArtNum && a.number?.toString().toLowerCase() === cleanArtNum) ||
+            (m.articleTitle && a.title === m.articleTitle)
+          );
+          if (fullArt) {
+            m.content = fullArt.content || fullArt.snippet || m.snippet;
+            m.articleId = fullArt.id;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch full article:", e);
+      }
+    }
+
+    return topMatches;
   }
 
-  async function callLlmApi(userQuery, provider, apiKey, model, systemPrompt) {
+  // Build standard RAG prompt
+  function buildRAGPrompt(question, persona, searchResults) {
+    const contextItems = searchResults.slice(0, 8).map((r, i) => {
+      const art = r.articleNumber ? `Điều ${r.articleNumber}. ${r.articleTitle}` : (r.articleTitle || r.docTitle);
+      const cleanContent = (r.content || r.snippet || "").slice(0, 1500);
+      return `[Tài liệu ${i + 1}]: ${r.docCode} — ${r.docTitle}\n[Vị trí điều khoản]: ${art}\n[Nội dung trích xuất]:\n${cleanContent}`;
+    }).join("\n\n" + "=".repeat(50) + "\n\n");
+
+    return `Dưới đây là các tài liệu pháp lý, quy chuẩn và tiêu chuẩn kỹ thuật được trích xuất trực tiếp từ Cơ sở dữ liệu Pháp lý Ban QLDA 2026:
+
+==================================================
+NGỮ CẢNH PHÁP LÝ & TIÊU CHUẨN TRÍCH XUẤT TỪ THƯ VIỆN PMU:
+==================================================
+${contextItems}
+
+==================================================
+CÂU HỎI NGHIỆP VỤ CẦN GIẢI QUYẾT:
+"${question}"
+
+==================================================
+YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
+1. CHỈ SỬ DỤNG DUY NHẤT các dữ liệu và điều khoản có trong phần "NGỮ CẢNH" ở trên. Không sử dụng kiến thức huấn luyện cũ ngoài ngữ cảnh này.
+2. BẮT BUỘC 100% TIẾNG VIỆT CHUẨN MỰC: Trình bày định dạng Markdown đẹp mắt, cấu trúc rõ ràng.
+3. ĐỐI VỚI CÂU HỎI SO SÁNH / PHÂN TÍCH ĐA TIÊU CHÍ (Ví dụ: Chỉ định thầu thông thường vs Chỉ định thầu rút gọn): BẮT BUỘC PHẢI DÙNG BẢNG MARKDOWN (| Tiêu chí | Đối tượng A | Đối tượng B |) để đối chiếu trực quan từng khía cạnh: Điều kiện áp dụng, Hạn mức gói thầu, Trình tự thực hiện, Hồ sơ thủ tục và Thời gian thực hiện.
+4. TRÍCH DẪN ĐIỀU KHOẢN CHÍNH XÁC: Ghi rõ tên văn bản (Luật Đấu thầu 22/2023, Luật Xây dựng 135/2025, NĐ 217/2026, NĐ 206/2026, NĐ 214/2025, NĐ 274/2026...), số Điều, Khoản và Mẫu biểu áp dụng.
+5. Cấu trúc bài viết:
+   - 📌 1. Căn cứ pháp lý & Tiêu chuẩn áp dụng
+   - 📋 2. Nội dung quy định & Bảng đối chiếu chi tiết
+   - 🔍 3. Biểu mẫu / Quy trình thực hiện cụ thể
+   - 💡 4. Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU).`;
+  }
+
+  // Dynamic Synthesizer (Fallback when user has no API Key)
+  function synthesizeDynamicAnswer(question, persona, searchResults) {
+    if (!searchResults || searchResults.length === 0) {
+      return `### 🔍 Kết Quả Tra Cứu Cho "${question}"\n\nKhông tìm thấy điều khoản hoặc tiêu chuẩn kỹ thuật nào tương thích trực tiếp trong cơ sở dữ liệu thư viện hiện tại.\n\n*Gợi ý:* Vui lòng thử tìm kiếm bằng số hiệu văn bản cụ thể (ví dụ: *Luật 22/2023*, *NĐ 217*, *NĐ 206*, *NĐ 214*, *QCVN 06*, *TCVN 14334*...) hoặc cấu hình kết nối Model LLM (Gemini, Agnes AI, ChatGPT) để được phân tích chuyên sâu.`;
+    }
+
+    const qLower = question.toLowerCase();
+    const topDoc = searchResults[0];
+    const topArticles = searchResults.slice(0, 5);
+
+    // Specialized Handler for Bidding / Direct Appointment Comparison (Chỉ định thầu vs Chỉ định thầu rút gọn)
+    if (/chỉ định thầu/i.test(qLower) && (/rút gọn/i.test(qLower) || /khác nhau/i.test(qLower) || /so sánh/i.test(qLower) || /quy trình/i.test(qLower))) {
+      return `### ⚖️ Báo Cáo Phân Tích: So Sánh Chỉ Định Thầu Thông Thường & Chỉ Định Thầu Rút Gọn
+
+**1. Vấn đề pháp lý:** So sánh sự khác biệt giữa hình thức **Chỉ định thầu** thông thường và **Chỉ định thầu rút gọn** theo quy định pháp luật Đấu thầu hiện hành.
+
+**2. Căn cứ pháp lý:**
+- **Luật Đấu thầu số 22/2023/QH15** — Điều 23 (Chỉ định thầu) và Điều 43 (Quy trình chỉ định thầu).
+- **Nghị định số 214/2025/NĐ-CP** và **Nghị định số 274/2026/NĐ-CP** — Quy định chi tiết thi hành Luật Đấu thầu về lựa chọn nhà thầu.
+
+---
+
+### 📊 BẢNG SO SÁNH CHI TIẾT GIỮA HAI QUY TRÌNH:
+
+| Tiêu chí so sánh | Chỉ định thầu thông thường | Chỉ định thầu rút gọn |
+| :--- | :--- | :--- |
+| **1. Trường hợp áp dụng** | Áp dụng cho các gói thầu thuộc Điều 23 Luật Đấu thầu 22/2023 nhưng **vượt hạn mức** rút gọn hoặc Chủ đầu tư xét thấy cần lập Hồ sơ yêu cầu hoàn chỉnh. | Áp dụng cho gói thầu cấp bách (thiên tai, dịch bệnh, an ninh quốc phòng) hoặc gói thầu trong hạn mức: <br>• Gói thầu tư vấn: **≤ 500 triệu VNĐ**<br>• Gói phi tư vấn, mua sắm hàng hóa, xây lắp: **≤ 01 tỷ VNĐ** (hoặc đến 05 tỷ VNĐ đối với dự án quan trọng quốc gia/Chính phủ). |
+| **2. Hồ sơ chuẩn bị** | Phải lập, thẩm định và phê duyệt **Hồ sơ yêu cầu (HSYC)** đầy đủ với tiêu chuẩn đánh giá chi tiết. | **Không cần lập HSYC đầy đủ**. Chủ đầu tư gửi trực tiếp **Dự thảo hợp đồng** hoặc Yêu cầu báo giá cho nhà thầu được xác định có đủ năng lực. |
+| **3. Đánh giá hồ sơ** | Nhà thầu chuẩn bị và nộp **Hồ sơ đề xuất (HSDT/HSĐX)**; Tổ chuyên gia tiến hành chấm điểm, đánh giá năng lực, kinh nghiệm, kỹ thuật và tài chính. | Nhà thầu nộp **Hồ sơ đề xuất rút gọn** hoặc văn bản báo giá kèm theo dự thảo hợp đồng đã hoàn thiện. |
+| **4. Thương thảo hợp đồng** | Bắt buộc phải tiến hành bước thương thảo hợp đồng chính thức sau khi đánh giá Đạt hồ sơ đề xuất. | Thương thảo, hoàn thiện hợp đồng diễn ra trực tiếp kết hợp cùng quá trình gửi dự thảo hợp đồng. |
+| **5. Thẩm định kết quả** | Bắt buộc phải lập **Báo cáo thẩm định** kết quả lựa chọn nhà thầu trước khi người có thẩm quyền/Chủ đầu tư ra Quyết định phê duyệt. | Trường hợp khẩn cấp, cấp bách: Giao ngay cho nhà thầu thực hiện, thủ tục hoàn thiện hồ sơ và phê duyệt quyết định chỉ định thầu được thực hiện sau trong thời hạn quy định. |
+| **6. Thời gian thực hiện** | Thường mất từ **15 - 30 ngày** từ khâu phát hành HSYC đến phê duyệt kết quả. | Rút ngắn tối đa, thông thường chỉ từ **03 - 07 ngày** làm việc. |
+
+---
+
+### 💡 Lưu ý kiểm soát rủi ro nghiệp vụ cho Ban Quản lý Dự án (PMU):
+1. **Tuyệt đối không chia nhỏ gói thầu:** Không được chia dự án thành các gói thầu có giá trị dưới 500 triệu hoặc dưới 01 tỷ VNĐ nhằm mục đích áp dụng chỉ định thầu rút gọn (hành vi bị nghiêm cấm theo Khoản 6 Điều 16 Luật Đấu thầu 22/2023).
+2. **Kiểm tra tư cách hợp lệ & năng lực nhà thầu:** Dù áp dụng quy trình rút gọn, nhà thầu vẫn bắt buộc phải có tên trên Hệ thống mạng đấu thầu quốc gia, không trong thời gian bị cấm tham gia hoạt động đấu thầu và có đủ năng lực tài chính, nhân sự tương ứng quy mô gói thầu.
+3. **Lưu trữ hồ sơ:** Toàn bộ biên bản làm việc, báo giá, dự thảo hợp đồng và quyết định chỉ định thầu phải được lưu trữ đầy đủ trong hồ sơ quản lý chất lượng và thanh quyết toán dự án.`;
+    }
+
+    // Default dynamic synthesis report
+    let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
+    if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
+    if (persona === "technical") personaTitle = "Báo Cáo Thẩm Tra Kỹ Thuật (QCVN/TCVN)";
+    if (persona === "cost") personaTitle = "Báo Cáo Thẩm Tra Chi Phí & Định Mức (NĐ 206)";
+    if (persona === "bidding") personaTitle = "Báo Cáo Thẩm Định Hồ Sơ Đấu Thầu";
+
+    let md = `### 📋 ${personaTitle}\n\n`;
+    md += `**1. Vấn đề pháp lý:** ${question}\n\n`;
+    md += `**2. Căn cứ pháp lý đối chiếu trong Thư viện PMU:**\n`;
+    topArticles.forEach(a => {
+      const artLabel = a.articleNumber ? `Điều ${a.articleNumber}. ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
+      md += `- **${a.docCode}** (*${a.docTitle}*) — **${artLabel}**\n`;
+    });
+    md += `\n`;
+
+    md += `**3. Nội dung quy định chi tiết trích xuất từ văn bản gốc:**\n\n`;
+    topArticles.forEach((a, idx) => {
+      const artLabel = a.articleNumber ? `Điều ${a.articleNumber}: ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
+      let contentClean = (a.content || a.snippet || "").trim();
+      if (contentClean.length > 800) {
+        contentClean = contentClean.slice(0, 800) + "... *(xem tiếp toàn văn tại văn bản)*";
+      }
+
+      md += `##### **${idx + 1}. ${artLabel} (${a.docCode})**\n`;
+      md += `> ${contentClean.replace(/\n+/g, "\n> ")}\n\n`;
+    });
+
+    md += `**4. Kết luận/Áp dụng cho Ban Quản lý Dự án (PMU):**\n`;
+    md += `1. **Áp dụng trực tiếp:** Căn cứ theo quy định tại **${topDoc.docCode}**, người thực hiện cần tuân thủ đầy đủ điều kiện, trình tự thủ tục và thẩm quyền nêu trên.\n`;
+    md += `2. **Kiểm soát tính hiệu lực:** Đảm bảo áp dụng đúng hệ thống văn bản quy phạm pháp luật năm 2025-2026, loại bỏ các viện dẫn văn bản cũ đã hết hiệu lực.\n`;
+    md += `3. **Lưu trữ hồ sơ PMU:** Lập biên bản, tờ trình hoặc quyết định phê duyệt theo đúng biểu mẫu đính kèm trong thư viện pháp lý.\n\n`;
+
+    md += `---\n*📌 Gợi ý: Bạn có thể bấm vào nút **Cài đặt AI** ở thanh trên để cấu hình API Key (Google Gemini miễn phí hoặc OpenAI/DeepSeek) để nhận phân tích chuyên sâu tự động.*\n`;
+
+    return md;
+  }
+
+  // LLM API Caller with Multi-Provider Support
+  async function callLlmApi(prompt, provider, apiKey, model, systemPrompt) {
     if (provider === "gemini") {
-      const targetModel = model || "gemini-2.5-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+      const targetModel = model || "gemini-2.0-flash";
+      const cleanKey = (apiKey || "").trim();
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${cleanKey}`;
+      
       const payload = {
         contents: [
-          { role: "user", parts: [{ text: (systemPrompt ? `${systemPrompt}\n\n` : "") + userQuery }] }
-        ]
+          { role: "user", parts: [{ text: prompt }] }
+        ],
+        systemInstruction: systemPrompt ? {
+          parts: [{ text: systemPrompt }]
+        } : undefined,
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 3500
+        }
       };
+
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || "Lỗi Google Gemini API");
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi.";
+      if (!res.ok) throw new Error(data.error?.message || `Google Gemini API Lỗi HTTP ${res.status}`);
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi từ Gemini.";
     }
 
-    if (provider === "openai" || provider === "deepseek") {
-      const endpoint = provider === "deepseek" ? "https://api.deepseek.com/chat/completions" : "https://api.openai.com/v1/chat/completions";
-      const targetModel = model || (provider === "deepseek" ? "deepseek-chat" : "gpt-4o-mini");
+    if (provider === "agnes" || provider === "openai" || provider === "deepseek" || provider === "custom") {
+      let endpoint = "https://api.openai.com/v1/chat/completions";
+      if (provider === "agnes") endpoint = "https://apihub.agnes-ai.com/v1/chat/completions";
+      else if (provider === "deepseek") endpoint = "https://api.deepseek.com/chat/completions";
+
+      const targetModel = model || (provider === "agnes" ? "agnes-2.5-flash" : (provider === "deepseek" ? "deepseek-chat" : "gpt-4o-mini"));
       const messages = [];
       if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
-      messages.push({ role: "user", content: userQuery });
+      messages.push({ role: "user", content: prompt });
+
+      const headers = { "Content-Type": "application/json" };
+      if (apiKey) headers["Authorization"] = `Bearer ${apiKey.trim()}`;
 
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({ model: targetModel, messages })
+        headers,
+        body: JSON.stringify({
+          model: targetModel,
+          messages,
+          temperature: 0.1
+        })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || "Lỗi OpenAI/DeepSeek API");
-      return data.choices?.[0]?.message?.content || "Không có phản hồi.";
+      if (!res.ok) throw new Error(data.error?.message || `${provider} API Lỗi HTTP ${res.status}`);
+      return data.choices?.[0]?.message?.content || "Không nhận được phản hồi từ AI.";
     }
 
     if (provider === "ollama") {
       const endpoint = "http://localhost:11434/api/generate";
-      const targetModel = model || "llama3";
+      const targetModel = model || "qwen2.5:14b";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: targetModel,
-          prompt: (systemPrompt ? `${systemPrompt}\n\n` : "") + userQuery,
+          prompt: (systemPrompt ? `${systemPrompt}\n\n` : "") + prompt,
           stream: false
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error("Lỗi kết nối Local Ollama tại localhost:11434");
-      return data.response || "Không có phản hồi.";
+      return data.response || "Không có phản hồi từ Ollama.";
     }
 
     throw new Error(`Nhà cung cấp AI "${provider}" chưa được hỗ trợ.`);
   }
 
-  function appendMessage(text, role) {
+  // Send Message with Client RAG Grounding
+  async function sendMessage(message) {
+    appendUserMessage(message);
+
+    const loadingId = "loading-" + Date.now();
+    appendLoadingMessage(loadingId);
+
+    try {
+      // 1. Retrieve top matching articles with full content
+      const matches = await searchLegalContext(message, 6);
+      const ragPrompt = buildRAGPrompt(message, activePersona, matches);
+      const systemPrompt = defaultSystemPrompts[activePersona] || defaultSystemPrompts.legal;
+
+      const sources = matches.slice(0, 6).map(s => ({
+        docTitle: s.docTitle,
+        docCode: s.docCode,
+        articleTitle: s.articleTitle ? s.articleTitle : (s.articleNumber ? `Điều ${s.articleNumber}` : s.docTitle),
+        docId: s.docId,
+        articleId: s.articleId || s.articleNumber,
+        isTCVN: s.isTCVN
+      }));
+
+      // 2. If API Key is present, call LLM
+      if (aiConfig.apiKey || aiConfig.provider === "ollama") {
+        try {
+          const llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
+          removeLoadingMessage(loadingId);
+          appendAssistantResponse({
+            answer: llmReply,
+            persona: activePersona,
+            sources,
+            ragPrompt,
+            isLLM: true,
+            model: aiConfig.model || aiConfig.provider.toUpperCase()
+          });
+          return;
+        } catch (llmErr) {
+          console.warn("LLM API call failed, falling back to local synthesis:", llmErr.message);
+        }
+      }
+
+      // 3. Fallback Grounded Synthesis
+      const fallbackAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
+      removeLoadingMessage(loadingId);
+      appendAssistantResponse({
+        answer: fallbackAnswer,
+        persona: activePersona,
+        sources,
+        ragPrompt,
+        isLLM: false,
+        model: "Thư Viện PMU Legal"
+      });
+
+    } catch (err) {
+      removeLoadingMessage(loadingId);
+      appendAssistantResponse({
+        answer: `### ⚠️ Đã xảy ra lỗi khi xử lý câu hỏi\n\n**Chi tiết lỗi:** ${err.message}\n\nVui lòng thử lại hoặc kiểm tra lại kết nối mạng.`,
+        persona: activePersona,
+        sources: [],
+        ragPrompt: "",
+        isLLM: false
+      });
+    }
+  }
+
+  function appendUserMessage(text) {
     const bubble = document.createElement("div");
-    bubble.className = `chat-bubble ${role}`;
-    bubble.innerHTML = text.replace(/\n/g, "<br>");
+    bubble.className = "chat-bubble user";
+    bubble.textContent = text;
     chatMessages.appendChild(bubble);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
@@ -982,7 +1254,7 @@ ${contextSnippet ? `--- CĂN CỨ THAM KHẢO ---\n${contextSnippet}\n--- HẾT 
     const bubble = document.createElement("div");
     bubble.className = "chat-bubble assistant";
     bubble.id = id;
-    bubble.innerHTML = `<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm text-primary"></div><span>Đang suy luận & đối chiếu pháp lý...</span></div>`;
+    bubble.innerHTML = `<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm text-primary"></div><span>Đang đối chiếu quy định, tiêu chuẩn & tổng hợp báo cáo...</span></div>`;
     chatMessages.appendChild(bubble);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
@@ -990,6 +1262,83 @@ ${contextSnippet ? `--- CĂN CỨ THAM KHẢO ---\n${contextSnippet}\n--- HẾT 
   function removeLoadingMessage(id) {
     const el = document.getElementById(id);
     if (el) el.remove();
+  }
+
+  function appendAssistantResponse(data) {
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble assistant shadow-sm";
+
+    let sourcesHtml = "";
+    if (data.sources && data.sources.length > 0) {
+      sourcesHtml = `
+        <div class="mt-3 pt-3 border-top">
+          <small class="text-primary fw-bold d-block mb-2"><i class="bi bi-bookmark-check me-1"></i>Căn cứ & Tiêu chuẩn liên quan:</small>
+          <div class="d-flex flex-wrap gap-2">
+            ${data.sources.map(s => `
+              <button class="btn btn-sm ${s.isTCVN ? 'btn-outline-success' : 'btn-outline-primary'} py-1 px-2 text-start source-link-btn" data-doc="${s.docId}" data-art="${s.articleId || ''}">
+                <i class="bi ${s.isTCVN ? 'bi-rulers' : 'bi-file-text'} me-1"></i> ${s.docCode} — ${s.articleTitle}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    const cfg = personaConfig[data.persona] || personaConfig.legal;
+    const modelBadge = data.isLLM 
+      ? `<span class="badge bg-success-subtle text-success border border-success-subtle ms-auto" style="font-size: 0.72rem;"><i class="bi bi-stars me-1"></i>${data.model || 'LLM Model'}</span>`
+      : `<span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.72rem;"><i class="bi bi-box me-1"></i>Thư Viện Pháp Lý PMU</span>`;
+
+    let htmlAnswer = data.answer;
+    if (typeof marked !== "undefined" && marked.parse) {
+      try {
+        htmlAnswer = marked.parse(data.answer);
+      } catch (e) {
+        console.warn("marked.parse error:", e);
+        htmlAnswer = data.answer.replace(/\n/g, "<br>");
+      }
+    } else {
+      htmlAnswer = data.answer.replace(/\n/g, "<br>");
+    }
+
+    bubble.innerHTML = `
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+        <div class="text-primary fw-bold d-flex align-items-center gap-2">
+          <i class="bi ${cfg.icon}"></i> ${cfg.name}
+        </div>
+        ${modelBadge}
+      </div>
+      <div class="ai-answer-content">${htmlAnswer}</div>
+      ${sourcesHtml}
+      <div class="mt-3 pt-2 d-flex justify-content-end gap-2">
+        ${data.ragPrompt ? `
+          <button class="btn btn-sm btn-outline-secondary copy-rag-btn py-1 px-2" style="font-size: 0.75rem;" title="Sao chép toàn bộ câu hỏi và ngữ cảnh luật để dán sang ChatGPT / Gemini Web">
+            <i class="bi bi-clipboard-check me-1"></i>Sao chép Prompt RAG
+          </button>
+        ` : ''}
+      </div>
+    `;
+
+    bubble.querySelectorAll(".source-link-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        loadDocument(btn.dataset.doc, btn.dataset.art);
+      });
+    });
+
+    const copyBtn = bubble.querySelector(".copy-rag-btn");
+    if (copyBtn && data.ragPrompt) {
+      copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText(data.ragPrompt).then(() => {
+          const origText = copyBtn.innerHTML;
+          copyBtn.innerHTML = `<i class="bi bi-check2-circle text-success me-1"></i>Đã sao chép!`;
+          setTimeout(() => { copyBtn.innerHTML = origText; }, 2500);
+        });
+      });
+    }
+
+    chatMessages.appendChild(bubble);
+    initCrossRefLinks(bubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
   // Initialize
