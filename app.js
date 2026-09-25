@@ -1200,6 +1200,99 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
    - Giai đoạn **Đồ án quy hoạch**: Bắt buộc phải lấy ý kiến cộng đồng dân cư (20 - 30 ngày) và cơ quan, tổ chức (15 ngày).`;
     }
 
+    // Specialized Handler for Feasibility Study Report Appraisal Contents (Nội dung thẩm định Báo cáo NCKT - Luật XD 135/2025 & NĐ 217/2026)
+    if ((/nghiên cứu khả thi|kinh tế.*kỹ thuật|báo cáo nckt/i.test(qLower) || (/thẩm định/i.test(qLower) && /dự án/i.test(qLower))) && 
+        (/nội dung/i.test(qLower) || /bao gồm/i.test(qLower) || /những gì/i.test(qLower) || /gồm những/i.test(qLower))) {
+      return `### 📋 Báo Cáo Tra Cứu Pháp Lý: Nội Dung Thẩm Định Báo Cáo Nghiên Cứu Khả Thi Đầu Tư Xây Dựng
+
+**1. Vấn đề pháp lý:** ${question}
+
+**2. Căn cứ pháp lý áp dụng:**
+- **Luật Xây dựng số 135/2025/QH15**:
+  - **Điều 26:** Thẩm định Báo cáo nghiên cứu khả thi, Báo cáo kinh tế - kỹ thuật.
+  - **Điều 27:** Thẩm định Báo cáo nghiên cứu khả thi của cơ quan chuyên môn về xây dựng, Hội đồng thẩm định.
+- **Nghị định số 217/2026/NĐ-CP** của Chính phủ:
+  - **Điều 31:** Thẩm định Báo cáo nghiên cứu khả thi, Báo cáo kinh tế - kỹ thuật của người quyết định đầu tư.
+  - **Điều 38:** Nội dung, kết quả thẩm định Báo cáo nghiên cứu khả thi của cơ quan chuyên môn về xây dựng, Hội đồng thẩm định.
+- **Nghị định số 206/2026/NĐ-CP** của Chính phủ về quản lý chi phí đầu tư xây dựng (Thẩm định Tổng mức đầu tư).
+
+---
+
+### 🏛️ QUY ĐỊNH CỤ THỂ: PHÂN ĐỊNH 02 KHỐI NỘI DUNG THẨM ĐỊNH
+
+Theo quy định pháp luật xây dựng hiện hành, việc thẩm định Báo cáo nghiên cứu khả thi (FSR) được phân định rõ ràng giữa **02 chủ thể thẩm định độc lập nhưng phối hợp đồng bộ**:
+
+---
+
+#### KHỐI 1: Nội dung thẩm định của CƠ QUAN CHUYÊN MÔN VỀ XÂY DỰNG
+*(Căn cứ: **Khoản 4 Điều 27 Luật Xây dựng năm 2025** và **Điều 38 Nghị định số 217/2026/NĐ-CP**)*
+
+Cơ quan chuyên môn về xây dựng (Bộ Xây dựng / Bộ quản lý công trình chuyên ngành / Sở Xây dựng theo phân cấp) thẩm định các nội dung kỹ thuật - công nghệ - chi phí xây dựng:
+1. **Sự phù hợp của thiết kế xây dựng (Thiết kế cơ sở) với quy hoạch:**
+   - Đánh giá sự phù hợp với quy hoạch chi tiết xây dựng, quy hoạch phân khu hoặc quy hoạch chung;
+   - Kiểm tra chức năng sử dụng đất, chỉ tiêu sử dụng đất quy hoạch (mật độ xây dựng, hệ số sử dụng đất, tầng cao, khoảng lùi), quy mô dân số, kiến trúc cảnh quan;
+   - Đối với công trình theo tuyến: kiểm tra vị trí, hướng tuyến, vùng tuyến công trình.
+2. **Khả năng kết nối hạ tầng kỹ thuật khu vực:**
+   - Kiểm tra tính đầy đủ, hợp pháp của các văn bản thỏa thuận hoặc hướng dẫn đấu nối cấp điện, cấp thoát nước, giao thông, thông tin liên lạc ngoài hàng rào dự án.
+3. **Sự tuân thủ quy chuẩn kỹ thuật (QCVN) và áp dụng tiêu chuẩn (TCVN):**
+   - Rà soát danh mục quy chuẩn, tiêu chuẩn kỹ thuật bắt buộc áp dụng;
+   - Kiểm tra sự tuân thủ của các giải pháp thiết kế kết cấu, an toàn công trình so với quy chuẩn kỹ thuật tương ứng.
+4. **Đánh giá các yếu tố an toàn xây dựng và giải pháp Phòng cháy và Chữa cháy (PCCC):**
+   - Đánh giá sự bảo đảm an toàn của giải pháp kết cấu chịu lực chính, nền móng; bảo đảm an toàn cho công trình lân cận;
+   - Kiểm tra tính đầy đủ của hồ sơ thiết kế cơ sở về PCCC theo pháp luật về PCCC và cứu nạn cứu hộ.
+5. **Thẩm định Tổng mức đầu tư (đối với dự án đầu tư công, dự án PPP):**
+   - Kiểm tra tính đúng đắn của phương pháp xác định Tổng mức đầu tư;
+   - Rà soát tính đầy đủ, hợp lệ của các định mức, đơn giá, chi phí xây dựng, chi phí thiết bị, chi phí QLDA, tư vấn và dự phòng trượt giá theo Nghị định 206/2026/NĐ-CP.
+
+---
+
+#### KHỐI 2: Nội dung thẩm định của NGƯỜI QUYẾT ĐỊNH ĐẦU TƯ (Chủ đầu tư / Hội đồng thẩm định)
+*(Căn cứ: **Khoản 3 Điều 26 Luật Xây dựng năm 2025** và **Điều 31 Nghị định số 217/2026/NĐ-CP**)*
+
+Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc làm đầu mối chủ trì) thẩm định các yếu tố đầu tư, hiệu quả, nguồn vốn và quản lý:
+1. **Sự phù hợp với Chủ trương đầu tư:**
+   - Đối chiếu mục tiêu, quy mô, địa điểm xây dựng, tổng mức vốn và tiến độ thực hiện so với Quyết định phê duyệt Chủ trương đầu tư.
+2. **Các yếu tố bảo đảm tính khả thi và hiệu quả của dự án:**
+   - Phân tích nhu cầu sử dụng, thị trường tiêu thụ và phương án khai thác, vận hành dự án;
+   - Đánh giá hiệu quả kinh tế - xã hội, bảo đảm quốc phòng, an ninh (đối với dự án đầu tư công);
+   - Đánh giá hiệu quả tài chính, phương án hoàn vốn, khả năng trả nợ (đối với dự án PPP hoặc dự án kinh doanh).
+3. **Khả năng cân đối nguồn vốn và kế hoạch vốn:**
+   - Kiểm tra khả năng bố trí vốn theo kế hoạch đầu tư công trung hạn và hàng năm; tiến độ cấp vốn giải ngân.
+4. **Phương án bồi thường, giải phóng mặt bằng và tái định cư:**
+   - Tính khả thi của phương án bồi thường GPMB, hỗ trợ tái định cư, tiến độ bàn giao mặt bằng thi công.
+5. **Sự phù hợp của thiết kế xây dựng với Nhiệm vụ thiết kế:**
+   - Kiểm tra dây chuyền công năng, tiêu chuẩn kỹ thuật đáp ứng yêu cầu của Chủ đầu tư nêu trong Nhiệm vụ thiết kế đã duyệt.
+6. **Thẩm định công nghệ và môi trường:**
+   - Đánh giá hoặc lấy ý kiến về công nghệ (nếu dự án sử dụng công nghệ hạn chế chuyển giao theo Luật Chuyển giao công nghệ);
+   - Việc thực hiện thủ tục môi trường (ĐTM, Giấy phép môi trường) theo Luật Bảo vệ môi trường.
+7. **Hình thức quản lý dự án:**
+   - Lựa chọn mô hình Ban QLDA chuyên ngành, Ban QLDA khu vực, Ban QLDA một dự án hoặc thuê tư vấn QLDA.
+
+---
+
+### 📊 BẢNG TỔNG HỢP SO SÁNH NỘI DUNG THẨM ĐỊNH GIỮA 02 CƠ QUAN:
+
+| Nhóm nội dung thẩm định | Cơ quan chuyên môn về xây dựng (Điều 27 Luật XD & Điều 38 NĐ 217) | Người quyết định đầu tư / Chủ đầu tư (Điều 26 Luật XD & Điều 31 NĐ 217) |
+| :--- | :--- | :--- |
+| **Quy hoạch & Đấu nối hạ tầng** | **Thẩm định chính:** Đánh giá sự phù hợp quy hoạch chi tiết/phân khu, chỉ tiêu mật độ, tầng cao & thỏa thuận đấu nối hạ tầng | Kiểm tra địa điểm, diện tích đất theo Chủ trương đầu tư |
+| **Giải pháp kỹ thuật & QCVN/TCVN** | **Thẩm định chính:** Kiểm tra tuân thủ QCVN bắt buộc, danh mục tiêu chuẩn áp dụng, an toàn chịu lực | Đánh giá sự phù hợp với Nhiệm vụ thiết kế đã phê duyệt |
+| **Phòng cháy chữa cháy (PCCC)** | **Thẩm định chính:** Kiểm tra giải pháp PCCC trong Thiết kế cơ sở và ý kiến của cơ quan PCCC | Kiểm tra tính đầy đủ hồ sơ theo quy định |
+| **Hiệu quả kinh tế & Tài chính** | *Không thuộc thẩm quyền thẩm định* | **Thẩm định chính:** Hiệu quả KT-XH, hiệu quả tài chính, phương án hoàn vốn và thu hồi vốn |
+| **Nguồn vốn & Kế hoạch vốn** | *Không thuộc thẩm quyền thẩm định* | **Thẩm định chính:** Khả năng bố trí vốn trung hạn/hàng năm, tiến độ cấp vốn |
+| **Bồi thường GPMB & Môi trường** | *Không thuộc thẩm quyền thẩm định* | **Thẩm định chính:** Phương án GPMB, tái định cư và hồ sơ môi trường (ĐTM/Giấy phép môi trường) |
+| **Tổng mức đầu tư (TMĐT)** | Thẩm định phương pháp lập, chi phí xây dựng, thiết bị (Dự án công, PPP) | Thẩm định tổng thể cơ cấu nguồn vốn, chi phí GPMB, QLDA, tư vấn và chốt TMĐT phê duyệt |
+| **Hình thức quản lý dự án** | *Không thuộc thẩm quyền thẩm định* | **Quyết định:** Lựa chọn Ban QLDA chuyên ngành/khu vực hoặc thuê tư vấn QLDA |
+
+---
+
+### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):
+1. **Trình tự thực hiện trước - sau:**
+   - Hồ sơ Báo cáo NCKT phải gửi **Cơ quan chuyên môn về xây dựng thẩm định trước** để có Văn bản thông báo kết quả thẩm định (Mẫu số 03 Phụ lục I NĐ 217/2026/NĐ-CP).
+   - Sau khi có kết quả của Cơ quan chuyên môn về xây dựng, Ban QLDA/Chủ đầu tư mới hoàn thiện hồ sơ gửi **Cơ quan chủ trì thẩm định của Người quyết định đầu tư** để tổng hợp, thẩm định các nội dung còn lại trước khi trình phê duyệt dự án.
+2. **Hồ sơ PCCC và Môi trường:**
+   - Cần hoàn tất văn bản thỏa thuận/thẩm duyệt PCCC và thủ tục môi trường song song trong giai đoạn chuẩn bị dự án để kịp thời tích hợp vào kết quả thẩm định của Người quyết định đầu tư.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -1374,10 +1467,14 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         try {
           let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
           if (llmReply && llmReply.trim().length > 30) {
-            // Check if comparison or planning question needs authoritative table formatting
+            // Check if comparison or planning question or feasibility study needs authoritative table formatting
             const isComparison = /so sánh|khác nhau|khác biệt/i.test(message) || (/chỉ định thầu/i.test(message) && /rút gọn/i.test(message));
             const isPlanningTimeline = /quy hoạch/i.test(message) && (/nhiệm vụ/i.test(message) || /lấy ý kiến/i.test(message) || /thời gian/i.test(message) || /thời hạn/i.test(message));
-            if ((isComparison && !llmReply.includes("|")) || (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|")))) {
+            const isFsrContent = (/nghiên cứu khả thi|kinh tế.*kỹ thuật|báo cáo nckt/i.test(message) || (/thẩm định/i.test(message) && /dự án/i.test(message))) && 
+                                 (/nội dung/i.test(message) || /bao gồm/i.test(message) || /những gì/i.test(message) || /gồm những/i.test(message));
+            if ((isComparison && !llmReply.includes("|")) || 
+                (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
+                (isFsrContent && (!llmReply.includes("Điều 26") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
