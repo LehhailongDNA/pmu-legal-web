@@ -761,10 +761,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // AI Configuration Management
+  let initialProvider = localStorage.getItem("pmu_ai_provider") || "pmu";
   let initialModel = localStorage.getItem("pmu_ai_model") || "gemini-2.0-flash";
   if (initialModel === "gemini-2.5-flash") initialModel = "gemini-2.0-flash";
   let aiConfig = {
-    provider: localStorage.getItem("pmu_ai_provider") || "gemini",
+    provider: initialProvider,
     apiKey: localStorage.getItem("pmu_ai_apikey") || "",
     model: initialModel
   };
@@ -785,8 +786,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (settingModel) settingModel.value = aiConfig.model;
 
     if (activeModelLabel) {
-      if (aiConfig.apiKey) {
-        activeModelLabel.innerHTML = `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>${aiConfig.provider.toUpperCase()}</span>`;
+      if (aiConfig.provider === "pmu") {
+        activeModelLabel.innerHTML = `<span class="badge bg-primary" title="Thư Viện Pháp Lý PMU (Chuẩn hóa 100%)"><i class="bi bi-shield-check me-1"></i>Thư Viện PMU</span>`;
+      } else if (aiConfig.apiKey || aiConfig.provider === "ollama") {
+        const displayModel = aiConfig.model || (aiConfig.provider === "gemini" ? "gemini-2.0-flash" : aiConfig.provider.toUpperCase());
+        activeModelLabel.innerHTML = `<span class="badge bg-success" title="Đã kết nối AI"><i class="bi bi-stars me-1"></i>${displayModel}</span>`;
       } else {
         activeModelLabel.innerHTML = `<span class="badge bg-warning text-dark"><i class="bi bi-key me-1"></i>Nhập API Key</span>`;
       }
@@ -1104,6 +1108,10 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
   // LLM API Caller with Multi-Provider Support
   async function callLlmApi(prompt, provider, apiKey, model, systemPrompt) {
+    if (provider === "pmu") {
+      return "";
+    }
+
     if (provider === "gemini") {
       let targetModel = (model || "").trim() || "gemini-2.0-flash";
       if (targetModel === "gemini-2.5-flash") targetModel = "gemini-2.0-flash";
@@ -1119,7 +1127,8 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         } : undefined,
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: 3500
+          maxOutputTokens: 8192,
+          thinkingConfig: { thinkingBudget: 0 }
         }
       };
 
@@ -1136,6 +1145,10 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         throw new Error(data.promptFeedback?.blockReason ? `Yêu cầu bị chặn: ${data.promptFeedback.blockReason}` : "Gemini không trả về kết quả.");
       }
 
+      if (candidate.finishReason === "MAX_TOKENS") {
+        throw new Error("Gemini bị ngắt quãng do giới hạn độ dài mã (MAX_TOKENS).");
+      }
+
       const parts = candidate.content?.parts || [];
       // Collect all text from parts, filtering out thoughts if separate
       const text = parts
@@ -1144,7 +1157,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         .join("")
         .trim() || parts.map(p => p.text || "").join("").trim();
 
-      if (!text || text.length < 5) {
+      if (!text || text.length < 15) {
         throw new Error(`Gemini kết thúc với trạng thái: ${candidate.finishReason || 'Trống'}`);
       }
 
@@ -1224,11 +1237,20 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         isTCVN: s.isTCVN
       }));
 
-      // 2. If API Key is present, call LLM
-      if (aiConfig.apiKey || aiConfig.provider === "ollama") {
+      // 2. If user selected Cloud LLM (not PMU) and has API Key or Ollama
+      if (aiConfig.provider !== "pmu" && (aiConfig.apiKey || aiConfig.provider === "ollama")) {
         try {
-          const llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
-          if (llmReply && llmReply.trim().length > 10) {
+          let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
+          if (llmReply && llmReply.trim().length > 30) {
+            // Check if comparison question needs a table and LLM forgot it
+            const isComparison = /so sánh|khác nhau|khác biệt/i.test(message) || (/chỉ định thầu/i.test(message) && /rút gọn/i.test(message));
+            if (isComparison && !llmReply.includes("|")) {
+              const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
+              if (dynReport && dynReport.includes("|")) {
+                llmReply = dynReport;
+              }
+            }
+
             removeLoadingMessage(loadingId);
             const activeModelName = (aiConfig.model === "gemini-2.5-flash" ? "gemini-2.0-flash" : aiConfig.model) || aiConfig.provider.toUpperCase();
             appendAssistantResponse({
@@ -1241,13 +1263,13 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
             });
             return;
           }
-          throw new Error("Phản hồi từ LLM không đủ nội dung.");
+          throw new Error("Phản hồi từ LLM không đủ nội dung hoặc bị ngắt.");
         } catch (llmErr) {
           console.warn("LLM API call failed, falling back to local synthesis:", llmErr.message);
         }
       }
 
-      // 3. Fallback Grounded Synthesis (Guaranteed High Quality Report)
+      // 3. Fallback Grounded Synthesis (Guaranteed Complete High-Fidelity Report)
       const fallbackAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
       removeLoadingMessage(loadingId);
       appendAssistantResponse({
