@@ -751,6 +751,13 @@ document.addEventListener("DOMContentLoaded", () => {
             artScore -= 5000;
           }
 
+          // Booster for Concrete Acceptance / Thi công & Nghiệm thu Bê tông (TCVN 4453:1995 & NĐ 207/2026)
+          if (clean.includes("bê tông") && (clean.includes("nghiệm thu") || clean.includes("thi công") || clean.includes("đổ") || clean.includes("cốp pha") || clean.includes("cốt thép") || clean.includes("checklist") || clean.includes("kiểm tra"))) {
+            if (lowerCode.includes("4453") || artTitleLower.includes("bê tông") || artSnippetLower.includes("bê tông") || (lowerCode.includes("207/2026") && art.number == 22)) {
+              artScore += 3000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number?.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -1102,6 +1109,13 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
           }
           if (clean.includes("một giai đoạn") && !clean.includes("hai giai đoạn") && (artTitleLower.includes("hai giai đoạn") || art.number == 32 || art.number == 33)) {
             artScore -= 5000;
+          }
+
+          // Booster for Concrete Acceptance / Thi công & Nghiệm thu Bê tông (TCVN 4453:1995 & NĐ 207/2026)
+          if (clean.includes("bê tông") && (clean.includes("nghiệm thu") || clean.includes("thi công") || clean.includes("đổ") || clean.includes("cốp pha") || clean.includes("cốt thép") || clean.includes("checklist") || clean.includes("kiểm tra"))) {
+            if (lowerDocCode.includes("4453") || artTitleLower.includes("bê tông") || artSnippetLower.includes("bê tông") || (lowerDocCode.includes("207/2026") && art.number == 22)) {
+              artScore += 3000;
+            }
           }
 
           keywords.forEach(kw => {
@@ -1578,6 +1592,78 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
    - Phương thức **Hai giai đoạn** (Điều 32, 33): Chỉ áp dụng cho gói thầu mua sắm, xây lắp, hỗn hợp có quy mô lớn, kỹ thuật công nghệ mới mà **chưa xác định được chính xác yêu cầu kỹ thuật cụ thể** tại thời điểm mời thầu (Giai đoạn 1 chưa nộp giá dự thầu, sang Giai đoạn 2 mới nộp giá).`;
     }
 
+    // Specialized Handler for Concrete Works Acceptance Checklist (Nghiệm thu công tác bê tông - TCVN 4453:1995 & NĐ 207/2026)
+    if (/bê tông/i.test(qLower) && (/nghiệm thu/i.test(qLower) || /checklist|check list|nội dung nào|cần hoàn thành|kiểm tra/i.test(qLower))) {
+      return `### 📋 Báo Cáo Kỹ Thuật & Pháp Lý: Danh Mục Kiểm Tra (Checklist) Nghiệm Thu Công Tác Bê Tông Toàn Khối
+
+**1. Vấn đề pháp lý & kỹ thuật:** ${question}
+
+**2. Căn cứ pháp lý & Tiêu chuẩn kỹ thuật bắt buộc:**
+- **Nghị định số 207/2026/NĐ-CP** của Chính phủ:
+  - **Điều 22:** Nghiệm thu công việc xây dựng (Thời hạn kiểm tra không quá 24 giờ, thành phần ký biên bản nghiệm thu).
+  - **Điều 15 & Điều 20:** Trách nhiệm quản lý chất lượng thi công của Nhà thầu và Tư vấn giám sát (TVGS).
+- **TCVN 4453:1995** — Kết cấu bê tông và bê tông cốt thép toàn khối - Quy phạm thi công và nghiệm thu:
+  - **Mục 3 (Bảng 1, Bảng 2):** Kiểm tra và nghiệm thu công tác lắp dựng cốp pha và đà giáo.
+  - **Mục 4 (Điều 4.7):** Kiểm tra và nghiệm thu công tác cốt thép và chi tiết đặt sẵn.
+  - **Mục 6 (Điều 6.2 - 6.6):** Quy định thi công đổ bê tông, đầm lèn, xử lý mạch ngừng và bảo dưỡng bê tông (TCVN 5592:1991).
+  - **Mục 7 (Điều 7.1):** Kiểm tra độ sụt và lấy mẫu thí nghiệm xác định cường độ bê tông (TCVN 3105, 3118).
+  - **Mục 8 (Bảng 20):** Kiểm tra, nghiệm thu hoàn thiện kết cấu bê tông cốt thép (sai lệch kích thước, khuyết tật rỗ nứt).
+- **QCVN 18:2021/BXD** — Quy chuẩn kỹ thuật quốc gia về An toàn trong thi công xây dựng (Mục 2.11 Ván khuôn và thi công bê tông).
+- **Nghị định số 339/2026/NĐ-CP** (Điều 31: Xử phạt hành chính về lập biên bản và quản lý chất lượng thi công).
+
+---
+
+### 📋 BẢNG CHECKLIST NGHIỆM THU CÔNG TÁC BÊ TÔNG (03 GIAI ĐOẠN CHI TIẾT):
+
+#### GIAI ĐOẠN 1: CHECKLIST NGHIỆM THU TRƯỚC KHI ĐỔ BÊ TÔNG (PRE-POUR CHECKLIST)
+*(Điều kiện tiên quyết để Tư vấn giám sát ký Phiếu cho phép đổ bê tông)*
+
+| STT | Hạng mục kiểm tra chi tiết | Yêu cầu kỹ thuật & Chỉ tiêu đối chiếu | Căn cứ kỹ thuật | Kết quả đối chiếu |
+| :---: | :--- | :--- | :--- | :---: |
+| **1** | **Ván khuôn & Đà giáo** | • Đúng kích thước hình học, độ phẳng ($\le 3mm$), độ thẳng đứng (sai số $\le 5-10mm$).<br>• Cốp pha ghép kín khít, không hở mép tránh mất nước xi măng.<br>• Hệ cột chống, giằng ngang, giằng chéo ổn định, đặt trên nền cứng, không lún sụt.<br>• Có độ vồng thi công đối với dầm/sàn nhịp $\ge 4m$ (độ vồng $3L/1000$).<br>• Quét chất chống dính đều khắp bề mặt tiếp xúc. | TCVN 4453 Mục 3.5 & Bảng 1, 2 | Đạt / Không đạt |
+| **2** | **Cốt thép & Lớp bảo vệ** | • Đúng chủng loại, đường kính, số lượng, khoảng cách đan thép ($s$).<br>• Vị trí mối nối, chiều dài nối buộc ($\ge 30-45d$) hoặc chất lượng mối hàn.<br>• **Con kê bê tông/nhựa:** Bố trí đủ mật độ ($\ge 4-5$ cục $/m^2$), bảo đảm đúng chiều dày lớp bê tông bảo vệ (dầm, cột, sàn, móng).<br>• Thép sạch, không dính dầu mỡ, bùn đất, rỉ sét bong vảy. | TCVN 4453 Mục 4.7 & Bảng 5 | Đạt / Không đạt |
+| **3** | **Chi tiết đặt sẵn & MEP** | • Toàn bộ ống luồn điện, ống chờ cấp thoát nước, bu-lông neo móng, bản mã thép âm sàn/cột đã lắp đặt đúng tọa độ, cao độ thiết kế.<br>• Đã bịt kín tất cả các đầu ống chờ, tránh vữa bê tông lọt vào làm tắc ống. | TCVN 4453 Bảng 1 | Đạt / Không đạt |
+| **4** | **Vệ sinh & Xử lý mạch ngừng** | • Cọ rửa, xịt khí nén/nước sạch mùn cưa, rác, phoi thép đáy cốp pha (bịt kín cửa sổ vệ sinh sau khi thổi bụi).<br>• Mạch ngừng cũ: Đục nhám loại bỏ lớp màng vữa yếu, tưới nước rửa sạch và quét hồ dầu kết nối ngay trước khi đổ.<br>• Tưới ẩm cốp pha gỗ (tránh hút nước bê tông) nhưng **tuyệt đối không đọng nước thành vũng**. | TCVN 4453 Mục 3.4.4 & 6.6 | Đạt / Không đạt |
+| **5** | **Hồ sơ cấp phối & Biện pháp đổ** | • Phiếu chấp thuận thiết kế thành phần cấp phối bê tông (Mix Design) đạt mác/cấp độ bền thiết kế.<br>• Kế hoạch xe bồn, công suất trạm trộn, máy bơm bê tông (có máy bơm/máy đầm dự phòng).<br>• Bố trí đủ nhân lực, thợ đầm, hệ thống chiếu sáng ban đêm và bạt che mưa dự phòng. | Điều 22 NĐ 207 & QCVN 18 Mục 2.11 | Đạt / Không đạt |
+
+---
+
+#### GIAI ĐOẠN 2: CHECKLIST KIỂM SOÁT TRONG KHI ĐỔ VÀ ĐẦM BÊ TÔNG (POURING CHECKLIST)
+
+| STT | Nội dung kiểm soát tại hiện trường | Quy chuẩn & Yêu cầu kỹ thuật bắt buộc | Căn cứ áp dụng |
+| :---: | :--- | :--- | :--- |
+| **1** | **Phiếu xuất xưởng từng xe bồn** | Kiểm tra mác bê tông, loại xi măng, phụ gia, giờ xuất xưởng tại trạm. Thời gian từ lúc trộn đến lúc đổ xong **không vượt quá 90 - 120 phút** (tùy thời tiết và phụ gia kéo dài ninh kết). | TCVN 4453 Mục 6.3.4 |
+| **2** | **Thử độ sụt (Slump test)** | Đo độ sụt tại hiện trường từng xe hoặc theo lô đổ, sai số độ sụt trong giới hạn thiết kế $\pm 2$ cm. Nếu bê tông bị đông kết hoặc phân tầng phải kiên quyết từ chối tiếp nhận. | TCVN 3106:1993 & TCVN 4453 Mục 7.1.5 |
+| **3** | **Lấy mẫu thí nghiệm nén** | Lấy mẫu đúc tại chỗ: Mỗi tổ gồm **03 viên mẫu** kích thước $150 \times 150 \times 150 mm$.<br>• Tần suất: Tối thiểu 1 tổ mẫu cho mỗi $20 - 50 m^3$ bê tông, hoặc tối thiểu 1 tổ mẫu cho mỗi ca đổ / kết cấu độc lập.<br>• Đúc thêm tổ mẫu lưu bảo dưỡng tại hiện trường để nén xác định cường độ tháo cốp pha (R3, R7). | TCVN 3105:1993 & TCVN 4453 Mục 7.1.7 |
+| **4** | **Chiều cao rơi tự do của bê tông** | Chiều cao rơi tự do khi trút bê tông từ vòi bơm hoặc thùng cẩu **không được vượt quá 1,5 mét** để tránh hiện tượng phân tầng, tách nước. Nếu chiều cao $> 1,5m$ phải dùng máng nghiêng hoặc ống vòi voi nối dài. | TCVN 4453 Mục 6.4.2 |
+| **5** | **Kỹ thuật đầm lèn** | • Chiều dày mỗi lớp bê tông rải đầm từ $20 - 30 cm$.<br>• Đầm dùi phải cắm ngập vào lớp bê tông dưới từ $10 - 15 cm$; thời gian đầm mỗi điểm từ $20 - 30$ giây đến khi bê tông không lún và nổi váng nước.<br>• Bước di chuyển đầu đầm không quá 1,5 lần bán kính tác dụng; không để đầu đầm chạm vào cốt thép hoặc cốp pha. | TCVN 4453 Mục 6.4.5 & 6.4.6 |
+
+---
+
+#### GIAI ĐOẠN 3: CHECKLIST NGHIỆM THU SAU KHI ĐỔ & BÀN GIAO KẾT CẤU (POST-POUR CHECKLIST)
+
+| STT | Hạng mục kiểm tra & Nghiệm thu | Tiêu chuẩn đánh giá & Nghiệm thu | Căn cứ quy định |
+| :---: | :--- | :--- | :--- |
+| **1** | **Chế độ bảo dưỡng ẩm** | Phủ bao tải ẩm, bạt nylon hoặc phun chất bảo dưỡng ngay khi bề mặt se lại. Tưới ẩm liên tục ban ngày lẫn ban đêm trong **ít nhất 03 đến 07 ngày đầu** tùy loại xi măng và điều kiện khí hậu. | TCVN 5592:1991 & TCVN 4453 Mục 6.5 |
+| **2** | **Điều kiện tháo dỡ Cốp pha chịu lực** | Cốp pha thành bên (cột, vách, dầm) tháo sau 24-48h khi bê tông đạt cường độ giữ mép ($\ge 5 MPa$).<br>Cốp pha đáy dầm, sàn chỉ được tháo khi cường độ bê tông đạt Bảng 4 TCVN 4453:<br>• Bản, dầm nhịp $< 2m$: Đạt $\ge$ **50%** $R_{28}$.<br>• Bản, dầm nhịp $2 - 8m$: Đạt $\ge$ **70%** $R_{28}$.<br>• Bản, dầm nhịp $2 - 8m$: Đạt $\ge$ **70%** $R_{28}$.<br>• Bản, dầm nhịp $> 8m$: Đạt $\ge$ **90%** (hoặc 100%) $R_{28}$.<br>• Công-xôn, ô-văng: Bắt buộc đạt **100%** $R_{28}$. | TCVN 4453 Mục 3.6 & Bảng 4 |
+| **3** | **Kết quả nén mẫu lưu $R_{28}$** | Biên bản kết quả thí nghiệm nén mẫu tuổi 28 ngày do phòng thí nghiệm hợp chuẩn (LAS-XD) cấp phải đạt cường độ mác/cấp độ bền thiết kế theo TCVN 3118:1993. | TCVN 3118:1993 & TCVN 4453 Mục 7.1 |
+| **4** | **Kiểm tra khuyết tật & Sai lệch hình học** | • Kiểm tra khuyết tật mặt ngoài: Không bị rỗ tổ ong sâu, không nứt nẻ, không bong tróc, không lộ cốt thép. Nếu có khuyết tật nhỏ phải lập biên bản và xử lý bằng vữa bù co ngót chuyên dụng (SikaGrout).<br>• Sai lệch trục tim, cao độ, kích thước tiết diện nằm trong phạm vi cho phép của Bảng 20 TCVN 4453. | TCVN 4453 Mục 8.1 & Bảng 20 |
+| **5** | **Biên bản nghiệm thu công việc xây dựng** | Lập Biên bản nghiệm thu hoàn thành công tác bê tông theo đúng quy định tại Điều 22 Nghị định 207/2026/NĐ-CP (Đầy đủ chữ ký của Kỹ sư giám sát CĐT/TVGS và Cán bộ kỹ thuật phụ trách thi công của Nhà thầu). | Điều 22 Nghị định 207/2026/NĐ-CP |
+
+---
+
+### 💡 Lưu ý kiểm soát nghiệp vụ sống còn cho Ban Quản lý Dự án (PMU) & TVGS:
+
+1. **Nguyên tắc "Không nghiệm thu ván khuôn, cốt thép — Tuyệt đối không cho đổ bê tông":**
+   - Phiếu yêu cầu nghiệm thu phải gửi trước 24 giờ. Cán bộ giám sát PMU/TVGS phải kiểm tra thực địa, chụp ảnh lưu trữ và ký xác nhận Biên bản nghiệm thu cốt thép, cốp pha trước khi cấp **Lệnh đổ bê tông**.
+2. **Kiểm soát chặt thời gian vận chuyển xe bồn:**
+   - Mỗi xe bê tông đến công trường bắt buộc phải kiểm tra phiếu xuất xưởng. Nếu thời gian vận chuyển vượt quá 120 phút hoặc xe bê tông tự ý châm thêm nước tại công trường, TVGS phải **lập biên bản đuổi xe ra khỏi công trường ngay lập tức**.
+3. **Quản lý nghiêm mẫu nén hiện trường:**
+   - Mẫu bê tông phải được đúc trực tiếp tại vị trí đổ, gạt phẳng mặt, dán nhãn ghi rõ ngày giờ, vị trí cấu kiện, có chữ ký của TVGS và Nhà thầu trên nhãn mẫu, ngâm bảo dưỡng đúng quy trình TCVN 3105. Tránh rủi ro tráo mẫu hoặc đúc mẫu từ hỗn hợp riêng.
+4. **Kiểm soát dỡ cây chống sàn:**
+   - Tuyệt đối nghiêm cấm việc tháo dỡ toàn bộ hệ cây chống sàn tầng dưới khi đang đổ bê tông sàn tầng trên liền kề nếu chưa được tính toán kiểm tra khả năng truyền tải trọng thi công.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -1842,13 +1928,15 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
             const isWorkingAtHeight = /trên cao|ngã cao|rơi ngã/i.test(message) || (/an toàn/i.test(message) && (/thi công/i.test(message) || /lao động/i.test(message)) && /cao/i.test(message));
             const isOneBagVsTwoBag = (/1.*túi|một.*túi/i.test(message) && /2.*túi|hai.*túi/i.test(message)) || 
                                      (/giai đoạn/i.test(message) && /túi/i.test(message) && (/khác|so sánh|phân biệt/i.test(message) || (/1/i.test(message) && /2/i.test(message))));
+            const isConcreteAcceptance = /bê tông/i.test(message) && (/nghiệm thu/i.test(message) || /checklist|check list|nội dung nào|cần hoàn thành|kiểm tra/i.test(message));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
                 (isFsrContent && (!llmReply.includes("Điều 26") || !llmReply.includes("|"))) ||
                 (isThamTraVsThamDinh && (!llmReply.includes("Khoản 15") || !llmReply.includes("|"))) ||
                 (isWorkingAtHeight && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
-                (isOneBagVsTwoBag && (!llmReply.includes("Điều 30") || !llmReply.includes("|")))) {
+                (isOneBagVsTwoBag && (!llmReply.includes("Điều 30") || !llmReply.includes("|"))) ||
+                (isConcreteAcceptance && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
