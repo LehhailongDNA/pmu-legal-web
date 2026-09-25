@@ -816,6 +816,24 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
 
+          // Booster for Planning Map Scale & Mining / Tailings Dam / Reservoir Query (1/500, 1/1000, 1/2000)
+          if ((/quy hoạch chi tiết/i.test(clean) || /đồ án/i.test(clean) || /tổng mặt bằng/i.test(clean)) &&
+              (/tỷ lệ/i.test(clean) || /1\/500/i.test(clean) || /1\/1000/i.test(clean) || /1\/2000/i.test(clean)) &&
+              (/nhiều tỷ lệ|bắt buộc|hồ đập|hồ chứa|khoáng sản|mỏ|tuyển khoáng|6000|600|vùng hồ/i.test(clean))) {
+            if (lowerCode.includes("47/2024") && (art.number == 30 || art.number == 33 || art.number == 26)) {
+              artScore += 4500;
+            }
+            if ((lowerCode.includes("16/2025") || lowerDocTitle.includes("quy hoạch đô thị và nông thôn")) && (art.number == 19 || art.number == 6 || art.number == 21)) {
+              artScore += 5000;
+            }
+            if (lowerCode.includes("8477") || lowerDocTitle.includes("thủy lợi - thành phần, khối lượng khảo sát địa hình")) {
+              artScore += 4000;
+            }
+            if (art.number == 36 || lowerCode.includes("339/2026") || lowerCode.includes("105/2025") || lowerCode.includes("55/2024")) {
+              artScore -= 6000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number?.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -1230,6 +1248,24 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
               artScore += 3500;
             }
             if (art.number == 85 || art.number == 9 || lowerDocCode.includes("144/2025") || lowerDocTitle.includes("quy hoạch")) {
+              artScore -= 6000;
+            }
+          }
+
+          // Booster for Planning Map Scale & Mining / Tailings Dam / Reservoir Query (1/500, 1/1000, 1/2000)
+          if ((/quy hoạch chi tiết/i.test(clean) || /đồ án/i.test(clean) || /tổng mặt bằng/i.test(clean)) &&
+              (/tỷ lệ/i.test(clean) || /1\/500/i.test(clean) || /1\/1000/i.test(clean) || /1\/2000/i.test(clean)) &&
+              (/nhiều tỷ lệ|bắt buộc|hồ đập|hồ chứa|khoáng sản|mỏ|tuyển khoáng|6000|600|vùng hồ/i.test(clean))) {
+            if (lowerDocCode.includes("47/2024") && (art.number == 30 || art.number == 33 || art.number == 26)) {
+              artScore += 4500;
+            }
+            if ((lowerDocCode.includes("16/2025") || lowerDocTitle.includes("quy hoạch đô thị và nông thôn")) && (art.number == 19 || art.number == 6 || art.number == 21)) {
+              artScore += 5000;
+            }
+            if (lowerDocCode.includes("8477") || lowerDocTitle.includes("thủy lợi - thành phần, khối lượng khảo sát địa hình")) {
+              artScore += 4000;
+            }
+            if (art.number == 36 || lowerDocCode.includes("339/2026") || lowerDocCode.includes("105/2025") || lowerDocCode.includes("55/2024")) {
               artScore -= 6000;
             }
           }
@@ -2133,6 +2169,98 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 2. **Không tự ý cho thợ làm sai thiết kế khi chưa có bản vẽ điều chỉnh duyệt:** Cán bộ PMU không được tự ý chỉ đạo nhà thầu thi công "cứ làm đại đi rồi sửa bản vẽ sau", vì nếu xảy ra sự cố sụp đổ kết cấu hoặc bị Thanh tra kiểm toán kết luận thi công sai thiết kế thì cán bộ PMU và TVGS sẽ phải chịu trách nhiệm hình sự liên đới.`;
     }
 
+    // Specialized Handler for Planning Map Scale & Mining / Tailings Dam / Reservoir Query (Quy hoạch chi tiết: Một đồ án có nhiều tỷ lệ không? Dự án mỏ 6000ha / 600ha thì vùng hồ đập có bắt buộc 1/500 hay dùng 1/1000, 1/2000?)
+    if ((/quy hoạch chi tiết/i.test(qLower) || /đồ án/i.test(qLower) || /tổng mặt bằng/i.test(qLower)) &&
+        (/tỷ lệ/i.test(qLower) || /1\/500/i.test(qLower) || /1\/1000/i.test(qLower) || /1\/2000/i.test(qLower)) &&
+        (/nhiều tỷ lệ|bắt buộc|hồ đập|hồ chứa|khoáng sản|mỏ|tuyển khoáng|6000|600|vùng hồ/i.test(qLower))) {
+      return `### ⚖️ Báo Cáo Phân Tích Pháp Lý & Nghiệp Vụ Kỹ Thuật: Quy Định Tỷ Lệ Bản Đồ Trong Đồ Án Quy Hoạch Chi Tiết Dự Án Khai Thác Khoáng Sản & Hồ Đập
+
+**1. Vấn đề pháp lý & Kỹ thuật:** ${question}
+
+**2. Căn cứ pháp lý & Tiêu chuẩn kỹ thuật áp dụng:**
+- **Luật Quy hoạch đô thị và nông thôn số 47/2024/QH15**:
+  - **Khoản 2 Điều 30:** Tỷ lệ bản vẽ đối với quy hoạch chi tiết các khu vực xây dựng (lập theo tỷ lệ 1/500).
+  - **Điều 26 & Điều 33:** Nội dung quy hoạch chi tiết đô thị và khu chức năng.
+  - **Điều 36:** Thẩm quyền lập, thẩm định và phê duyệt **Nhiệm vụ quy hoạch**.
+- **Thông tư số 16/2025/TT-BXD** của Bộ Xây dựng:
+  - **Điều 6 (Khoản 1 Điểm e):** Nội dung hồ sơ **Nhiệm vụ quy hoạch chi tiết** (thẩm quyền xác định danh mục bản vẽ, quy cách sản phẩm và tỷ lệ bản vẽ).
+  - **Điều 19 (Khoản 4 Điểm a, b, c, d):** Thành phần bản vẽ đồ án quy hoạch chi tiết (cho phép Sơ đồ vị trí, mối liên hệ vùng thể hiện theo tỷ lệ thích hợp; khu vực xây dựng lập tỷ lệ 1/500).
+  - **Điều 21:** Quy định về quy hoạch tổng mặt bằng.
+- **Tiêu chuẩn Quốc gia về Khảo sát - Thiết kế Thủy lợi, Hồ đập**:
+  - **TCVN 8477:2018** (*Công trình thủy lợi - Thành phần, khối lượng khảo sát địa hình*): Quy định tỷ lệ đo vẽ địa hình vùng tuyến đầu mối đập (1/500 - 1/1.000) và vùng ngập lòng hồ chứa nước (1/1.000, 1/2.000 hoặc 1/5.000).
+  - **TCVN 8478:2018** (*Công trình thủy lợi - Khảo sát địa chất phục vụ thiết kế*).
+- **Luật Khoáng sản & Quy định quản lý Dự án đầu tư xây dựng công trình mỏ**:
+  - Phân định rõ giữa **Ranh giới cấp phép khai thác khoáng sản (khai trường mỏ)** và **Ranh giới xây dựng công trình phụ trợ, tuyển khoáng**.
+
+---
+
+### 🎯 I. TRẢ LỜI TRỰC TIẾP CÁC CÂU HỎI TRỌNG TÂM:
+
+#### 1. Một đồ án quy hoạch chi tiết có thể áp dụng nhiều tỷ lệ bản đồ không hay bắt buộc phải là 1/500?
+- **TRẢ LỜI:** **HOÀN TOÀN CÓ THỂ VÀ LUÔN LUÔN ÁP DỤNG NHIỀU TỶ LỆ TRONG CÙNG MỘT ĐỒ ÁN!**
+- Không có quy định nào bắt buộc 100% tất cả các bản vẽ trong hồ sơ đồ án đều phải đóng khung duy nhất ở tỷ lệ 1/500:
+  - **Bản vẽ sơ đồ vị trí và mối liên hệ vùng (giới hạn khu đất):** Thể hiện theo **tỷ lệ thích hợp** (1/2.000, 1/5.000 hoặc 1/10.000 trên nền quy hoạch chung/phân khu) theo Điểm a Khoản 4 Điều 19 Thông tư 16/2025/TT-BXD.
+  - **Bản đồ hiện trạng, tổng mặt bằng sử dụng đất, kiến trúc cảnh quan, hạ tầng kỹ thuật phân lô:** Thể hiện ở **tỷ lệ 1/500**.
+  - **Bản vẽ trích chi tiết các nút giao thông phức tạp, vị trí đấu nối kỹ thuật đặc biệt:** Được phép trích xuất ở tỷ lệ **1/200** để phục vụ quản lý và thi công.
+
+#### 2. Dự án khai thác mỏ > 6.000 ha nhưng Quy hoạch chi tiết 600 ha (có hồ đập) thì vùng lòng hồ chứa có bắt buộc phải làm 1/500 hay được dùng 1/1.000 (1/2.000)?
+- **TRẢ LỜI:** **VÙNG LÒNG HỒ CHỨA KHÔNG BẮT BUỘC PHẢI THIẾT KẾ/ĐO VẼ TỶ LỆ 1/500! ĐƯỢC PHÉP DÙNG TỶ LỆ 1/1.000 HOẶC 1/2.000.**
+- Trong phạm vi 600 ha của đồ án, đồ án được phân chia thành **02 phân vùng kỹ thuật** với tỷ lệ bản đồ khác nhau:
+  - **Phân vùng 1 - Cụm công trình xây dựng kiên cố & Đầu mối đập:** BẮT BUỘC lập ở **tỷ lệ 1/500**.
+  - **Phân vùng 2 - Vùng lòng hồ chứa (diện tích ngập nước / bãi chứa bùn quặng):** ĐƯỢC PHÉP lập ở **tỷ lệ 1/1.000 hoặc 1/2.000**.
+
+---
+
+### 📊 II. BẢNG PHÂN VÙNG VÀ XÁC ĐỊNH TỶ LỆ BẢN ĐỒ TRONG ĐỒ ÁN 600 HA:
+
+| Phân khu trong phạm vi 600 ha | Các hạng mục công trình cụ thể | Tỷ lệ bản đồ áp dụng | Căn cứ & Mục đích kỹ thuật |
+| :--- | :--- | :--- | :--- |
+| **Khu xây dựng nhà máy & Phụ trợ** | Nhà máy tuyển khoáng, khu nghiền sàng, trạm biến áp, kho bãi quặng, nhà điều hành, xưởng sửa chữa, đường giao thông nội bộ | **Tỷ lệ 1/500** | Khoản 2 Điều 30 Luật 47/2024/QH15. Xác định chỉ giới xây dựng, cốt nền, khoảng lùi, mạng lưới cấp điện, cấp thoát nước chi tiết. |
+| **Khu Cụm công trình đầu mối hồ đập** | Tuyến thân đập chính, đập phụ, đập chắn bùn quặng, tràn xả lũ, cống tháo sâu/lấy nước, trạm bơm hoàn lưu, đường quản lý vận hành đập | **Tỷ lệ 1/500** | Khoản 4 Điều 19 TT 16/2025/TT-BXD & TCVN 8477:2018. Đảm bảo độ chính xác tính toán kết cấu thân đập, chỉ giới an toàn đập và cắm mốc tim tuyến. |
+| **Khu Vùng ngập lòng hồ chứa nước / Hồ lắng bùn thải** | Diện tích mặt nước ngập lòng hồ, đường viền mực nước dâng bình thường (MNDBT), mực nước lũ kiểm tra (MNLKT), vùng bán ngập sườn núi | **Tỷ lệ 1/1.000** hoặc **1/2.000** | TCVN 8477:2018 (Bình đồ khảo sát lòng hồ chứa). Phục vụ tính toán đường đặc tính dung tích hồ $V = f(H)$, diện tích ngập $F = f(H)$, cắm mốc ranh giới ngập và đền bù GPMB. |
+| **Sơ đồ liên kết vùng & Khai trường mỏ (> 6.000 ha)** | Toàn bộ ranh giới cấp phép mỏ 6.000 ha, mối liên hệ hạ tầng giao thông vùng, nguồn cấp điện nước ngoài hàng rào | **Tỷ lệ 1/5.000** hoặc **1/10.000** *(Tỷ lệ thích hợp)* | Điểm a Khoản 4 Điều 19 Thông tư 16/2025/TT-BXD. Thể hiện ranh giới nghiên cứu và kết nối ngoài hàng rào dự án. |
+
+---
+
+### ⚙️ III. BẢN CHẤT KHOA HỌC KỸ THUẬT & TRÁNH LÃNG PHÍ KINH PHÍ:
+
+1. **Vùng lòng hồ chỉ là diện tích ngập nước:**
+   - Trong vùng lòng hồ chứa (rộng hàng trăm hecta đồi núi ngập nước), **không có công trình xây dựng dân dụng hay nhà máy**.
+   - Mục đích duy nhất của bản đồ lòng hồ là xác định: **Dung tích chứa nước/bùn quặng** và **Đường viền ranh giới giải phóng mặt bằng thu hồi đất (vùng ngập)**.
+   - Việc ép đo vẽ toàn bộ lòng hồ ở tỷ lệ 1/500 (khoảng cao đều 0,5m) trên diện tích đồi núi hàng trăm ha là **cực kỳ tốn kém kinh phí khảo sát (hàng tỷ đồng)**, kéo dài thời gian vô ích và hoàn toàn lãng phí vì độ chính xác 1/1.000 hoặc 1/2.000 (khoảng cao đều 1,0m - 2,0m) đã hoàn toàn đáp ứng độ chính xác thủy văn - dung tích hồ chứa theo TCVN 8477:2018.
+
+2. **Quy định tại Tiêu chuẩn TCVN 8477:2018 (Khảo sát địa hình thủy lợi - hồ chứa):**
+   - Tiêu chuẩn quy định rõ:
+     - Khảo sát khu vực cụm đầu mối (đập, tràn, cống): Lập bình đồ tỷ lệ **1/500 - 1/1.000**.
+     - Khảo sát vùng lòng hồ chứa: Lập bình đồ tỷ lệ **1/1.000, 1/2.000 đến 1/5.000** tùy thuộc diện tích và địa hình.
+
+---
+
+### 🏛️ IV. THỦ TỤC PHÁP LÝ THEN CHỐT ĐỂ BAN QLDA / CHỦ ĐẦU TƯ ĐƯỢC CHẤP THUẬN 100%:
+
+Để việc áp dụng tỷ lệ hỗn hợp (Khu xây dựng 1/500, Vùng lòng hồ 1/1.000 - 1/2.000) được cơ quan quản lý nhà nước (Sở Xây dựng / Bộ Xây dựng) **thẩm định thông qua mà không bị từ chối**, Chủ đầu tư và PMU cần thực hiện chặt chẽ theo bước sau:
+
+1. **Khóa chặt ngay từ khâu "Nhiệm vụ Quy hoạch chi tiết":**
+   - Theo quy định tại **Điểm e Khoản 1 Điều 6 Thông tư 16/2025/TT-BXD**, Nhiệm vụ quy hoạch chi tiết có trách nhiệm: *"Xác định danh mục bản vẽ, thuyết minh, phụ lục kèm theo; số lượng, quy cách của sản phẩm hồ sơ quy hoạch chi tiết; dự kiến về kinh phí"*.
+   - Trong Thuyết minh và Tờ trình thẩm định Nhiệm vụ quy hoạch, Ban QLDA phải đưa vào mục **Quy cách sản phẩm bản vẽ**:
+     > *"Khu vực tổ hợp nhà máy tuyển khoáng, phụ trợ và tuyến công trình đầu mối đập hồ: Bản đồ tỷ lệ 1/500."*  
+     > *"Khu vực ngập nước lòng hồ chứa và vùng bán ngập: Bản đồ địa hình tỷ lệ 1/1.000 (hoặc 1/2.000)."*
+2. **Quyết định phê duyệt Nhiệm vụ là căn cứ pháp lý cao nhất của Đồ án:**
+   - Khi UBND tỉnh hoặc Cơ quan có thẩm quyền ban hành **Quyết định phê duyệt Nhiệm vụ quy hoạch chi tiết** chuẩn y danh mục tỷ lệ trên, đơn vị tư vấn cứ thế thực hiện.
+   - Khi trình đồ án quy hoạch chi tiết, cơ quan thẩm định sẽ đối chiếu đồ án với Quyết định phê duyệt Nhiệm vụ. Đồ án hoàn toàn đúng quy cách, được phê duyệt hợp pháp và thanh quyết toán chi phí lập quy hoạch theo đúng định mức.
+
+---
+
+### 💡 V. TỔNG KẾT & LƯU Ý NGHIỆP VỤ CHO BAN QLDA (PMU):
+
+1. **Khai trường mỏ 6.000 ha:** Không đưa vào phạm vi đồ án quy hoạch chi tiết xây dựng. Chỉ đưa vào sơ đồ vị trí tỷ lệ 1/5.000 - 1/10.000 để thuyết minh mối liên hệ mỏ với khu tuyển khoáng.
+2. **Đồ án 600 ha:** Áp dụng mô hình **bản đồ ghép tỷ lệ**:
+   - Vùng xây dựng nhà xưởng và thân đập: Bản đồ 1/500;
+   - Vùng lòng hồ chứa ngập nước: Bản đồ 1/1.000 hoặc 1/2.000.
+3. **Dự toán chi phí khảo sát và lập quy hoạch:** 
+   - Áp dụng định mức theo Thông tư 17/2025/TT-BXD: Phần diện tích đo 1/500 tính theo đơn giá 1/500; phần diện tích lòng hồ đo 1/1.000 hoặc 1/2.000 tính theo đơn giá tương ứng, giúp tiết kiệm ngân sách dự án và giải trình kiểm toán nhà nước minh bạch, an toàn tuyệt đối.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -2402,6 +2530,9 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
             const isToleranceQuery = /sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(message) && (/thi công|nghiệm thu|chấp nhận|kết cấu|hình học/i.test(message));
             const isScaffoldingQuery = /giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(message) && (/yêu cầu|bắt buộc|kiểm tra|nghiệm thu|lắp dựng|an toàn|tiêu chuẩn/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
             const isGstgViolation = /giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế/i.test(message) && (/xử lý|chậm trễ|không nghiêm túc|vi phạm|kéo dài|tiến độ/i.test(message));
+            const isPlanningScaleQuery = (/quy hoạch chi tiết/i.test(message) || /đồ án/i.test(message) || /tổng mặt bằng/i.test(message)) &&
+                                         (/tỷ lệ/i.test(message) || /1\/500/i.test(message) || /1\/1000/i.test(message) || /1\/2000/i.test(message)) &&
+                                         (/nhiều tỷ lệ|bắt buộc|hồ đập|hồ chứa|khoáng sản|mỏ|tuyển khoáng|6000|600|vùng hồ/i.test(message));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
@@ -2413,7 +2544,8 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
                 (isTilingPaving && (!llmReply.includes("TCVN 9377") || !llmReply.includes("|"))) ||
                 (isToleranceQuery && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
                 (isScaffoldingQuery && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
-                (isGstgViolation && (!llmReply.includes("Điều 21") || !llmReply.includes("|")))) {
+                (isGstgViolation && (!llmReply.includes("Điều 21") || !llmReply.includes("|"))) ||
+                (isPlanningScaleQuery && (!llmReply.includes("TCVN 8477") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
