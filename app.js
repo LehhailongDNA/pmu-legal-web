@@ -2371,12 +2371,6 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
       md += `> ${contentClean.replace(/\n+/g, "\n> ")}\n\n`;
     });
 
-    md += `### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):\n`;
-    md += `1. **Nguyên tắc áp dụng văn bản đa tầng:** Luôn tuân thủ thứ bậc hiệu lực pháp lý (Luật quy định khung nguyên tắc & thẩm quyền $\\rightarrow$ Nghị định quy định chi tiết trình tự, hồ sơ, thời hạn $\\rightarrow$ Thông tư hướng dẫn biểu mẫu, định mức $\\rightarrow$ Quy chuẩn bắt buộc áp dụng).\n`;
-    md += `2. **Không áp dụng đơn lẻ:** Khi lập tờ trình, báo cáo thẩm định hoặc văn bản xin ý kiến, PMU phải trích dẫn đồng bộ cả Điều khoản của Luật và Điều khoản quy định chi tiết tương ứng tại Nghị định/Thông tư để đảm bảo giá trị pháp lý đầy đủ nhất.\n\n`;
-
-    md += `---\n*💡 **Mẹo:** Bạn có thể bấm vào nút **Cài đặt AI** ở thanh trên để cấu hình API Key (Google Gemini 100% miễn phí) để kích hoạt mô hình Generative AI tự động xâu chuỗi và phân tích sâu sắc mọi tình huống phức tạp.*\n`;
-
     return md;
   }
 
