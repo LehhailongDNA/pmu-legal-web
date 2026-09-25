@@ -790,6 +790,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
 
+          // Booster for Scaffolding / Giàn giáo / Dàn giáo thi công (QCVN 18:2021 Mục 2.2, TCXDVN 296:2004, TCVN 4453, TCVN 5308)
+          if (/giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(clean)) {
+            if (lowerCode.includes("qcvn 18") || lowerCode.includes("296") || lowerCode.includes("4453") || lowerCode.includes("5308")) {
+              artScore += 4500;
+            }
+            if (artTitleLower.includes("giàn giáo") || artSnippetLower.includes("giàn giáo") || artTitleLower.includes("dàn giáo") || artSnippetLower.includes("dàn giáo")) {
+              artScore += 3000;
+            }
+            if (lowerCode.includes("105/2025") || lowerCode.includes("55/2024") || lowerCode.includes("70/2026") || lowerDocTitle.includes("chữa cháy")) {
+              artScore -= 6000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number?.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -797,7 +810,7 @@ document.addEventListener("DOMContentLoaded", () => {
           });
 
           // Only penalize pure TCVN if query is strictly legal/administrative AND not technical/safety
-          const isTechnicalQuery = /kỹ thuật|thi công|an toàn|giàn giáo|trên cao|ngã cao|rơi ngã|tải trọng|kết cấu|khoảng cách|chiều cao|pccc|nghiệm thu/i.test(clean);
+          const isTechnicalQuery = /kỹ thuật|thi công|an toàn|giàn giáo|dàn giáo|giáo thi công|trên cao|ngã cao|rơi ngã|tải trọng|kết cấu|khoảng cách|chiều cao|pccc|nghiệm thu/i.test(clean);
           if (isDocTCVN && !isTechnicalQuery && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
             artScore = Math.floor(artScore * 0.3);
           }
@@ -1182,6 +1195,19 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
             }
           }
 
+          // Booster for Scaffolding / Giàn giáo / Dàn giáo thi công (QCVN 18:2021 Mục 2.2, TCXDVN 296:2004, TCVN 4453, TCVN 5308)
+          if (/giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(clean)) {
+            if (lowerDocCode.includes("qcvn 18") || lowerDocCode.includes("296") || lowerDocCode.includes("4453") || lowerDocCode.includes("5308")) {
+              artScore += 4500;
+            }
+            if (artTitleLower.includes("giàn giáo") || artSnippetLower.includes("giàn giáo") || artTitleLower.includes("dàn giáo") || artSnippetLower.includes("dàn giáo")) {
+              artScore += 3000;
+            }
+            if (lowerDocCode.includes("105/2025") || lowerDocCode.includes("55/2024") || lowerDocCode.includes("70/2026") || lowerDocTitle.includes("chữa cháy")) {
+              artScore -= 6000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number && art.number.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -1189,7 +1215,7 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
           });
 
           // Only penalize pure TCVN if query is strictly legal/administrative AND not technical/safety
-          const isTechnicalQuery = /kỹ thuật|thi công|an toàn|giàn giáo|trên cao|ngã cao|rơi ngã|tải trọng|kết cấu|khoảng cách|chiều cao|pccc|nghiệm thu/i.test(clean);
+          const isTechnicalQuery = /kỹ thuật|thi công|an toàn|giàn giáo|dàn giáo|giáo thi công|trên cao|ngã cao|rơi ngã|tải trọng|kết cấu|khoảng cách|chiều cao|pccc|nghiệm thu/i.test(clean);
           if (isDocTCVN && !isTechnicalQuery && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
             artScore = Math.floor(artScore * 0.3);
           }
@@ -1914,6 +1940,89 @@ Thuộc các trường hợp nghiêm trọng sau:
    - Bất kỳ sai lệch nào vượt dung sai cấp độ 1 nhưng được chấp nhận ở cấp độ 2 **bắt buộc phải có Văn bản xác nhận của Tư vấn thiết kế và Quyết định xử lý của Chủ đầu tư** lưu trong hồ sơ hoàn công. Tránh trường hợp sau này cơ quan Thanh tra, Kiểm toán Nhà nước vào kiểm tra coi đây là công trình thi công sai thiết kế không được phép nghiệm thu.`;
     }
 
+    // Specialized Handler for Scaffolding Inspection & Safety Requirements (Giàn giáo / Dàn giáo thi công - QCVN 18:2021/BXD Mục 2.2, TCXDVN 296:2004, TCVN 4453, TCVN 5308)
+    if (/giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(qLower) && (/yêu cầu|bắt buộc|kiểm tra|nghiệm thu|lắp dựng|an toàn|tiêu chuẩn/i.test(qLower) || !qLower.includes("quy hoạch"))) {
+      return `### 🛡️ Báo Cáo Kỹ Thuật & An Toàn: Các Yêu Cầu Bắt Buộc Khi Kiểm Tra, Nghiệm Thu Lắp Dựng Giàn Giáo Thi Công
+
+**1. Vấn đề pháp lý & kỹ thuật:** ${question}
+
+**2. Căn cứ Quy chuẩn kỹ thuật quốc gia & Tiêu chuẩn an toàn bắt buộc áp dụng:**
+- **Quy chuẩn kỹ thuật quốc gia QCVN 18:2021/BXD** — *An toàn trong thi công xây dựng* (Ban hành kèm Thông tư số 16/2021/TT-BXD của Bộ Xây dựng):
+  - **Mục 2.2:** Quy định kỹ thuật an toàn đối với **Giàn giáo và thang** (2.2.1 Quy định chung; 2.2.2 Sử dụng vật liệu; 2.2.3 Thiết kế và lắp dựng; 2.2.4 Kiểm tra, giám sát và bảo trì).
+  - **Mục 2.7:** An toàn khi làm việc trên cao và hệ thống chống rơi ngã.
+- **TCXDVN 296:2004** — *Dàn giáo - Các yêu cầu về an toàn* (Quy định chi tiết về cấu tạo, tải trọng sàn công tác, giằng liên kết, kiểm tra và thử tải dàn giáo).
+- **TCVN 4453:1995** — *Quy phạm thi công và nghiệm thu kết cấu bê tông* (Mục 3.5 Bảng 1 & 2: Kiểm tra nghiệm thu hệ đà giáo, cột chống chịu lực).
+- **TCVN 5308:1991** — *Quy phạm kỹ thuật an toàn trong xây dựng* (Mục 8: Giàn giáo và giá đỡ thi công).
+- **Luật Xây dựng số 135/2025/QH15** (Điều 51: Bảo đảm an toàn trong thi công xây dựng) & **Nghị định số 207/2026/NĐ-CP** (Điều 22: Nghiệm thu công việc xây dựng).
+
+---
+
+### 🧱 I. CÁC TIÊU CHÍ KỸ THUẬT BẮT BUỘC PHẢI ĐẠT KHI KIỂM TRA LẮP DỰNG GIÀN GIÁO:
+
+#### 1. Yêu cầu đối với Nền móng & Hệ chân đế giàn giáo (Mục 2.2.3.6 QCVN 18):
+- **Độ ổn định của nền:** Nền đất phải được đầm chặt, có rãnh thoát nước, không để đọng nước làm lún sụt chân giáo. Tuyệt đối không đặt chân giáo trên nền đất yếu, gạch kê tạm, ván mục hoặc mép hố móng chưa gia cố.
+- **Tấm lót đệm phân bổ tải (Sole plates):** Bắt buộc phải đặt **ván lót đệm chân đế** bằng gỗ dày tối thiểu $\ge 50\\text{ mm}$ (hoặc thép định hình), diện tích đủ rộng để phân bổ áp lực lên nền đất.
+- **Đế kim loại & Chân kích (Base plates & Screw jacks):** Cột giáo phải đặt trên đế kim loại cố định. Chiều cao tăng đơ của chân kích ren **không được vượt quá 2/3 chiều dài trục ren** (tối đa không quá $200 - 300\\text{ mm}$) để bảo đảm độ cứng ổn định chống uốn.
+
+#### 2. Yêu cầu đối với Cột đứng, Khung giáo & Hệ giằng liên kết (Mục 2.2.2 & 2.2.3):
+- **Chất lượng thanh ống giáo:** Ống thép phải thẳng, không bị rạn nứt, cong vênh, móp méo, thủng rỗ hoặc rỉ sét ăn mòn quá mức quy định. Không dùng lẫn lộn ống thép và ống hợp kim nhôm trong cùng một hệ giáo.
+- **Độ thẳng đứng:** Sai lệch độ nghiêng cột giáo không vượt quá **1/200 đến 1/500 chiều cao** của hệ giáo; sai lệch tim trục $\\le 10\\text{ mm}$.
+- **Hệ giằng chéo và giằng ngang (Bracing):** Bắt buộc phải lắp đầy đủ hệ thanh giằng chéo ở tất cả các đốt giáo cả hai phương dọc và ngang để chống vặn xoắn và ngăn ngừa biến dạng hình học.
+- **Cùm khóa và chốt nối (Clamps & Couplers):** Các cùm khóa (khóa tĩnh, khóa xoay) phải đạt chuẩn, bu-lông siết chặt với mô-men lực quy định từ **$40 - 60\\text{ N.m}$**, các chốt liên kết khóa nêm/khóa ringlock phải được gõ chặt kịch đáy.
+
+#### 3. Yêu cầu đối với Hệ thống Neo giữ vào công trình (Mục 2.2.3.2 & 2.2.3.3):
+- **Liên kết neo cứng (Ties & Anchors):** Đối với giàn giáo công trình cao ngoài nhà, **bắt buộc phải neo giữ giàn giáo vào các bộ phận kết cấu chịu lực kiên cố của công trình** (dầm bê tông, cột bê tông hoặc tường đặc) theo cả phương đứng và ngang.
+- **Khoảng cách neo:** Khoảng cách giữa các điểm neo không vượt quá **$4 - 6\\text{ m}$** (hoặc cách tầng theo đúng bản vẽ thiết kế biện pháp thi công).
+- **Phần giáo nhô tự do:** Chiều cao phần giàn giáo phía trên điểm neo cao nhất vào công trình không được vượt quá **$2,0\\text{ m}$** (hoặc 1 tầng giáo).
+- **Nghiêm cấm:** Tuyệt đối không neo giàn giáo vào lan can tạm, ống dẫn nước, ống thông gió hoặc khung cửa sổ.
+
+#### 4. Yêu cầu đối với Sàn thao tác (Sàn công tác - Mục 2.2.3.13):
+- **Kích thước sàn:** Bề rộng thông thủy của sàn công tác **không được nhỏ hơn 50 cm** (đối với giáo hoàn thiện, sơn trát) và từ **$1,0 - 1,5\\text{ m}$** đối với giáo xây tải nặng.
+- **Độ kín khít:** Mặt sàn phải được lát kín khít, khe hở giữa các tấm mâm giáo/ván sàn **không được vượt quá 20 mm** để chống lọt rơi dụng cụ và vấp ngã.
+- **Cố định mâm giáo:** Các tấm mâm giáo kim loại phải có móc khóa an toàn gài chặt vào thanh giằng ngang để chống lật, chống trượt. Nếu dùng ván gỗ: Ván phải dày $\ge 30\\text{ mm}$, được néo chặt bằng dây thép ly hoặc đai kẹp.
+- **Khoảng hở giàn giáo - tường công trình:** Khoảng cách hở giữa mép trong sàn công tác và mặt ngoài kết cấu công trình **không được vượt quá 20 cm** (Mục 2.7.3.4 QCVN 18).
+
+#### 5. Yêu cầu Lan can an toàn & Tấm chặn chân (Mục 2.2.3.12):
+Đối với mọi sàn thao tác ở độ cao từ **$2,0\\text{ m}$ trở lên** so với mặt sàn/mặt đất, **bắt buộc 100%** phải có hệ lan can bảo vệ 3 thành phần:
+- **Tay vịn trên (Top rail):** Cao từ **$0,9\\text{ m}$ đến $1,15\\text{ m}$** so với mặt sàn công tác.
+- **Thanh ngang giữa (Mid rail):** Lắp đặt ở khoảng giữa (cao khoảng $0,45 - 0,6\\text{ m}$) để ngăn người lọt qua khe.
+- **Tấm chặn chân (Toeboard):** Lắp đặt áp sát mặt sàn, chiều cao tối thiểu $\ge$ **$150\\text{ mm}$** nhằm ngăn ngừa vật liệu, dụng cụ rơi xuống phía dưới.
+
+#### 6. Lối tiếp cận & Lưới an toàn bao che (Mục 2.2.1.2 & 2.2.3.8):
+- **Lối lên xuống an toàn:** Bắt buộc bố trí thang leo có lồng bảo vệ hoặc thang bộ chuyên dụng bên trong khoang giáo, có tay vịn và bậc chống trơn trượt. **Tuyệt đối cấm công nhân leo trèo trực tiếp trên khung giáo**.
+- **Lưới bao che:** Toàn bộ mặt ngoài giàn giáo phải bọc kín bằng lưới chống bụi, lưới hứng an toàn ngăn vật thể rơi. Phía dưới lối đi lại của công nhân phải lắp đặt mái che chắn bảo vệ kiên cố.
+
+---
+
+### 📋 II. BẢNG CHECKLIST NGHIỆM THU AN TOÀN LẮP DỰNG GIÀN GIÁO:
+
+| STT | Hạng mục kiểm tra bắt buộc | Tiêu chuẩn & Chỉ tiêu kỹ thuật đối chiếu | Căn cứ quy chuẩn | Đánh giá |
+| :---: | :--- | :--- | :--- | :---: |
+| **1** | **Bản vẽ & Biện pháp thi công** | Có bản vẽ thiết kế lắp dựng được phê duyệt; tính toán chịu lực cho giáo cao $\ge 28\\text{m}$ | QCVN 18 Mục 2.2.1.4 | Đạt / Không đạt |
+| **2** | **Nền đỡ & Ván lót đệm** | Đất đầm chặt, phẳng; có ván lót dày $\ge 50\\text{mm}$, chân kích ren $\le 2/3$ bước ren | QCVN 18 Mục 2.2.3.6 | Đạt / Không đạt |
+| **3** | **Độ thẳng đứng & Khung giáo** | Độ nghiêng $\le 1/200 - 1/500$ chiều cao; ống thép không rỉ sét móp méo | TCXDVN 296 Mục 4.1 | Đạt / Không đạt |
+| **4** | **Hệ giằng chéo & Cùm khóa** | Đầy đủ giằng chéo 2 phương; cùm khóa siết lực $40 - 60\\text{ N.m}$, không nứt vỡ | QCVN 18 Mục 2.2.3.2 | Đạt / Không đạt |
+| **5** | **Neo giữ vào công trình** | Neo cứng vào kết cấu bê tông/tường kiên cố cách khoảng $\le 4-6\\text{m}$; không neo tạm bợ | QCVN 18 Mục 2.2.3.3 | Đạt / Không đạt |
+| **6** | **Sàn thao tác (Mâm giáo)** | Rộng $\ge 50\\text{cm}$; lát kín khít hở $\le 20\\text{mm}$; có chốt khóa chống lật; cách tường $\le 20\\text{cm}$ | QCVN 18 Mục 2.2.3.13 | Đạt / Không đạt |
+| **7** | **Lan can an toàn & Chặn chân** | Tay vịn cao $0,9 - 1,15\\text{m}$; thanh giữa; tấm chặn chân cao $\ge 150\\text{mm}$ (sàn cao $\ge 2\\text{m}$) | QCVN 18 Mục 2.2.3.12 | Đạt / Không đạt |
+| **8** | **Thang tiếp cận & Lưới che** | Có thang bộ/thang leo độc lập; bọc kín lưới bao che; có mái che lối đi bên dưới | QCVN 18 Mục 2.2.1.2 & 2.2.3.8 | Đạt / Không đạt |
+| **9** | **Thẻ kiểm định Scafftag** | Ký biên bản nghiệm thu; treo **Thẻ XANH** (cho phép sử dụng) tại cửa thang | QCVN 18 Mục 2.2.4.1 | Đạt / Không đạt |
+
+---
+
+### 💡 III. QUY TRÌNH QUẢN TRỊ AN TOÀN CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
+
+1. **Quy tắc "Không có Thẻ Xanh — Tuyệt đối cấm lên giáo" (Scafftag System):**
+   - Giàn giáo sau khi lắp dựng xong bắt buộc phải được Cán bộ an toàn Nhà thầu và Tư vấn giám sát (TVGS) kiểm tra thực địa theo bảng checklist trên.
+   - Khi nghiệm thu đạt 100% các tiêu chí, các bên ký Biên bản nghiệm thu và treo **Thẻ XANH (Green Tag - "ĐỦ ĐIỀU KIỆN SỬ DỤNG")** tại lối lên thang.
+   - Nếu giàn giáo đang trong quá trình lắp dựng, tháo dỡ hoặc phát hiện nguy cơ mất an toàn: Phải treo ngay **Thẻ ĐỎ (Red Tag - "CẤM SỬ DỤNG")** và rào chắn lối lên.
+2. **Tần suất kiểm tra bắt buộc (Mục 2.2.4.1 QCVN 18):**
+   - Kiểm tra nghiệm thu lần đầu trước khi đưa vào khai thác.
+   - Kiểm tra định kỳ: **Tối thiểu 07 ngày một lần** đối với giàn giáo kim loại.
+   - Kiểm tra đột xuất bắt buộc: **Ngay sau các trận mưa to, giông bão, gió giật từ cấp 5 trở lên**, rung chấn động đất hoặc sau khi công trình tạm ngừng thi công dài ngày.
+3. **Quyền đình chỉ thi công:** TVGS kiên quyết đình chỉ ngay công việc và lập biên bản xử lý nếu phát hiện công nhân tự ý tháo giằng, tháo lan can hoặc tự ý chất tải vật liệu vượt quá tải trọng thiết kế cho phép của sàn thao tác.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -2181,6 +2290,7 @@ Thuộc các trường hợp nghiêm trọng sau:
             const isConcreteAcceptance = /bê tông/i.test(message) && (/nghiệm thu/i.test(message) || /checklist|check list|nội dung nào|cần hoàn thành|kiểm tra/i.test(message));
             const isTilingPaving = /lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(message) && (/yêu cầu kỹ thuật|tiêu chuẩn|quy trình|nghiệm thu|dung sai|kỹ thuật/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
             const isToleranceQuery = /sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(message) && (/thi công|nghiệm thu|chấp nhận|kết cấu|hình học/i.test(message));
+            const isScaffoldingQuery = /giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(message) && (/yêu cầu|bắt buộc|kiểm tra|nghiệm thu|lắp dựng|an toàn|tiêu chuẩn/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
@@ -2190,7 +2300,8 @@ Thuộc các trường hợp nghiêm trọng sau:
                 (isOneBagVsTwoBag && (!llmReply.includes("Điều 30") || !llmReply.includes("|"))) ||
                 (isConcreteAcceptance && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
                 (isTilingPaving && (!llmReply.includes("TCVN 9377") || !llmReply.includes("|"))) ||
-                (isToleranceQuery && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|")))) {
+                (isToleranceQuery && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
+                (isScaffoldingQuery && (!llmReply.includes("QCVN 18") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
