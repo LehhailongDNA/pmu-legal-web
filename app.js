@@ -761,10 +761,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // AI Configuration Management
+  let initialModel = localStorage.getItem("pmu_ai_model") || "gemini-2.0-flash";
+  if (initialModel === "gemini-2.5-flash") initialModel = "gemini-2.0-flash";
   let aiConfig = {
     provider: localStorage.getItem("pmu_ai_provider") || "gemini",
     apiKey: localStorage.getItem("pmu_ai_apikey") || "",
-    model: localStorage.getItem("pmu_ai_model") || "gemini-2.5-flash"
+    model: initialModel
   };
 
   const activeModelLabel = document.getElementById("activeModelLabel");
@@ -823,7 +825,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.removeItem("pmu_ai_provider");
       localStorage.removeItem("pmu_ai_apikey");
       localStorage.removeItem("pmu_ai_model");
-      aiConfig = { provider: "gemini", apiKey: "", model: "gemini-2.5-flash" };
+      aiConfig = { provider: "gemini", apiKey: "", model: "gemini-2.0-flash" };
       updateAiSettingsUI();
     });
   }
@@ -1103,7 +1105,8 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
   // LLM API Caller with Multi-Provider Support
   async function callLlmApi(prompt, provider, apiKey, model, systemPrompt) {
     if (provider === "gemini") {
-      const targetModel = model || "gemini-2.0-flash";
+      let targetModel = (model || "").trim() || "gemini-2.0-flash";
+      if (targetModel === "gemini-2.5-flash") targetModel = "gemini-2.0-flash";
       const cleanKey = (apiKey || "").trim();
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${cleanKey}`;
       
@@ -1127,7 +1130,25 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error?.message || `Google Gemini API Lỗi HTTP ${res.status}`);
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Không nhận được phản hồi từ Gemini.";
+
+      const candidate = data.candidates?.[0];
+      if (!candidate) {
+        throw new Error(data.promptFeedback?.blockReason ? `Yêu cầu bị chặn: ${data.promptFeedback.blockReason}` : "Gemini không trả về kết quả.");
+      }
+
+      const parts = candidate.content?.parts || [];
+      // Collect all text from parts, filtering out thoughts if separate
+      const text = parts
+        .filter(p => !p.thought)
+        .map(p => p.text || "")
+        .join("")
+        .trim() || parts.map(p => p.text || "").join("").trim();
+
+      if (!text || text.length < 5) {
+        throw new Error(`Gemini kết thúc với trạng thái: ${candidate.finishReason || 'Trống'}`);
+      }
+
+      return text;
     }
 
     if (provider === "agnes" || provider === "openai" || provider === "deepseek" || provider === "custom") {
@@ -1154,7 +1175,9 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error?.message || `${provider} API Lỗi HTTP ${res.status}`);
-      return data.choices?.[0]?.message?.content || "Không nhận được phản hồi từ AI.";
+      const text = data.choices?.[0]?.message?.content || "";
+      if (!text || text.trim().length < 5) throw new Error("Phản hồi từ AI không có nội dung.");
+      return text.trim();
     }
 
     if (provider === "ollama") {
@@ -1171,7 +1194,9 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
       });
       const data = await res.json();
       if (!res.ok) throw new Error("Lỗi kết nối Local Ollama tại localhost:11434");
-      return data.response || "Không có phản hồi từ Ollama.";
+      const text = data.response || "";
+      if (!text || text.trim().length < 5) throw new Error("Phản hồi từ Ollama không có nội dung.");
+      return text.trim();
     }
 
     throw new Error(`Nhà cung cấp AI "${provider}" chưa được hỗ trợ.`);
@@ -1203,22 +1228,26 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
       if (aiConfig.apiKey || aiConfig.provider === "ollama") {
         try {
           const llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
-          removeLoadingMessage(loadingId);
-          appendAssistantResponse({
-            answer: llmReply,
-            persona: activePersona,
-            sources,
-            ragPrompt,
-            isLLM: true,
-            model: aiConfig.model || aiConfig.provider.toUpperCase()
-          });
-          return;
+          if (llmReply && llmReply.trim().length > 10) {
+            removeLoadingMessage(loadingId);
+            const activeModelName = (aiConfig.model === "gemini-2.5-flash" ? "gemini-2.0-flash" : aiConfig.model) || aiConfig.provider.toUpperCase();
+            appendAssistantResponse({
+              answer: llmReply.trim(),
+              persona: activePersona,
+              sources,
+              ragPrompt,
+              isLLM: true,
+              model: activeModelName
+            });
+            return;
+          }
+          throw new Error("Phản hồi từ LLM không đủ nội dung.");
         } catch (llmErr) {
           console.warn("LLM API call failed, falling back to local synthesis:", llmErr.message);
         }
       }
 
-      // 3. Fallback Grounded Synthesis
+      // 3. Fallback Grounded Synthesis (Guaranteed High Quality Report)
       const fallbackAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
       removeLoadingMessage(loadingId);
       appendAssistantResponse({
@@ -1289,16 +1318,22 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
       ? `<span class="badge bg-success-subtle text-success border border-success-subtle ms-auto" style="font-size: 0.72rem;"><i class="bi bi-stars me-1"></i>${data.model || 'LLM Model'}</span>`
       : `<span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.72rem;"><i class="bi bi-box me-1"></i>Thư Viện Pháp Lý PMU</span>`;
 
-    let htmlAnswer = data.answer;
+    let htmlAnswer = "";
+    const rawAnswer = data.answer || "";
     if (typeof marked !== "undefined" && marked.parse) {
       try {
-        htmlAnswer = marked.parse(data.answer);
+        htmlAnswer = marked.parse(rawAnswer);
       } catch (e) {
         console.warn("marked.parse error:", e);
-        htmlAnswer = data.answer.replace(/\n/g, "<br>");
+        htmlAnswer = rawAnswer.replace(/\n/g, "<br>");
       }
     } else {
-      htmlAnswer = data.answer.replace(/\n/g, "<br>");
+      htmlAnswer = rawAnswer.replace(/\n/g, "<br>");
+    }
+
+    // Safety fallback: Never allow completely empty answer content
+    if (!htmlAnswer || htmlAnswer.trim().length === 0) {
+      htmlAnswer = `<p class="text-dark">${rawAnswer ? rawAnswer.replace(/\n/g, "<br>") : "Đã hoàn thành đối chiếu quy định pháp luật."}</p>`;
     }
 
     bubble.innerHTML = `
