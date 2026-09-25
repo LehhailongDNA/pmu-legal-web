@@ -502,49 +502,66 @@ document.addEventListener("DOMContentLoaded", () => {
   // 3. Table of Contents (TOC)
   function renderTOC(articles) {
     if (!tocList) return;
-    tocList.innerHTML = "";
-
     if (!articles || articles.length === 0) {
-      tocList.innerHTML = '<div class="text-muted small text-center p-3">Văn bản này không có mục lục điều khoản.</div>';
+      tocList.innerHTML = `<small class="text-muted p-2 d-block">Văn bản này không có mục lục điều</small>`;
       return;
     }
 
+    const isTcvn = currentDoc?.categoryId?.startsWith("tcvn") || currentDoc?.docCode?.includes("TCVN") || currentDoc?.docCode?.includes("QCVN");
+
+    tocList.innerHTML = "";
     articles.forEach(art => {
-      const item = document.createElement("a");
-      item.href = `#${art.id}`;
-      item.className = "toc-item list-group-item list-group-item-action border-0 py-1 px-2 rounded small";
-      item.textContent = art.title;
-      item.addEventListener("click", (e) => {
+      const link = document.createElement("a");
+      link.href = `#${art.id}`;
+      link.className = "toc-item";
+      
+      if (art.level === 2) {
+        link.classList.add("toc-level-2");
+      } else if (art.level === 3) {
+        link.classList.add("toc-level-3");
+      } else if (art.level >= 4) {
+        link.classList.add("toc-level-4");
+      } else {
+        link.classList.add("toc-level-1");
+      }
+
+      let label = art.title ? art.title.trim() : `Điều ${art.number}`;
+      const lower = label.toLowerCase();
+      const isSubOrAppendix = (art.level && art.level > 1) ||
+                              art.type === "sec" ||
+                              art.type === "appendix" ||
+                              art.id.startsWith("sec-") ||
+                              art.id.startsWith("pl-") ||
+                              art.id.startsWith("phan-") ||
+                              art.id.startsWith("muc-") ||
+                              art.id.startsWith("bang-");
+
+      if (!isTcvn && !isSubOrAppendix && art.number && !/^(?:điều|mục|phụ\s+lục|chương|phần|mẫu|bảng|\d+\.|\d+\b)/i.test(lower)) {
+        label = `Điều ${art.number}. ${label}`;
+      }
+
+      let bulletIcon = "";
+      if (isTcvn) {
+        if (art.level === 1) {
+          bulletIcon = `<i class="bi bi-bookmark-fill me-1 text-primary" style="font-size: 0.72rem;"></i>`;
+        } else if (art.level === 2) {
+          bulletIcon = `<i class="bi bi-chevron-right me-1 text-secondary" style="font-size: 0.68rem;"></i>`;
+        } else if (art.level === 3) {
+          bulletIcon = `<i class="bi bi-dot me-1 text-muted" style="font-size: 0.9rem;"></i>`;
+        } else {
+          bulletIcon = `<i class="bi bi-dash me-1 text-muted" style="font-size: 0.72rem;"></i>`;
+        }
+      }
+
+      link.innerHTML = `${bulletIcon}<span class="toc-text text-truncate">${label}</span>`;
+      link.title = label;
+      link.addEventListener("click", (e) => {
         e.preventDefault();
+        tocList.querySelectorAll(".toc-item").forEach(item => item.classList.remove("active"));
+        link.classList.add("active");
         scrollToArticle(art.id);
-        const drawer = document.getElementById("tocContainer");
-        if (drawer) drawer.classList.remove("open");
       });
-      tocList.appendChild(item);
-    });
-  }
-
-  const tocFloatingBtn = document.getElementById("tocFloatingBtn");
-  const tocContainer = document.getElementById("tocContainer");
-  const closeTocBtn = document.getElementById("closeTocBtn");
-  const tocFilterInput = document.getElementById("tocFilterInput");
-
-  if (tocFloatingBtn && tocContainer) {
-    tocFloatingBtn.addEventListener("click", () => {
-      tocContainer.classList.toggle("open");
-    });
-  }
-  if (closeTocBtn && tocContainer) {
-    closeTocBtn.addEventListener("click", () => {
-      tocContainer.classList.remove("open");
-    });
-  }
-  if (tocFilterInput && tocList) {
-    tocFilterInput.addEventListener("input", (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      tocList.querySelectorAll(".toc-item").forEach(item => {
-        item.classList.toggle("d-none", !item.textContent.toLowerCase().includes(q));
-      });
+      tocList.appendChild(link);
     });
   }
 

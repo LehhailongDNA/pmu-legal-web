@@ -94,7 +94,7 @@
           </div>
 
           <!-- Middle Column: Document Viewer / Search Results -->
-          <div class="col-lg-9 col-md-8 h-100 d-flex flex-column">
+          <div class="col-lg-7 col-md-8 h-100 d-flex flex-column">
             <div id="searchResultsContainer" class="d-none mb-0 flex-grow-1">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold text-primary mb-0"><i class="bi bi-search me-2"></i>Kết quả tìm kiếm: "<span id="searchKeyword"></span>"</h5>
@@ -131,6 +131,16 @@
                   <i class="bi bi-file-earmark-text display-3 text-muted opacity-50 mb-3 d-block"></i>
                   Chọn một văn bản từ danh mục bên trái hoặc nhập từ khóa để bắt đầu tra cứu.
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Table of Contents (Mục lục Điều) -->
+          <div class="col-lg-2 d-none d-lg-block h-100 d-flex flex-column">
+            <div class="toc-panel shadow-sm flex-grow-1">
+              <h6 class="fw-bold text-primary border-bottom pb-2 mb-2 flex-shrink-0"><i class="bi bi-list-nested me-1"></i>Mục lục Điều / Mục</h6>
+              <div id="tocList" class="text-muted">
+                <small>Chưa mở văn bản</small>
               </div>
             </div>
           </div>
@@ -198,22 +208,6 @@
 
     </div>
   </main>
-
-  <!-- Floating Table of Contents (TOC) -->
-  <button id="tocFloatingBtn" class="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center" title="Mục lục Điều khoản">
-    <i class="bi bi-list-ul fs-5"></i>
-  </button>
-
-  <div id="tocContainer" class="toc-drawer shadow-lg border-start bg-white">
-    <div class="toc-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-      <span class="fw-bold text-primary"><i class="bi bi-bookmark-fill me-2"></i>Mục Lục Điều Khoản</span>
-      <button id="closeTocBtn" class="btn btn-sm btn-close" aria-label="Close"></button>
-    </div>
-    <div class="p-2 border-bottom">
-      <input type="text" id="tocFilterInput" class="form-control form-control-sm" placeholder="Lọc điều khoản...">
-    </div>
-    <div id="tocList" class="toc-body p-2"></div>
-  </div>
 
   <!-- Modal for Cross-Reference Document Comparison -->
   <div class="modal fade" id="crossRefModal" tabindex="-1" aria-labelledby="crossRefModalLabel" aria-hidden="true">
