@@ -629,7 +629,12 @@ document.addEventListener("DOMContentLoaded", () => {
     "và", "các", "của", "cho", "là", "bao", "lâu", "có", "được", "này", "trong", "về",
     "những", "để", "khi", "với", "tại", "do", "theo", "từ", "ra", "đến", "nào", "gì",
     "ai", "sao", "thì", "ở", "đó", "bởi", "như", "bị", "mà", "lại", "nên", "cần",
-    "bằng", "vào", "lên", "ngay", "đã", "sẽ", "phải", "nhiều", "ít"
+    "bằng", "vào", "lên", "ngay", "đã", "sẽ", "phải", "nhiều", "ít",
+    "quy", "định", "điều", "khoản", "mục", "biết", "thế", "nhất"
+  ]);
+
+  const GENERIC_PHRASES = new Set([
+    "quy định", "quy định về", "định về", "về việc", "hướng dẫn", "hướng dẫn về", "thực hiện"
   ]);
 
   function extractSearchFeatures(query) {
@@ -638,9 +643,11 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const phrases = [];
     for (let i = 0; i < rawWords.length - 1; i++) {
-      phrases.push(rawWords[i] + " " + rawWords[i+1]);
+      const p2 = rawWords[i] + " " + rawWords[i+1];
+      if (!GENERIC_PHRASES.has(p2)) phrases.push(p2);
       if (i < rawWords.length - 2) {
-        phrases.push(rawWords[i] + " " + rawWords[i+1] + " " + rawWords[i+2]);
+        const p3 = rawWords[i] + " " + rawWords[i+1] + " " + rawWords[i+2];
+        if (!GENERIC_PHRASES.has(p3)) phrases.push(p3);
       }
     }
 
@@ -709,13 +716,29 @@ document.addEventListener("DOMContentLoaded", () => {
             artScore += 300;
           }
 
+          // Booster for Working at Height / An Toàn Thi Công Trên Cao
+          if (clean.includes("trên cao") || clean.includes("ngã cao") || clean.includes("rơi ngã")) {
+            if (artTitleLower.includes("trên cao") || artSnippetLower.includes("trên cao") || 
+                artTitleLower.includes("ngã cao") || artTitleLower.includes("rơi ngã") ||
+                (art.number && art.number.toString().startsWith("2.7"))) {
+              artScore += 2500;
+            }
+          }
+          if (clean.includes("an toàn") && clean.includes("thi công")) {
+            if (lowerCode.includes("qcvn 18") || artTitleLower.includes("an toàn trong thi công") || artSnippetLower.includes("an toàn trong thi công")) {
+              artScore += 1200;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number?.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
             if (artSnippetLower.includes(kw)) artScore += 10;
           });
 
-          if (isDocTCVN && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
+          // Only penalize pure TCVN if query is strictly legal/administrative AND not technical/safety
+          const isTechnicalQuery = /kỹ thuật|thi công|an toàn|giàn giáo|trên cao|ngã cao|rơi ngã|tải trọng|kết cấu|khoảng cách|chiều cao|pccc|nghiệm thu/i.test(clean);
+          if (isDocTCVN && !isTechnicalQuery && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
             artScore = Math.floor(artScore * 0.3);
           }
 
@@ -1035,13 +1058,29 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
             artScore += 300;
           }
 
+          // Booster for Working at Height / An Toàn Thi Công Trên Cao
+          if (clean.includes("trên cao") || clean.includes("ngã cao") || clean.includes("rơi ngã")) {
+            if (artTitleLower.includes("trên cao") || artSnippetLower.includes("trên cao") || 
+                artTitleLower.includes("ngã cao") || artTitleLower.includes("rơi ngã") ||
+                (art.number && art.number.toString().startsWith("2.7"))) {
+              artScore += 2500;
+            }
+          }
+          if (clean.includes("an toàn") && clean.includes("thi công")) {
+            if (lowerDocCode.includes("qcvn 18") || artTitleLower.includes("an toàn trong thi công") || artSnippetLower.includes("an toàn trong thi công")) {
+              artScore += 1200;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number && art.number.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
             if (artSnippetLower.includes(kw)) artScore += 10;
           });
 
-          if (isDocTCVN && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
+          // Only penalize pure TCVN if query is strictly legal/administrative AND not technical/safety
+          const isTechnicalQuery = /kỹ thuật|thi công|an toàn|giàn giáo|trên cao|ngã cao|rơi ngã|tải trọng|kết cấu|khoảng cách|chiều cao|pccc|nghiệm thu/i.test(clean);
+          if (isDocTCVN && !isTechnicalQuery && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
             artScore = Math.floor(artScore * 0.3);
           }
 
@@ -1375,6 +1414,90 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
    - Cần hoàn tất văn bản thỏa thuận/thẩm duyệt PCCC và thủ tục môi trường song song trong giai đoạn chuẩn bị dự án để kịp thời tích hợp vào kết quả thẩm định của Người quyết định đầu tư.`;
     }
 
+    // Specialized Handler for Safety When Working at Heights (An toàn khi thi công trên cao - QCVN 18:2021/BXD & Luật XD 2025)
+    if (/trên cao|ngã cao|rơi ngã/i.test(qLower) || (/an toàn/i.test(qLower) && (/thi công/i.test(qLower) || /lao động/i.test(qLower)) && /cao/i.test(qLower))) {
+      return `### 🛡️ Báo Cáo Tra Cứu Pháp Lý: Quy Định Về An Toàn Khi Thi Công Trên Cao Trong Xây Dựng
+
+**1. Vấn đề pháp lý:** ${question}
+
+**2. Căn cứ pháp lý & Quy chuẩn kỹ thuật bắt buộc áp dụng:**
+- **Quy chuẩn kỹ thuật quốc gia QCVN 18:2021/BXD** về An toàn trong thi công xây dựng (Ban hành kèm Thông tư số 16/2021/TT-BXD của Bộ trưởng Bộ Xây dựng):
+  - **Mục 2.7:** Quy định kỹ thuật an toàn khi **Làm việc trên cao** (2.7.1 Quy định chung; 2.7.2 Làm việc trên mái; 2.7.3 Làm việc trên công trình cao).
+  - **Mục 2.2:** Quy định về an toàn **Giàn giáo và thang** trong thi công.
+  - **Mục 2.19:** Quy định về **Phương tiện bảo vệ cá nhân** (Hệ thống chống rơi ngã theo QCVN 23:2014/BLĐTBXH).
+- **Luật Xây dựng số 135/2025/QH15**:
+  - **Điều 51:** An toàn trong thi công xây dựng công trình (Trách nhiệm bắt buộc của Chủ đầu tư, Nhà thầu thi công xây dựng và Tư vấn giám sát).
+- **Luật An toàn, vệ sinh lao động số 84/2015/QH13**:
+  - Quy định về các công việc có yêu cầu nghiêm ngặt về an toàn lao động (Danh mục ban hành kèm Thông tư số 06/2020/TT-BLĐTBXH).
+- **Nghị định số 207/2026/NĐ-CP** (và Nghị định số 06/2021/NĐ-CP):
+  - Quy định về lập Kế hoạch tổng hợp về an toàn và Biện pháp bảo đảm an toàn chi tiết đối với công việc có nguy cơ mất an toàn cao.
+- **TCVN 5308:1991:** Quy phạm kỹ thuật an toàn trong xây dựng.
+
+---
+
+### 🧱 CÁC NGUYÊN TẮC & QUY ĐỊNH KỸ THUẬT BẮT BUỘC THEO QCVN 18:2021/BXD:
+
+#### 1. Định nghĩa và Ngưỡng độ cao bắt buộc áp dụng biện pháp an toàn (Mục 2.7.1):
+- **Ngưỡng độ cao quy định:** Làm việc ở độ cao từ **2,0 m trở lên** so với mặt sàn hoặc mặt đất tự nhiên được coi là làm việc trên cao và bắt buộc phải áp dụng các biện pháp phòng ngừa ngã cao.
+- **Trường hợp đặc biệt nguy hiểm:** Kể cả ở độ cao **dưới 2,0 m**, nếu phía dưới có các yếu tố nguy hiểm (hố móng sâu, nước sâu, vật sắc nhọn, hóa chất độc hại, máy móc đang vận hành...) thì **bắt buộc phải áp dụng biện pháp bảo vệ chống ngã như làm việc trên cao**.
+
+#### 2. Thứ bậc ưu tiên kiểm soát phòng ngừa rơi ngã (Mục 2.7.1.3 & 2.7.1.4):
+Theo quy chuẩn an toàn xây dựng, các biện pháp kỹ thuật phải được áp dụng theo thứ tự ưu tiên nghiêm ngặt:
+1. **Ưu tiên 1 - Biện pháp bảo vệ tập thể (Collective Protection):**
+   - **Lan can an toàn (Guardrail system):** Chiều cao lan can tối thiểu từ 0,9 m đến 1,15 m; phải có thanh tay vịn trên, thanh ngang nằm giữa (ngăn người lọt qua) và **tấm chặn chân (toeboard)** cao tối thiểu 150 mm để ngăn vật thể/dụng cụ rơi xuống dưới.
+   - **Sàn thao tác:** Lắp đặt kín khít, chịu lực tốt, khe hở giữa các tấm lát không vượt quá 20 mm, không bị trơn trượt.
+   - **Che chắn lỗ mở:** Tất cả lỗ sàn, giếng trời, hố thang phải có nắp đậy chịu tải hoặc rào chắn kiên cố kèm biển cảnh báo nguy hiểm.
+2. **Ưu tiên 2 - Lưới hứng an toàn (Safety Nets):**
+   - Lắp đặt lưới hứng an toàn bên dưới khu vực thi công trên cao để hạn chế khoảng cách rơi ngã và hứng giữ vật liệu rơi.
+3. **Ưu tiên 3 - Hệ thống chống rơi ngã cá nhân (Personal Fall Arrest System - PFAS):**
+   - Khi không thể lắp đặt lan can an toàn hoặc lưới bảo vệ, người lao động bắt buộc phải sử dụng **Dây an toàn toàn thân (Full Body Harness)** kết hợp với:
+     - Dây cứu sinh (Lifeline) độc lập;
+     - Thiết bị hãm rơi tự động (Fall arrester) hoặc thiết bị giảm chấn (Energy absorber) theo đúng **QCVN 23:2014/BLĐTBXH**.
+   - **Nghiêm cấm:** Tuyệt đối không chỉ sử dụng dây đai ngang lưng (Body belt) để làm việc ở vị trí có nguy cơ rơi ngã tự do vì có thể gây chấn thương cột sống khi xảy ra sự cố.
+
+#### 3. Điều kiện đối với Người lao động làm việc trên cao:
+- **Độ tuổi:** Đủ 18 tuổi trở lên.
+- **Sức khỏe:** Có giấy khám sức khỏe đủ điều kiện làm việc trên cao do cơ sở y tế đủ thẩm quyền cấp; định kỳ khám lại ít nhất 06 tháng/lần. Người có tiền sử bệnh tim mạch, huyết áp, động kinh, chóng mặt, sợ độ cao **tuyệt đối không được bố trí làm việc trên cao**.
+- **Đào tạo & Cấp chứng chỉ:** Phải được huấn luyện an toàn, vệ sinh lao động **Nhóm 3 (Công việc có yêu cầu nghiêm ngặt)** và được cấp Thẻ an toàn lao động trước khi lên vị trí thi công.
+- **Trang bị bảo hộ cá nhân (PPE):** Mũ bảo hộ có quai cài dưới cằm, giày chống trượt, găng tay, túi đựng dụng cụ chuyên dụng (không cầm nắm vật liệu, dụng cụ trên tay khi leo trèo thang/giàn giáo).
+
+#### 4. Quy định an toàn đối với Giàn giáo và Thang (Mục 2.2 & 2.7.3):
+- Giàn giáo phải được lập bản vẽ thiết kế, tính toán kiểm tra khả năng chịu lực và ổn định, được thẩm duyệt biện pháp thi công.
+- Khi lắp dựng, cải tạo hoặc tháo dỡ giàn giáo phải có cán bộ an toàn giám sát; phải treo biển nghiệm thu: **"ĐƯỢC PHÉP SỬ DỤNG" (Biển xanh)** hoặc **"CẤM SỬ DỤNG" (Biển đỏ)**.
+- **Khoảng hở tối đa:** Khe hở giữa sàn công tác của giàn giáo và mặt ngoài công trình không được vượt quá **20 cm**.
+- Sàn công tác trên cùng phải thấp hơn đỉnh giàn giáo/công trình tối thiểu 65 cm hoặc có lan can chắn an toàn.
+- Dụng cụ thi công trên cao phải có dây buộc chống rơi (tool lanyard) vào đai an toàn hoặc cổ tay.
+
+#### 5. Điều kiện thời tiết cấm thi công trên cao (Mục 2.7.1.6):
+Tuyệt đối **CẤM** người lao động làm việc trên cao trong các điều kiện sau:
+- Trời mưa to, giông lốc, có sấm sét;
+- Gió mạnh từ **cấp 5 trở lên** (tốc độ gió từ 8 m/s hoặc $\ge 29$ km/h);
+- Trời tối, sương mù dày đặc làm hạn chế tầm nhìn dưới 10 mét hoặc nơi làm việc không đủ ánh sáng theo quy chuẩn chiếu sáng.
+
+---
+
+### 📊 BẢNG TỔNG HỢP CÁC YÊU CẦU KỸ THUẬT AN TOÀN THI CÔNG TRÊN CAO:
+
+| Hạng mục kiểm soát | Tiêu chuẩn kỹ thuật quy định | Căn cứ quy chuẩn / pháp luật |
+| :--- | :--- | :--- |
+| **Ngưỡng độ cao bắt buộc** | Từ **2,0 m trở lên** (hoặc dưới 2m nếu bên dưới có hố sâu, nước, vật nguy hiểm) | QCVN 18:2021/BXD Mục 2.7.1 |
+| **Quy cách Lan can an toàn** | Chiều cao: **0,9 m - 1,15 m**; có thanh ngang giữa; tấm chặn chân cao $\ge$ **150 mm** | QCVN 18:2021/BXD Mục 2.7.1 |
+| **Hệ thống dây an toàn** | Bắt buộc loại **toàn thân (Full Body Harness)** kèm dây cứu sinh độc lập & giảm chấn | QCVN 23:2014/BLĐTBXH |
+| **Khoảng hở giàn giáo - tường** | Không được vượt quá **20 cm** ở mọi vị trí | QCVN 18:2021/BXD Mục 2.7.3.4 |
+| **Sàn công tác giàn giáo** | Lát kín khít, khe hở ván lát $\le$ **20 mm**, chống trơn trượt, chịu tải trọng thử nghiệm | QCVN 18:2021/BXD Mục 2.2 |
+| **Độ tuổi & Sức khỏe** | Đủ 18 tuổi; khám sức khỏe chuyên khoa làm việc trên cao định kỳ 6 tháng/lần | Luật ATVSLĐ số 84/2015 |
+| **Chứng chỉ đào tạo** | Đã hoàn thành khóa huấn luyện an toàn **Nhóm 3**, được cấp Thẻ an toàn lao động | Nghị định 44/2016 & TT 06/2020 |
+| **Giới hạn thời tiết an toàn** | Cấm làm việc trên cao khi có gió từ **cấp 5 trở lên**, mưa bão, sấm sét, tối trời | QCVN 18:2021/BXD Mục 2.7.1.6 |
+
+---
+
+### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU) & Tư vấn Giám sát:
+1. **Phê duyệt Biện pháp an toàn chi tiết:** Trước khi nhà thầu thi công bất kỳ hạng mục nào trên cao (lắp dựng kết cấu thép, đổ bê tông sàn cao tầng, hoàn thiện mặt ngoài, lợp mái...), PMU và Tư vấn giám sát bắt buộc phải phê duyệt **Biện pháp bảo đảm an toàn lao động riêng biệt** cho công tác đó (Khoản 2 Điều 51 Luật Xây dựng 2025).
+2. **Hệ thống cấp phép làm việc trên cao (Permit to Work - PTW):** Áp dụng quy trình kiểm tra và ký Giấy phép làm việc trên cao theo từng ca thi công. Cán bộ an toàn của nhà thầu và giám sát an toàn PMU kiểm tra thực địa trước khi cho công nhân lên sàn công tác.
+3. **Thiết lập vùng nguy hiểm bên dưới:** Bắt buộc căng dây phản quang, dựng rào chắn và đặt biển báo cấm người qua lại tại bán kính nguy hiểm có nguy cơ rơi vật thể bên dưới. Tuyệt đối cấm quăng, ném phế thải, vật liệu từ trên cao xuống đất.
+4. **Quyền đình chỉ thi công:** Tư vấn giám sát và cán bộ PMU có quyền và nghĩa vụ **đình chỉ ngay lập tức** công việc nếu phát hiện người lao động không cài dây an toàn đúng cách, giàn giáo chưa được nghiệm thu an toàn, hoặc khi thời tiết chuyển biến xấu có mưa giông gió mạnh.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -1630,17 +1753,19 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
         try {
           let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
           if (llmReply && llmReply.trim().length > 30) {
-            // Check if comparison or planning question or feasibility study or verification vs appraisal needs authoritative table formatting
+            // Check if comparison or planning question or feasibility study or verification vs appraisal or working at height needs authoritative formatting
             const isComparison = /so sánh|khác nhau|khác biệt/i.test(message) || (/chỉ định thầu/i.test(message) && /rút gọn/i.test(message));
             const isPlanningTimeline = /quy hoạch/i.test(message) && (/nhiệm vụ/i.test(message) || /lấy ý kiến/i.test(message) || /thời gian/i.test(message) || /thời hạn/i.test(message));
             const isFsrContent = (/nghiên cứu khả thi|kinh tế.*kỹ thuật|báo cáo nckt/i.test(message) || (/thẩm định/i.test(message) && /dự án/i.test(message))) && 
                                  (/nội dung/i.test(message) || /bao gồm/i.test(message) || /những gì/i.test(message) || /gồm những/i.test(message));
             const isThamTraVsThamDinh = /thẩm tra/i.test(message) && /thẩm định/i.test(message);
+            const isWorkingAtHeight = /trên cao|ngã cao|rơi ngã/i.test(message) || (/an toàn/i.test(message) && (/thi công/i.test(message) || /lao động/i.test(message)) && /cao/i.test(message));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
                 (isFsrContent && (!llmReply.includes("Điều 26") || !llmReply.includes("|"))) ||
-                (isThamTraVsThamDinh && (!llmReply.includes("Khoản 15") || !llmReply.includes("|")))) {
+                (isThamTraVsThamDinh && (!llmReply.includes("Khoản 15") || !llmReply.includes("|"))) ||
+                (isWorkingAtHeight && (!llmReply.includes("QCVN 18") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
