@@ -777,6 +777,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
 
+          // Booster for Construction Tolerances / Sai số / Dung sai cho phép (TCVN 4453 Bảng 20, TCVN 5593, TCVN 9377...)
+          if (/sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(clean) && (/thi công|nghiệm thu|kết cấu|kích thước|hình học|chấp nhận/i.test(clean))) {
+            if (lowerCode.includes("4453") || lowerCode.includes("5593") || lowerCode.includes("9377") || lowerCode.includes("9340") || lowerCode.includes("9262")) {
+              artScore += 4500;
+            }
+            if (artTitleLower.includes("sai số") || artSnippetLower.includes("sai số") || artTitleLower.includes("dung sai") || artSnippetLower.includes("dung sai") || artTitleLower.includes("sai lệch cho phép") || artSnippetLower.includes("sai lệch cho phép")) {
+              artScore += 3000;
+            }
+            if (lowerCode.includes("339/2026") || lowerDocTitle.includes("xử phạt vi phạm hành chính")) {
+              artScore -= 5000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number?.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -1153,6 +1166,19 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
             }
             if (lowerDocCode.includes("70/2026") || lowerDocCode.includes("144/2025") || lowerDocCode.includes("339/2026") || lowerDocCode.includes("08/2022") || lowerDocTitle.includes("quy hoạch")) {
               artScore -= 4000;
+            }
+          }
+
+          // Booster for Construction Tolerances / Sai số / Dung sai cho phép (TCVN 4453 Bảng 20, TCVN 5593, TCVN 9377...)
+          if (/sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(clean) && (/thi công|nghiệm thu|kết cấu|kích thước|hình học|chấp nhận/i.test(clean))) {
+            if (lowerDocCode.includes("4453") || lowerDocCode.includes("5593") || lowerDocCode.includes("9377") || lowerDocCode.includes("9340") || lowerDocCode.includes("9262")) {
+              artScore += 4500;
+            }
+            if (artTitleLower.includes("sai số") || artSnippetLower.includes("sai số") || artTitleLower.includes("dung sai") || artSnippetLower.includes("dung sai") || artTitleLower.includes("sai lệch cho phép") || artSnippetLower.includes("sai lệch cho phép")) {
+              artScore += 3000;
+            }
+            if (lowerDocCode.includes("339/2026") || lowerDocTitle.includes("xử phạt vi phạm hành chính")) {
+              artScore -= 5000;
             }
           }
 
@@ -1798,6 +1824,96 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
      - Bản vẽ hoàn công và ảnh chụp hiện trường hoàn thiện.`;
     }
 
+    // Specialized Handler for Construction Tolerances & Permissible Deviations (Dung sai cho phép & Sai số trong thi công - TCVN 4453, TCVN 5593, TCVN 9377, NĐ 207/2026)
+    if (/sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(qLower) && (/thi công|nghiệm thu|chấp nhận|kết cấu|hình học/i.test(qLower))) {
+      return `### 📐 Báo Cáo Kỹ Thuật & Nghiệm Thu: Quy Định Về Sai Số (Dung Sai Cho Phép) Được Chấp Nhận Trong Thi Công Xây Dựng
+
+**1. Vấn đề pháp lý & kỹ thuật:** ${question}
+
+**2. Bản chất pháp lý & Phân định rạch ròi 02 khái niệm:**
+- **Sai số kỹ thuật trong thi công (Dung sai hình học - Tolerances):** Là sai lệch kích thước, vị trí, độ phẳng, độ thẳng đứng tự nhiên phát sinh do dung sai đo đạc trắc đạc, sai số dụng cụ, biến dạng nhiệt và tay nghề công nhân. Khái niệm này được điều chỉnh bởi **Quy chuẩn (QCVN), Tiêu chuẩn thi công & nghiệm thu (TCVN) và Chỉ dẫn kỹ thuật dự án**.
+- **Sai sót khối lượng / Gian lận thanh quyết toán (Nghị định số 339/2026/NĐ-CP):** Là hành vi cố ý hoặc vô ý khai khống, tính sai tăng khối lượng nhằm rút ruột ngân sách hoặc thanh toán khống. **Đây là vi phạm hành chính/kinh tế, hoàn toàn không phải khái niệm dung sai kỹ thuật thi công**.
+
+**3. Căn cứ tiêu chuẩn kỹ thuật & Pháp luật nghiệm thu áp dụng:**
+- **TCVN 5593:1991** — *Quản lý chất lượng thi công xây lắp công trình xây dựng - Nguyên tắc kiểm tra và nghiệm thu* (**Điều 1.4:** *"Công trình chỉ được nghiệm thu khi các sai số thực tế thi công không vượt quá các sai số cho phép được quy định trong thiết kế và tiêu chuẩn"*).
+- **TCVN 4453:1995** — *Kết cấu bê tông và bê tông cốt thép toàn khối - Quy phạm thi công và nghiệm thu* (**Mục 3.5.1 Bảng 2:** Sai lệch cốp pha; **Mục 4.7 Bảng 5, 6:** Sai lệch cốt thép; **Mục 7.2.2 & Bảng 20:** Sai lệch kích thước và vị trí kết cấu bê tông toàn khối).
+- **TCVN 9377-1:2012** — *Công tác hoàn thiện - Lát và láng* (**Bảng 1, Bảng 2:** Dung sai bề mặt và mép gạch).
+- **TCVN 9340:2012** (và **TCVN 4459:1987**) — *Khối xây gạch đá - Quy phạm thi công và nghiệm thu*.
+- **TCVN 9262:2012** (ISO 4463) — *Đo đạc trong xây dựng - Phương pháp đo và dung sai*.
+- **Nghị định số 207/2026/NĐ-CP**:
+  - **Điều 22:** Nghiệm thu công việc xây dựng hoàn thành.
+  - **Điều 21:** Trách nhiệm Giám sát tác giả của Nhà thầu thiết kế khi xử lý các sai lệch thực tế hiện trường.
+
+---
+
+### ⚖️ I. NGUYÊN TẮC CỐT LÕI 03 CẤP ĐỘ ĐÁNH GIÁ "SAI SỐ CÓ ĐƯỢC CHẤP NHẬN HAY KHÔNG":
+
+#### CẤP ĐỘ 1: Sai số NẰM TRONG GIỚI HẠN Dung sai cho phép (Tolerances $\\le$ Tiêu chuẩn) $\\rightarrow$ ĐƯỢC TỰ ĐỘNG NGHIỆM THU
+- **Nguyên tắc:** Nếu sai số đo đạc thực tế tại hiện trường (bằng máy thủy bình, toàn đạc, thước laser, thước nêm) nằm trong phạm vi dung sai quy định tại TCVN hoặc Chỉ dẫn kỹ thuật dự án $\\rightarrow$ Hạng mục được đánh giá là **Đạt yêu cầu kỹ thuật** và Tư vấn giám sát (TVGS) ký biên bản nghiệm thu bình thường.
+- *Ví dụ:* Cột lệch tim $7\\text{ mm}$ (tiêu chuẩn cho phép $\\le 8 - 10\\text{ mm}$); độ phẳng sàn gạch hở $2\\text{ mm}$ dưới thước 3m (cho phép $\\le 3\\text{ mm}$).
+
+#### CẤP ĐỘ 2: Sai số VƯỢT DUNG SAI nhưng KHÔNG ẢNH HƯỞNG AN TOÀN CHỊU LỰC $\\rightarrow$ XỬ LÝ THEO QUY TRÌNH GIÁM SÁT TÁC GIẢ & CHỦ ĐẦU TƯ CHẤP THUẬN
+- **Nguyên tắc:** TVGS và Nhà thầu thi công **tuyệt đối không được tự ý bỏ qua hoặc tự ý ký nghiệm thu**.
+- **Quy trình xử lý bắt buộc (Điều 21 & Điều 22 NĐ 207/2026/NĐ-CP):**
+  1. TVGS lập Biên bản ghi nhận hiện trường về vị trí và mức độ vượt dung sai.
+  2. Nhà thầu thi công gửi văn bản yêu cầu **Nhà thầu thiết kế (Giám sát tác giả)** kiểm toán, tính toán lại khả năng chịu lực của kết cấu với thông số sai lệch thực tế.
+  3. Nếu Tư vấn thiết kế tính toán kết luận kết cấu vẫn bảo đảm tuyệt đối khả năng chịu lực, an toàn công trình và không ảnh hưởng công năng kiến trúc: Thiết kế lập Văn bản xử lý kỹ thuật / Bản vẽ điều chỉnh, đề xuất biện pháp xử lý hoàn thiện bù (ví dụ trát bù, điều chỉnh lớp ốp lát, bổ sung thanh neo...).
+  4. **Chủ đầu tư / Ban QLDA xem xét phê duyệt phương án xử lý bằng văn bản**. Sau khi xử lý hoàn tất, TVGS mới tiến hành nghiệm thu theo hồ sơ xử lý.
+
+#### CẤP ĐỘ 3: Sai số BẤT KHẢ CHẤP NHẬN (NON-CONFORMANCE) $\\rightarrow$ KIÊN QUYẾT BÁC BỎ, ĐẬP BỎ LÀM LẠI
+Thuộc các trường hợp nghiêm trọng sau:
+1. **Vi phạm chỉ giới xây dựng:** Sai lệch tim trục làm công trình lấn ra ngoài ranh giới đất được cấp phép hoặc lấn chỉ giới đường đỏ (theo quy hoạch và Giấy phép xây dựng).
+2. **Ảnh hưởng trực tiếp đến an toàn chịu lực chính:** Độ lệch tâm cột/vách quá lớn gây mô-men uốn nguy hiểm mà tính toán kết cấu không bảo đảm an toàn; bê tông bị suy giảm cường độ mác quá mức cho phép; võng dầm/sàn vượt quá giới hạn nứt gãy.
+3. **Biện pháp xử lý:** TVGS đình chỉ ngay công việc, lập phiếu không phù hợp (NCR). Nhà thầu thi công bắt buộc phải tự chịu toàn bộ chi phí phá dỡ làm lại hoặc thuê đơn vị thẩm tra độc lập lập phương án gia cường kết cấu đặc biệt được cấp có thẩm quyền phê duyệt.
+
+---
+
+### 📊 II. BẢNG TỔNG HỢP CÁC MỨC DUNG SAI / SAI SỐ CHO PHÉP ĐIỂN HÌNH TRONG THI CÔNG:
+
+#### 1. KẾT CẤU BÊ TÔNG & BÊ TÔNG CỐT THÉP TOÀN KHỐI (THEO TCVN 4453:1995 BẢNG 20):
+
+| STT | Chỉ tiêu sai lệch hình học | Mức sai số cho phép ($\\le\\text{mm}$) | Phương pháp & Dụng cụ kiểm tra |
+| :---: | :--- | :---: | :--- |
+| **1** | **Độ nghiêng lệch phương thẳng đứng:**<br>• Trên 1m chiều cao kết cấu<br>• Trên toàn bộ chiều cao móng<br>• Trên toàn bộ chiều cao cột, tường 1 tầng ($< 5\\text{m}$)<br>• Cột khung liên kết bằng dầm | <br>**5 mm**<br>**20 mm**<br>**15 mm**<br>**10 mm** | Đo bằng quả dọi, máy kinh vĩ hoặc máy chiếu đứng laser |
+| **2** | **Sai lệch kích thước tiết diện ngang** (cột, dầm, bản sàn) | **+ 8 mm / - 5 mm** | Đo bằng thước thép lá, thước cặp cơ khí |
+| **3** | **Sai lệch cao độ mặt trên của móng, dầm, sàn** | $\\pm$ **10 mm** | Đo bằng máy thủy bình |
+| **4** | **Độ phẳng mặt bê tông** (đo bằng thước 2m áp sát) | $\\le$ **8 mm** | Dùng thước nêm đo khe hở dưới thước nhôm 2m |
+| **5** | **Sai lệch trục tim kết cấu so với thiết kế:**<br>• Móng<br>• Cột, tường<br>• Dầm, xà, vòm | <br>**15 mm**<br>**8 mm**<br>**10 mm** | Bật mực tim trục, đo bằng thước thép và máy toàn đạc |
+| **6** | **Sai lệch vị trí bu-lông neo, chi tiết đặt sẵn** | $\\le$ **5 mm** | Thước cơ khí chính xác |
+
+---
+
+#### 2. CÔNG TÁC CỐP PHA & CỐT THÉP (THEO TCVN 4453:1995 BẢNG 2 & BẢNG 5):
+
+| Hạng mục kiểm tra | Chỉ tiêu dung sai cho phép | Căn cứ kỹ thuật |
+| :--- | :--- | :--- |
+| **Khoảng cách cột chống cốp pha** | Sai lệch $\\le 25\\text{ mm}$ trên mỗi mét dài; $\\le 75\\text{ mm}$ trên toàn bộ khẩu độ dầm/sàn | TCVN 4453 Bảng 2 |
+| **Sai lệch chiều dày lớp bê tông bảo vệ** | • Bản sàn, vách mỏng ($\\le 100\\text{ mm}$): $\\pm 3\\text{ mm}$<br>• Dầm, cột, móng: $\\pm 5\\text{ mm}$ | TCVN 4453 Mục 4.7 |
+| **Khoảng cách giữa các thanh cốt thép** | • Cốt thép chịu lực dầm, cột: $\\pm 5\\text{ mm}$<br>• Cốt thép sàn, móng: $\\pm 10\\text{ mm}$ | TCVN 4453 Bảng 5 |
+| **Độ võng khung cốt thép so với thiết kế** | $\\le 10\\text{ mm}$ đối với dầm khẩu độ lớn | TCVN 4453 Mục 4.7 |
+
+---
+
+#### 3. CÔNG TÁC HOÀN THIỆN XÂY, TRÁT, LÁT (TCVN 9377 & TCVN 9340):
+
+| Công tác hoàn thiện | Chỉ tiêu dung sai cho phép chấp nhận khi nghiệm thu | Căn cứ tiêu chuẩn |
+| :--- | :--- | :--- |
+| **Lát nền gạch ceramic, đá granite** | • Khe hở dưới thước tầm 3m: $\\le 3\\text{ mm}$ (thước 2m $\\le 2\\text{ mm}$)<br>• Chênh lệch cao độ giữa 2 mép gạch liền kề: $\\le 0,5\\text{ mm}$ (không có gờ sắc)<br>• Sai lệch độ dốc thoát nước: $\\le 0,3\\%$ (thử nước thoát 100%, không đọng vũng) | TCVN 9377-1:2012 Bảng 1 & 2 |
+| **Trát tường phẳng** | • Trát thông thường: Khe hở thước 2m $\\le 3\\text{ mm}$<br>• Trát chất lượng cao: Khe hở thước 2m $\\le 2\\text{ mm}$<br>• Trát cao cấp: Khe hở thước 2m $\\le 1\\text{ mm}$ | TCVN 9377-2:2012 |
+| **Xây gạch tường** | • Chiều dày mạch vữa ngang: Chuẩn $12\\text{ mm}$ (dao động cho phép $8 - 15\\text{ mm}$)<br>• Độ nghiêng lệch thẳng đứng của góc tường (1 tầng): $\\le 10\\text{ mm}$ | TCVN 9340:2012 |
+
+---
+
+### 💡 III. LƯU Ý NGHIỆP VỤ QUẢN TRỊ RỦI RO CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
+
+1. **Chỉ dẫn kỹ thuật của Dự án là căn cứ pháp lý cao nhất:**
+   - Trong hồ sơ mời thầu và hợp đồng xây dựng, **Chỉ dẫn kỹ thuật (Technical Specifications)** được Chủ đầu tư phê duyệt sẽ quy định cụ thể mức dung sai cho từng hạng mục. Nếu Chỉ dẫn kỹ thuật dự án quy định dung sai chặt chẽ hơn TCVN (ví dụ sàn phẳng hở $\\le 2\\text{ mm}$ thay vì $3\\text{ mm}$) thì bắt buộc phải áp dụng theo Chỉ dẫn kỹ thuật dự án.
+2. **Quy tắc đo đạc trắc đạc độc lập:**
+   - TVGS không được chỉ dựa vào số liệu hoàn công do Nhà thầu lập. Đối với các cấu kiện chịu lực chính (tim móng, tim cột tầng trệt, cao độ dầm sàn), TVGS phải bố trí trắc đạc kiểm tra độc lập trước khi cho phép đổ bê tông hoặc hoàn thiện.
+3. **Hồ sơ hóa các sai lệch vượt chuẩn:**
+   - Bất kỳ sai lệch nào vượt dung sai cấp độ 1 nhưng được chấp nhận ở cấp độ 2 **bắt buộc phải có Văn bản xác nhận của Tư vấn thiết kế và Quyết định xử lý của Chủ đầu tư** lưu trong hồ sơ hoàn công. Tránh trường hợp sau này cơ quan Thanh tra, Kiểm toán Nhà nước vào kiểm tra coi đây là công trình thi công sai thiết kế không được phép nghiệm thu.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -2064,6 +2180,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
                                      (/giai đoạn/i.test(message) && /túi/i.test(message) && (/khác|so sánh|phân biệt/i.test(message) || (/1/i.test(message) && /2/i.test(message))));
             const isConcreteAcceptance = /bê tông/i.test(message) && (/nghiệm thu/i.test(message) || /checklist|check list|nội dung nào|cần hoàn thành|kiểm tra/i.test(message));
             const isTilingPaving = /lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(message) && (/yêu cầu kỹ thuật|tiêu chuẩn|quy trình|nghiệm thu|dung sai|kỹ thuật/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
+            const isToleranceQuery = /sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(message) && (/thi công|nghiệm thu|chấp nhận|kết cấu|hình học/i.test(message));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
@@ -2072,7 +2189,8 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
                 (isWorkingAtHeight && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
                 (isOneBagVsTwoBag && (!llmReply.includes("Điều 30") || !llmReply.includes("|"))) ||
                 (isConcreteAcceptance && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
-                (isTilingPaving && (!llmReply.includes("TCVN 9377") || !llmReply.includes("|")))) {
+                (isTilingPaving && (!llmReply.includes("TCVN 9377") || !llmReply.includes("|"))) ||
+                (isToleranceQuery && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
