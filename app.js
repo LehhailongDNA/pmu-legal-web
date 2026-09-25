@@ -625,6 +625,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  const SEARCH_STOP_WORDS = new Set([
+    "và", "các", "của", "cho", "là", "bao", "lâu", "có", "được", "này", "trong", "về",
+    "những", "để", "khi", "với", "tại", "do", "theo", "từ", "ra", "đến", "nào", "gì",
+    "ai", "sao", "thì", "ở", "đó", "bởi", "như", "bị", "mà", "lại", "nên", "cần",
+    "bằng", "vào", "lên", "ngay", "đã", "sẽ", "phải", "nhiều", "ít"
+  ]);
+
+  function extractSearchFeatures(query) {
+    const clean = (query || "").toLowerCase().replace(/[?,.:;!"'()\[\]{}]/g, " ").replace(/\s+/g, " ").trim();
+    const rawWords = clean.split(" ").filter(w => w.length > 0);
+    
+    const phrases = [];
+    for (let i = 0; i < rawWords.length - 1; i++) {
+      phrases.push(rawWords[i] + " " + rawWords[i+1]);
+      if (i < rawWords.length - 2) {
+        phrases.push(rawWords[i] + " " + rawWords[i+1] + " " + rawWords[i+2]);
+      }
+    }
+
+    const keywords = rawWords.filter(w => !SEARCH_STOP_WORDS.has(w) && w.length > 1);
+    return { clean, phrases, keywords, rawWords };
+  }
+
   async function runClientSearch(query) {
     await ensureSearchIndexLoaded();
     if (!searchIndex) return;
@@ -633,54 +656,84 @@ document.addEventListener("DOMContentLoaded", () => {
     docViewerContainer.classList.add("d-none");
     searchKeyword.textContent = query;
 
-    const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+    const { clean, phrases, keywords } = extractSearchFeatures(query);
     const results = [];
 
     for (const item of searchIndex) {
       if (searchScope === "phap-ly" && item.scope !== "phap-ly") continue;
       if (searchScope === "tcvn" && item.scope !== "tcvn") continue;
 
-      let score = 0;
-      const lowerCode = item.docCode.toLowerCase();
-      const lowerTitle = item.title.toLowerCase();
+      let docMatchScore = 0;
+      const lowerCode = (item.docCode || "").toLowerCase();
+      const lowerTitle = (item.title || "").toLowerCase();
+      const isDocTCVN = item.scope === "tcvn" || lowerCode.includes("tcvn") || lowerCode.includes("qcvn");
 
       // Check document code & title
-      terms.forEach(t => {
-        if (lowerCode.includes(t)) score += 100;
-        if (lowerTitle.includes(t)) score += 50;
+      phrases.forEach(p => {
+        if (lowerTitle.includes(p)) docMatchScore += 150;
+        if (lowerCode.includes(p)) docMatchScore += 250;
+      });
+      keywords.forEach(kw => {
+        if (lowerCode.includes(kw)) docMatchScore += 40;
+        if (lowerTitle.includes(kw)) docMatchScore += 20;
       });
 
       // Check articles
-      let matchedArticle = null;
+      let bestArticle = null;
+      let maxArtScore = 0;
+
       if (item.articles) {
         for (const art of item.articles) {
-          let artScore = 0;
+          let artScore = docMatchScore;
           const artTitleLower = (art.title || "").toLowerCase();
           const artSnippetLower = (art.snippet || "").toLowerCase();
 
-          terms.forEach(t => {
-            if (art.number?.toString() === t) artScore += 150;
-            if (artTitleLower.includes(t)) artScore += 60;
-            if (artSnippetLower.includes(t)) artScore += 20;
+          phrases.forEach(p => {
+            if (p.length >= 5) {
+              if (artTitleLower.includes(p)) artScore += 400;
+              if (artSnippetLower.includes(p)) artScore += 120;
+            }
           });
 
-          if (artScore > score) {
-            score = artScore;
-            matchedArticle = art;
+          if (clean.includes("lấy ý kiến") && (artTitleLower.includes("lấy ý kiến") || artSnippetLower.includes("lấy ý kiến"))) {
+            artScore += 600;
+          }
+          if (clean.includes("nhiệm vụ") && (artTitleLower.includes("nhiệm vụ") || artSnippetLower.includes("nhiệm vụ"))) {
+            artScore += 300;
+          }
+          if ((clean.includes("thời gian") || clean.includes("thời hạn") || clean.includes("bao lâu")) &&
+              (artTitleLower.includes("thời gian") || artTitleLower.includes("thời hạn") || artSnippetLower.includes("thời gian") || artSnippetLower.includes("thời hạn"))) {
+            artScore += 300;
+          }
+
+          keywords.forEach(kw => {
+            if (art.number?.toString() === kw) artScore += 150;
+            if (artTitleLower.includes(kw)) artScore += 30;
+            if (artSnippetLower.includes(kw)) artScore += 10;
+          });
+
+          if (isDocTCVN && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
+            artScore = Math.floor(artScore * 0.3);
+          }
+
+          if (artScore > maxArtScore) {
+            maxArtScore = artScore;
+            bestArticle = art;
           }
         }
       }
 
-      if (score > 0) {
+      const totalScore = Math.max(docMatchScore, maxArtScore);
+      if (totalScore > 0) {
         results.push({
           docId: item.id,
           docCode: item.docCode,
           docTitle: item.title,
           categoryName: item.categoryName,
-          articleNumber: matchedArticle ? matchedArticle.number : null,
-          articleTitle: matchedArticle ? matchedArticle.title : null,
-          snippet: matchedArticle ? matchedArticle.snippet : item.title,
-          score
+          articleNumber: bestArticle ? bestArticle.number : null,
+          articleTitle: bestArticle ? bestArticle.title : null,
+          snippet: bestArticle ? bestArticle.snippet : item.title,
+          score: totalScore
         });
       }
     }
@@ -921,17 +974,22 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
     await ensureSearchIndexLoaded();
     if (!searchIndex) return [];
 
-    const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+    const { clean, phrases, keywords } = extractSearchFeatures(query);
     const candidates = [];
 
     for (const item of searchIndex) {
       let docMatchScore = 0;
       const lowerDocTitle = (item.title || "").toLowerCase();
       const lowerDocCode = (item.docCode || "").toLowerCase();
+      const isDocTCVN = item.scope === "tcvn" || lowerDocCode.includes("tcvn") || lowerDocCode.includes("qcvn");
 
-      terms.forEach(t => {
-        if (lowerDocCode.includes(t)) docMatchScore += 80;
-        if (lowerDocTitle.includes(t)) docMatchScore += 40;
+      phrases.forEach(p => {
+        if (lowerDocTitle.includes(p)) docMatchScore += 150;
+        if (lowerDocCode.includes(p)) docMatchScore += 250;
+      });
+      keywords.forEach(kw => {
+        if (lowerDocCode.includes(kw)) docMatchScore += 40;
+        if (lowerDocTitle.includes(kw)) docMatchScore += 20;
       });
 
       if (item.articles) {
@@ -940,18 +998,41 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
           const artTitleLower = (art.title || "").toLowerCase();
           const artSnippetLower = (art.snippet || "").toLowerCase();
 
-          terms.forEach(t => {
-            if (art.number?.toString() === t) artScore += 150;
-            if (artTitleLower.includes(t)) artScore += 60;
-            if (artSnippetLower.includes(t)) artScore += 25;
+          phrases.forEach(p => {
+            if (p.length >= 5) {
+              if (artTitleLower.includes(p)) artScore += 400;
+              if (artSnippetLower.includes(p)) artScore += 120;
+            }
           });
+
+          // Specific bonus for query intent match
+          if (clean.includes("lấy ý kiến") && (artTitleLower.includes("lấy ý kiến") || artSnippetLower.includes("lấy ý kiến"))) {
+            artScore += 600;
+          }
+          if (clean.includes("nhiệm vụ") && (artTitleLower.includes("nhiệm vụ") || artSnippetLower.includes("nhiệm vụ"))) {
+            artScore += 300;
+          }
+          if ((clean.includes("thời gian") || clean.includes("thời hạn") || clean.includes("bao lâu")) && 
+              (artTitleLower.includes("thời gian") || artTitleLower.includes("thời hạn") || artSnippetLower.includes("thời gian") || artSnippetLower.includes("thời hạn"))) {
+            artScore += 300;
+          }
+
+          keywords.forEach(kw => {
+            if (art.number && art.number.toString() === kw) artScore += 150;
+            if (artTitleLower.includes(kw)) artScore += 30;
+            if (artSnippetLower.includes(kw)) artScore += 10;
+          });
+
+          if (isDocTCVN && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
+            artScore = Math.floor(artScore * 0.3);
+          }
 
           if (artScore > 0) {
             candidates.push({
               docId: item.id,
               docCode: item.docCode,
               docTitle: item.title,
-              isTCVN: item.scope === "tcvn" || (item.docCode || "").includes("TCVN") || (item.docCode || "").includes("QCVN"),
+              isTCVN: isDocTCVN,
               articleNumber: art.number,
               articleTitle: art.title,
               snippet: art.snippet,
@@ -1066,6 +1147,57 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 1. **Tuyệt đối không chia nhỏ gói thầu:** Không được chia dự án thành các gói thầu có giá trị dưới 500 triệu hoặc dưới 01 tỷ VNĐ nhằm mục đích áp dụng chỉ định thầu rút gọn (hành vi bị nghiêm cấm theo Khoản 6 Điều 16 Luật Đấu thầu 22/2023).
 2. **Kiểm tra tư cách hợp lệ & năng lực nhà thầu:** Dù áp dụng quy trình rút gọn, nhà thầu vẫn bắt buộc phải có tên trên Hệ thống mạng đấu thầu quốc gia, không trong thời gian bị cấm tham gia hoạt động đấu thầu và có đủ năng lực tài chính, nhân sự tương ứng quy mô gói thầu.
 3. **Lưu trữ hồ sơ:** Toàn bộ biên bản làm việc, báo giá, dự thảo hợp đồng và quyết định chỉ định thầu phải được lưu trữ đầy đủ trong hồ sơ quản lý chất lượng và thanh quyết toán dự án.`;
+    }
+
+    // Specialized Handler for Planning Approval & Consultation Timelines (Quy hoạch đô thị và nông thôn - Luật 47/2024/QH15)
+    if (/quy hoạch/i.test(qLower) && (/nhiệm vụ/i.test(qLower) || /lấy ý kiến/i.test(qLower) || /thời gian/i.test(qLower) || /thời hạn/i.test(qLower) || /thẩm định/i.test(qLower))) {
+      return `### 📋 Báo Cáo Tra Cứu Pháp Lý: Thời Gian Lấy Ý Kiến & Thẩm Định Nhiệm Vụ Quy Hoạch
+
+**1. Vấn đề pháp lý:** ${question}
+
+**2. Căn cứ pháp lý áp dụng:**
+- **Luật Quy hoạch đô thị và nông thôn số 47/2024/QH15** (Có hiệu lực thi hành từ ngày 01/01/2025):
+  - **Điều 36:** Lấy ý kiến về nhiệm vụ quy hoạch đô thị và nông thôn.
+  - **Điều 40:** Thẩm định nhiệm vụ quy hoạch, quy hoạch đô thị và nông thôn.
+  - **Điều 37:** Lấy ý kiến về quy hoạch đô thị và nông thôn.
+- **Nghị định số 178/2025/NĐ-CP:** Quy định chi tiết một số điều của Luật Quy hoạch đô thị và nông thôn.
+- **Nghị định số 70/2026/NĐ-CP:** Quy định chi tiết thi hành một số điều của Luật Quy hoạch (đối với quy hoạch cấp quốc gia, vùng, tỉnh).
+
+---
+
+### ⏱️ QUY ĐỊNH CỤ THỂ VỀ THỜI GIAN THEO LUẬT SỐ 47/2024/QH15:
+
+#### 1. Thời hạn lấy ý kiến về Nhiệm vụ quy hoạch (Khoản 4 Điều 36):
+- **Đối tượng lấy ý kiến:** Cơ quan quản lý nhà nước có liên quan (bao gồm các sở, ban, ngành và chính quyền địa phương liên quan).
+- **Hình thức thực hiện:** Gửi hồ sơ để đối tượng lấy ý kiến nghiên cứu, có ý kiến bằng văn bản.
+- **Thời hạn cho ý kiến bằng văn bản:** **Đúng 07 ngày làm việc** kể từ ngày nhận được đầy đủ hồ sơ theo quy định.
+- **Trách nhiệm trong giai đoạn thẩm định (Điểm b Khoản 1 Điều 36):** Cơ quan thẩm định nhiệm vụ quy hoạch có trách nhiệm tổ chức lấy ý kiến các cơ quan quản lý nhà nước có liên quan trong quá trình thẩm định.
+
+#### 2. Thời gian thẩm định Nhiệm vụ quy hoạch (Khoản 4 Điều 40):
+- **Thời gian thẩm định:** **Không quá 15 ngày** kể từ ngày cơ quan thẩm định nhận đủ hồ sơ hợp lệ theo quy định.
+
+---
+
+### 📊 BẢNG TỔNG HỢP SO SÁNH THỜI HẠN LẤY Ý KIẾN & THẨM ĐỊNH QUY HOẠCH:
+
+| Giai đoạn thực hiện | Đối tượng lấy ý kiến / thẩm định | Thời hạn quy định | Căn cứ pháp lý |
+| :--- | :--- | :--- | :--- |
+| **Nhiệm vụ quy hoạch: Lấy ý kiến** | Cơ quan quản lý nhà nước liên quan (địa phương, sở ngành) | **07 ngày làm việc** *(kể từ khi nhận đủ hồ sơ)* | **Điều 36 Khoản 4** Luật 47/2024/QH15 |
+| **Nhiệm vụ quy hoạch: Thẩm định** | Cơ quan thẩm định / Hội đồng thẩm định | **Không quá 15 ngày** | **Điều 40 Khoản 4** Luật 47/2024/QH15 |
+| **Đồ án quy hoạch: Lấy ý kiến cơ quan** | Cơ quan, tổ chức, chuyên gia liên quan | **15 ngày** *(kể từ ngày nhận đủ hồ sơ)* | **Điều 37 Khoản 6** Luật 47/2024/QH15 |
+| **Đồ án quy hoạch: Lấy ý kiến cộng đồng** | Cộng đồng dân cư có liên quan | **Từ 20 đến 30 ngày** | **Điều 37 Khoản 7** Luật 47/2024/QH15 |
+| **Đồ án quy hoạch: Thẩm định** | Cơ quan thẩm định / Hội đồng thẩm định | **Không quá 30 ngày** | **Điều 40 Khoản 4** Luật 47/2024/QH15 |
+| *Quy hoạch tỉnh (theo Luật Quy hoạch)* | Các Bộ, cơ quan ngang bộ, UBND tỉnh liên quan | **15 ngày làm việc** | **Điều 40** Nghị định 70/2026/NĐ-CP |
+
+---
+
+### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):
+1. **Kiểm soát thời hạn 07 ngày làm việc:** Khi gửi văn bản xin ý kiến địa phương và các đơn vị liên quan cho Nhiệm vụ quy hoạch, văn bản phát hành cần ghi rõ thời hạn phản hồi là 07 ngày làm việc theo đúng Khoản 4 Điều 36 Luật 47/2024/QH15.
+2. **Quy tắc hết thời hạn:** Trường hợp hết thời hạn 07 ngày làm việc mà cơ quan được lấy ý kiến không có văn bản trả lời thì được coi là đồng ý và phải chịu trách nhiệm về nội dung thuộc phạm vi quản lý của mình.
+3. **Báo cáo tiếp thu, giải trình (Khoản 5 Điều 36):** Cơ quan, đơn vị tổ chức lập nhiệm vụ quy hoạch có trách nhiệm tổng hợp, giải trình đầy đủ bằng văn bản và công bố công khai trước khi trình phê duyệt.
+4. **Tránh nhầm lẫn giữa Nhiệm vụ quy hoạch và Đồ án quy hoạch:** 
+   - Giai đoạn **Nhiệm vụ quy hoạch**: Chỉ lấy ý kiến cơ quan nhà nước có liên quan (07 ngày làm việc), **không bắt buộc** lấy ý kiến cộng đồng dân cư.
+   - Giai đoạn **Đồ án quy hoạch**: Bắt buộc phải lấy ý kiến cộng đồng dân cư (20 - 30 ngày) và cơ quan, tổ chức (15 ngày).`;
     }
 
     // Default dynamic synthesis report
@@ -1242,9 +1374,10 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         try {
           let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
           if (llmReply && llmReply.trim().length > 30) {
-            // Check if comparison question needs a table and LLM forgot it
+            // Check if comparison or planning question needs authoritative table formatting
             const isComparison = /so sánh|khác nhau|khác biệt/i.test(message) || (/chỉ định thầu/i.test(message) && /rút gọn/i.test(message));
-            if (isComparison && !llmReply.includes("|")) {
+            const isPlanningTimeline = /quy hoạch/i.test(message) && (/nhiệm vụ/i.test(message) || /lấy ý kiến/i.test(message) || /thời gian/i.test(message) || /thời hạn/i.test(message));
+            if ((isComparison && !llmReply.includes("|")) || (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
