@@ -1113,11 +1113,30 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 2. BẮT BUỘC 100% TIẾNG VIỆT CHUẨN MỰC: Trình bày định dạng Markdown đẹp mắt, cấu trúc rõ ràng.
 3. ĐỐI VỚI CÂU HỎI SO SÁNH / PHÂN TÍCH ĐA TIÊU CHÍ (Ví dụ: Chỉ định thầu thông thường vs Chỉ định thầu rút gọn): BẮT BUỘC PHẢI DÙNG BẢNG MARKDOWN (| Tiêu chí | Đối tượng A | Đối tượng B |) để đối chiếu trực quan từng khía cạnh: Điều kiện áp dụng, Hạn mức gói thầu, Trình tự thực hiện, Hồ sơ thủ tục và Thời gian thực hiện.
 4. TRÍCH DẪN ĐIỀU KHOẢN CHÍNH XÁC: Ghi rõ tên văn bản (Luật Đấu thầu 22/2023, Luật Xây dựng 135/2025, NĐ 217/2026, NĐ 206/2026, NĐ 214/2025, NĐ 274/2026...), số Điều, Khoản và Mẫu biểu áp dụng.
-5. Cấu trúc bài viết:
-   - 📌 1. Căn cứ pháp lý & Tiêu chuẩn áp dụng
+5. NGUYÊN TẮC TỔNG HỢP ĐA VĂN BẢN (MULTI-TIER SYNTHESIS - BẮT BUỘC):
+   - Một vấn đề pháp lý luôn có sự liên kết chặt chẽ giữa nhiều văn bản (Luật, Nghị định hướng dẫn, Thông tư mẫu biểu, Quy chuẩn kỹ thuật).
+   - TUYỆT ĐỐI KHÔNG chỉ trả lời dựa trên một văn bản đơn lẻ nếu trong Ngữ cảnh có nhiều văn bản cùng điều chỉnh.
+   - BẮT BUỘC phải xâu chuỗi và tổng hợp đầy đủ từ các tầng văn bản:
+     + Tầng LUẬT: Nêu nguyên tắc chung, đối tượng áp dụng và thẩm quyền.
+     + Tầng NGHỊ ĐỊNH: Nêu chi tiết quy trình, thủ tục, hồ sơ, điều kiện và thời hạn.
+     + Tầng THÔNG TƯ / TIÊU CHUẨN: Nêu rõ biểu mẫu, định mức, chỉ tiêu kỹ thuật số liệu.
+6. Cấu trúc bài viết:
+   - 📌 1. Căn cứ pháp lý đa tầng (Luật -> Nghị định -> Thông tư -> Tiêu chuẩn)
    - 📋 2. Nội dung quy định & Bảng đối chiếu chi tiết
    - 🔍 3. Biểu mẫu / Quy trình thực hiện cụ thể
    - 💡 4. Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU).`;
+  }
+
+  function categorizeDocument(docCode, docTitle) {
+    const code = (docCode || "").toLowerCase();
+    const title = (docTitle || "").toLowerCase();
+
+    if (code.includes("qcvn") || title.includes("qcvn")) return { tier: 4, name: "Quy chuẩn kỹ thuật quốc gia (Bắt buộc áp dụng)", badge: "📐 QCVN Bắt Buộc" };
+    if (code.includes("tcvn") || title.includes("tcvn")) return { tier: 4, name: "Tiêu chuẩn kỹ thuật xây dựng (Tiêu chuẩn áp dụng)", badge: "📏 Tiêu Chuẩn TCVN" };
+    if (code.includes("tt-") || title.includes("thông tư") || code.includes("qd-") || title.includes("quyết định")) return { tier: 3, name: "Thông tư & Hướng dẫn thi hành (Biểu mẫu / Định mức)", badge: "📋 Thông Tư / Mẫu Biểu" };
+    if (code.includes("nd-cp") || code.includes("nđ-cp") || title.includes("nghị định")) return { tier: 2, name: "Nghị định của Chính phủ (Trình tự, Hồ sơ & Thời hạn chi tiết)", badge: "🏛️ Nghị Định Hướng Dẫn" };
+    if (title.includes("luật") || code.includes("/qh") || title.includes("luật số")) return { tier: 1, name: "Văn bản Luật (Khung pháp lý, Thẩm quyền & Nguyên tắc)", badge: "⚖️ Căn Cứ Luật" };
+    return { tier: 5, name: "Văn bản pháp lý liên quan khác", badge: "📄 Văn Bản Khác" };
   }
 
   // Dynamic Synthesizer (Fallback when user has no API Key)
@@ -1128,7 +1147,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
     const qLower = question.toLowerCase();
     const topDoc = searchResults[0];
-    const topArticles = searchResults.slice(0, 5);
+    const topArticles = searchResults.slice(0, 8);
 
     // Specialized Handler for Bidding / Direct Appointment Comparison (Chỉ định thầu vs Chỉ định thầu rút gọn)
     if (/chỉ định thầu/i.test(qLower) && (/rút gọn/i.test(qLower) || /khác nhau/i.test(qLower) || /so sánh/i.test(qLower) || /quy trình/i.test(qLower))) {
@@ -1312,71 +1331,103 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
     if (persona === "cost") personaTitle = "Báo Cáo Thẩm Tra Chi Phí & Định Mức (NĐ 206)";
     if (persona === "bidding") personaTitle = "Báo Cáo Thẩm Định Hồ Sơ Đấu Thầu";
 
+    // Group and categorize all retrieved articles by Legal Hierarchy
+    const tiersMap = new Map();
+    for (const art of topArticles) {
+      const cat = categorizeDocument(art.docCode, art.docTitle);
+      if (!tiersMap.has(cat.tier)) {
+        tiersMap.set(cat.tier, { category: cat, docs: [] });
+      }
+      tiersMap.get(cat.tier).docs.push(art);
+    }
+    const sortedTiers = Array.from(tiersMap.entries()).sort((a, b) => a[0] - b[0]);
+
     let md = `### 📋 ${personaTitle}\n\n`;
     md += `**1. Vấn đề pháp lý:** ${question}\n\n`;
-    md += `**2. Căn cứ pháp lý đối chiếu trong Thư viện PMU:**\n`;
-    topArticles.forEach(a => {
-      const artLabel = a.articleNumber ? `Điều ${a.articleNumber}. ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
-      md += `- **${a.docCode}** (*${a.docTitle}*) — **${artLabel}**\n`;
+    md += `**2. Hệ thống văn bản quy phạm pháp luật liên quan (Tổng hợp đa tầng từ Luật -> Nghị định -> Thông tư -> Quy chuẩn):**\n`;
+    sortedTiers.forEach(([tierNum, tData]) => {
+      md += `\n##### **${tData.category.badge} — ${tData.category.name}:**\n`;
+      tData.docs.forEach(a => {
+        const artLabel = a.articleNumber ? `Điều ${a.articleNumber}. ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
+        md += `- **${a.docCode}** (*${a.docTitle}*) — **${artLabel}**\n`;
+      });
     });
     md += `\n---\n\n`;
 
-    // 3. Generalized Semantic Synthesis for Any Question
-    const primaryArticle = topArticles.find(a => (a.content || a.snippet || "").length > 200) || topArticles[0];
-    const pContent = primaryArticle ? (primaryArticle.content || primaryArticle.snippet || "") : "";
-    const pLines = pContent.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-
+    // 3. Multi-Document Cross-Synthesis
     const isTimeline = /thời gian|thời hạn|bao lâu|khi nào|mấy ngày|tiến độ/i.test(qLower);
     const isContent = /nội dung|bao gồm|những gì|gồm những|các bước|quy trình|hồ sơ/i.test(qLower);
     const isAuthority = /thẩm quyền|cơ quan nào|ai|cấp nào|trách nhiệm của/i.test(qLower);
 
-    const structuredPoints = [];
-    const timelineMatches = [];
-    const authorityMatches = [];
+    md += `### 🎯 NỘI DUNG TỔNG HỢP LIÊN VĂN BẢN (XÂU CHUỖI TỪNG CẤP ĐỘ PHÁP LÝ):\n\n`;
 
-    for (const line of pLines) {
-      if (/^(\d+\.|\b[a-z]\)|\-|\+)\s+/i.test(line)) {
-        structuredPoints.push(line);
-      }
-      const tMatch = line.match(/(?:thời hạn|thời gian|trong thời hạn|không quá|ít nhất)\s+([^,.;:]+(?:ngày|ngày làm việc|tháng|năm))/i);
-      if (tMatch) {
-        timelineMatches.push({ line, match: tMatch[0] });
-      }
-      if (/thẩm quyền|phê duyệt|chấp thuận|do .*? thực hiện|giao cho/i.test(line)) {
-        authorityMatches.push(line);
+    if (isTimeline) {
+      // Gather all timeline rules across all tiers
+      const allTimelines = [];
+      topArticles.forEach(art => {
+        const content = (art.content || art.snippet || "").trim();
+        const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+        lines.forEach(l => {
+          const tMatch = l.match(/(?:thời hạn|thời gian|trong thời hạn|không quá|ít nhất)\s+([^,.;:]+(?:ngày|ngày làm việc|tháng|năm))/i);
+          if (tMatch) {
+            allTimelines.push({
+              match: tMatch[0],
+              line: l.replace(/^[0-9a-z\.\-\+\)]+\s*/i, "").slice(0, 110),
+              docCode: art.docCode,
+              artNum: art.articleNumber ? `Điều ${art.articleNumber}` : ""
+            });
+          }
+        });
+      });
+
+      if (allTimelines.length > 0) {
+        md += `| Quy định thời hạn | Chi tiết nội dung thực hiện | Căn cứ văn bản |\n`;
+        md += `| :--- | :--- | :--- |\n`;
+        allTimelines.slice(0, 10).forEach(tm => {
+          md += `| **${tm.match}** | ${tm.line}... | ${tm.docCode} ${tm.artNum} |\n`;
+        });
+        md += `\n\n`;
       }
     }
 
-    md += `### 🎯 TỔNG HỢP NỘI DUNG GIẢI ĐÁP:\n\n`;
+    // Detail synthesis tier by tier
+    sortedTiers.forEach(([tierNum, tData]) => {
+      md += `#### **${tData.category.badge}: ${tData.category.name}**\n`;
+      tData.docs.forEach(art => {
+        const content = (art.content || art.snippet || "").trim();
+        const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+        const points = lines.filter(l => /^(\d+\.|\b[a-z]\)|\-|\+)\s+/i.test(l));
 
-    if (isTimeline && timelineMatches.length > 0) {
-      md += `| Quy định thời hạn | Chi tiết nội dung thực hiện | Căn cứ điều khoản |\n`;
-      md += `| :--- | :--- | :--- |\n`;
-      timelineMatches.slice(0, 8).forEach(tm => {
-        const cleanLine = tm.line.replace(/^[0-9a-z\.\-\+\)]+\s*/i, "").slice(0, 120);
-        md += `| **${tm.match}** | ${cleanLine}... | ${primaryArticle.docCode} Điều ${primaryArticle.articleNumber || ''} |\n`;
-      });
-      md += `\n`;
-    } else if (isContent && structuredPoints.length > 0) {
-      md += `Căn cứ theo quy định tại **${primaryArticle.docCode}** (${primaryArticle.articleTitle || `Điều ${primaryArticle.articleNumber}`}), các nội dung cụ thể bao gồm:\n\n`;
-      structuredPoints.slice(0, 20).forEach(pt => {
-        if (/^\d+\./.test(pt)) {
-          md += `\n**${pt}**\n`;
+        const artLabel = art.articleNumber ? `Điều ${art.articleNumber}: ${art.articleTitle || ''}` : (a.articleTitle || a.docTitle);
+        md += `* **Theo ${art.docCode} (${artLabel}):**\n`;
+        if (points.length > 0) {
+          points.slice(0, 6).forEach(pt => {
+            if (/^\d+\./.test(pt)) {
+              md += `  - **${pt}**\n`;
+            } else {
+              md += `    + ${pt}\n`;
+            }
+          });
         } else {
-          md += `  - ${pt}\n`;
+          md += `  > ${content.slice(0, 350)}...\n`;
         }
+        md += `\n`;
       });
-      md += `\n`;
-    } else if (isAuthority && authorityMatches.length > 0) {
-      md += `Quy định cụ thể về thẩm quyền và phân cấp trách nhiệm:\n\n`;
-      authorityMatches.slice(0, 8).forEach(am => {
-        md += `- ${am}\n`;
-      });
-      md += `\n`;
-    }
+    });
 
-    md += `\n---\n\n### 📖 TRÍCH DẪN NGUYÊN VĂN QUY ĐỊNH ĐỂ ĐỐI CHIẾU:\n\n`;
-    topArticles.slice(0, 3).forEach((a, idx) => {
+    md += `---\n### 📊 BẢNG ĐỐI CHIẾU TRÁCH NHIỆM & QUY ĐỊNH ĐA TẦNG PHÁP LÝ:\n\n`;
+    md += `| Cấp bậc văn bản | Số hiệu văn bản & Điều khoản | Nội dung quy định then chốt | Ý nghĩa thực thi cho PMU |\n`;
+    md += `| :--- | :--- | :--- | :--- |\n`;
+    sortedTiers.forEach(([tierNum, tData]) => {
+      tData.docs.slice(0, 2).forEach(a => {
+        const artNum = a.articleNumber ? `Điều ${a.articleNumber}` : '';
+        const summaryText = (a.articleTitle || a.snippet || '').slice(0, 80).replace(/[\r\n|]/g, ' ');
+        md += `| **${tData.category.badge}** | ${a.docCode} ${artNum} | ${summaryText}... | Tuân thủ đúng cấp thẩm quyền & quy trình |\n`;
+      });
+    });
+
+    md += `\n---\n\n### 📖 TRÍCH NGUYÊN VĂN CÁC ĐIỀU KHOẢN TRỌNG TÂM ĐỂ ĐỐI CHIẾU:\n\n`;
+    topArticles.slice(0, 4).forEach((a, idx) => {
       const artLabel = a.articleNumber ? `Điều ${a.articleNumber}: ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
       let contentClean = (a.content || a.snippet || "").trim();
       md += `##### **${idx + 1}. ${artLabel} (${a.docCode})**\n`;
@@ -1384,10 +1435,10 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
     });
 
     md += `### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):\n`;
-    md += `1. **Kiểm tra tính áp dụng:** Cần đối chiếu kỹ quy mô, loại hình dự án và thẩm quyền phân cấp đối với quy định tại **${topDoc.docCode}**.\n`;
-    md += `2. **Tuân thủ biểu mẫu:** Đảm bảo toàn bộ tài liệu, hồ sơ trình phê duyệt tuân thủ biểu mẫu hiện hành theo quy định mới nhất.\n\n`;
+    md += `1. **Nguyên tắc áp dụng văn bản đa tầng:** Luôn tuân thủ thứ bậc hiệu lực pháp lý (Luật quy định khung nguyên tắc & thẩm quyền $\\rightarrow$ Nghị định quy định chi tiết trình tự, hồ sơ, thời hạn $\\rightarrow$ Thông tư hướng dẫn biểu mẫu, định mức $\\rightarrow$ Quy chuẩn bắt buộc áp dụng).\n`;
+    md += `2. **Không áp dụng đơn lẻ:** Khi lập tờ trình, báo cáo thẩm định hoặc văn bản xin ý kiến, PMU phải trích dẫn đồng bộ cả Điều khoản của Luật và Điều khoản quy định chi tiết tương ứng tại Nghị định/Thông tư để đảm bảo giá trị pháp lý đầy đủ nhất.\n\n`;
 
-    md += `---\n*💡 **Mẹo:** Bạn có thể bấm vào nút **Cài đặt AI** ở thanh trên để cấu hình API Key (Google Gemini 100% miễn phí) để kích hoạt tính năng Generative AI thông minh tự động suy luận và phân tích sâu mọi tình huống thực tế.*\n`;
+    md += `---\n*💡 **Mẹo:** Bạn có thể bấm vào nút **Cài đặt AI** ở thanh trên để cấu hình API Key (Google Gemini 100% miễn phí) để kích hoạt mô hình Generative AI tự động xâu chuỗi và phân tích sâu sắc mọi tình huống phức tạp.*\n`;
 
     return md;
   }
@@ -1510,11 +1561,11 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
 
     try {
       // 1. Retrieve top matching articles with full content
-      const matches = await searchLegalContext(message, 6);
+      const matches = await searchLegalContext(message, 8);
       const ragPrompt = buildRAGPrompt(message, activePersona, matches);
       const systemPrompt = defaultSystemPrompts[activePersona] || defaultSystemPrompts.legal;
 
-      const sources = matches.slice(0, 6).map(s => ({
+      const sources = matches.slice(0, 8).map(s => ({
         docTitle: s.docTitle,
         docCode: s.docCode,
         articleTitle: s.articleTitle ? s.articleTitle : (s.articleNumber ? `Điều ${s.articleNumber}` : s.docTitle),
