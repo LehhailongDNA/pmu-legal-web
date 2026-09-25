@@ -803,6 +803,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
 
+          // Booster for Design Consultant Author Supervision & Delay in Adjustments (Điều 21 NĐ 207, Điều 35 Luật XD 135, Điều 12 NĐ 339)
+          if (/giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế|điều chỉnh thiết kế/i.test(clean) && (/xử lý|chậm trễ|trách nhiệm|vi phạm|không nghiêm túc|tiến độ/i.test(clean))) {
+            if ((lowerCode.includes("207/2026") && art.number == 21) || (lowerCode.includes("135/2025") && art.number == 35) || (lowerCode.includes("339/2026") && art.number == 12)) {
+              artScore += 5000;
+            }
+            if (artTitleLower.includes("giám sát tác giả") || artSnippetLower.includes("giám sát tác giả")) {
+              artScore += 3500;
+            }
+            if (art.number == 85 || art.number == 9 || lowerCode.includes("144/2025") || lowerDocTitle.includes("quy hoạch")) {
+              artScore -= 6000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number?.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -1204,6 +1217,19 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
               artScore += 3000;
             }
             if (lowerDocCode.includes("105/2025") || lowerDocCode.includes("55/2024") || lowerDocCode.includes("70/2026") || lowerDocTitle.includes("chữa cháy")) {
+              artScore -= 6000;
+            }
+          }
+
+          // Booster for Design Consultant Author Supervision & Delay in Adjustments (Điều 21 NĐ 207, Điều 35 Luật XD 135, Điều 12 NĐ 339)
+          if (/giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế|điều chỉnh thiết kế/i.test(clean) && (/xử lý|chậm trễ|trách nhiệm|vi phạm|không nghiêm túc|tiến độ/i.test(clean))) {
+            if ((lowerDocCode.includes("207/2026") && art.number == 21) || (lowerDocCode.includes("135/2025") && art.number == 35) || (lowerDocCode.includes("339/2026") && art.number == 12)) {
+              artScore += 5000;
+            }
+            if (artTitleLower.includes("giám sát tác giả") || artSnippetLower.includes("giám sát tác giả")) {
+              artScore += 3500;
+            }
+            if (art.number == 85 || art.number == 9 || lowerDocCode.includes("144/2025") || lowerDocTitle.includes("quy hoạch")) {
               artScore -= 6000;
             }
           }
@@ -2023,6 +2049,90 @@ Thuộc các trường hợp nghiêm trọng sau:
 3. **Quyền đình chỉ thi công:** TVGS kiên quyết đình chỉ ngay công việc và lập biên bản xử lý nếu phát hiện công nhân tự ý tháo giằng, tháo lan can hoặc tự ý chất tải vật liệu vượt quá tải trọng thiết kế cho phép của sàn thao tác.`;
     }
 
+    // Specialized Handler for Design Consultant Default in Author Supervision (Xử lý Tư vấn thiết kế vi phạm trách nhiệm giám sát tác giả - Điều 21 NĐ 207, Điều 35 Luật XD 135, Điều 12 NĐ 339)
+    if (/giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế/i.test(qLower) && (/xử lý|chậm trễ|không nghiêm túc|vi phạm|kéo dài|tiến độ/i.test(qLower))) {
+      return `### ⚖️ Báo Cáo Nghiệp Vụ & Pháp Lý: Quy Trình Xử Lý Khi Nhà Thầu Tư Vấn Thiết Kế Vi Phạm Trách Nhiệm Giám Sát Tác Giả
+
+**1. Vấn đề pháp lý:** ${question}
+
+**2. Căn cứ pháp lý áp dụng:**
+- **Luật Xây dựng số 135/2025/QH15**:
+  - **Điều 35 (Khoản 2 Điểm a, b, d):** Nghĩa vụ của nhà thầu tư vấn thiết kế: Chịu trách nhiệm về chất lượng, tiến độ; **bồi thường thiệt hại** khi chất lượng không bảo đảm theo yêu cầu và vi phạm hợp đồng làm thiệt hại cho Chủ đầu tư.
+  - **Điều 31:** Điều chỉnh thiết kế xây dựng triển khai sau thiết kế cơ sở.
+- **Nghị định số 207/2026/NĐ-CP** của Chính phủ:
+  - **Điều 21 (Khoản 1 & 2):** Trách nhiệm Giám sát tác giả của nhà thầu thiết kế:
+    - Kịp thời giải thích, làm rõ tài liệu thiết kế khi có yêu cầu;
+    - Phối hợp với Chủ đầu tư giải quyết vướng mắc, bất hợp lý, phát sinh; **kịp thời điều chỉnh thiết kế phù hợp với thực tế thi công**;
+    - Lập Báo cáo đánh giá việc thực hiện giám sát tác giả khi hoàn thành công trình.
+- **Nghị định số 339/2026/NĐ-CP** (Xử phạt vi phạm hành chính trong hoạt động xây dựng):
+  - **Điều 12 (Khoản 1 Điểm c):** Phạt tiền từ **20.000.000 đồng đến 30.000.000 đồng** đối với hành vi: *"Không chỉnh sửa bất hợp lý trong thiết kế theo yêu cầu của chủ đầu tư"* hoặc không thực hiện giám sát tác giả.
+- **Nghị định số 37/2015/NĐ-CP** (và Nghị định sửa đổi, bổ sung): Quy định chi tiết về Hợp đồng xây dựng (Chế tài phạt vi phạm tiến độ và bồi thường thiệt hại hợp đồng tư vấn).
+- **Luật Đấu thầu số 22/2023/QH15** & **Nghị định số 214/2025/NĐ-CP**: Chế tài xử lý uy tín nhà thầu và cấm tham gia hoạt động đấu thầu khi vi phạm hợp đồng.
+
+---
+
+### 🚨 I. NHẬN DIỆN HÀNH VI VI PHẠM PHÁP LÝ & HỢP ĐỒNG:
+
+Theo quy định tại Điều 21 Nghị định 207/2026/NĐ-CP và Hợp đồng tư vấn thiết kế, việc nhà thầu thiết kế:
+1. **Chậm trễ cử người có thẩm quyền đến hiện trường** để phối hợp giải quyết bất cập khi Chủ đầu tư/TVGS có văn bản yêu cầu;
+2. **Cố tình kéo dài thời gian phát hành hồ sơ điều chỉnh thiết kế** (dù đã được xác định thiết kế cũ có sai sót, xung đột hoặc địa chất sai lệch);
+3. **Làm gián đoạn, ngưng trệ đường găng tiến độ thi công (Critical Path)** của gói thầu xây lắp dẫn đến nguy cơ chậm tiến độ hoàn thành toàn bộ dự án;
+
+$\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp đồng xây dựng và là hành vi vi phạm pháp luật xây dựng bị xử phạt hành chính theo Điều 12 Nghị định 339/2026/NĐ-CP**.
+
+---
+
+### 🛠️ II. QUY TRÌNH 05 BƯỚC ĐANH THÉP CHỦ ĐẦU TƯ / PMU XỬ LÝ NHÀ THẦU THIẾT KẾ:
+
+#### BƯỚC 1: Lập Biên bản ghi nhận hiện trường & Phát hành Văn bản cảnh báo (Notice of Default)
+- **Hành động của PMU & TVGS:**
+  - Lập Biên bản ghi nhận sự chậm trễ: Ghi rõ số hiệu công văn yêu cầu điều chỉnh, ngày gửi, thời hạn hoàn thành theo cam kết hợp đồng (thông thường từ **03 đến 05 ngày làm việc**), số ngày chậm trễ thực tế, ảnh hưởng cụ thể làm dừng máy móc/nhân lực xây lắp.
+  - Ban hành **Văn bản cảnh cáo vi phạm hợp đồng lần 1**: Yêu cầu Người đại diện theo pháp luật của Nhà thầu thiết kế có mặt tại hiện trường và bàn giao hồ sơ điều chỉnh trong thời hạn chốt (Deadline từ **24 đến 48 giờ**).
+  - Nếu quá hạn vẫn không thực hiện: Tiếp tục phát hành **Văn bản cảnh cáo lần 2** nêu rõ các chế tài tài chính và pháp lý sẽ áp dụng ngay lập tức.
+
+#### BƯỚC 2: Áp dụng chế tài Phạt hợp đồng & Đóng băng giải ngân (Withholding Payment)
+- **Căn cứ:** Điều khoản phạt vi phạm trong Hợp đồng tư vấn thiết kế và Nghị định về Hợp đồng xây dựng.
+- **Thực hiện:**
+  - Áp dụng mức phạt chậm tiến độ theo hợp đồng (thường từ **$0,5\\% - 1\\%$ giá trị hợp đồng tư vấn cho mỗi tuần chậm trễ**, tối đa lên đến **$8\\% - 12\\%$** giá trị hợp đồng).
+  - **Tạm dừng giải ngân (đóng băng)**: Tạm dừng thanh toán toàn bộ chi phí giám sát tác giả và các khoản tiền giữ lại bảo hành thiết kế.
+
+#### BƯỚC 3: Buộc Tư vấn thiết kế Bồi thường toàn bộ thiệt hại phát sinh (Claims for Damages)
+- **Căn cứ:** Điểm d Khoản 2 Điều 35 Luật Xây dựng năm 2025 (*"Bồi thường thiệt hại khi kết quả, chất lượng không bảo đảm theo yêu cầu và vi phạm hợp đồng xây dựng làm thiệt hại cho chủ đầu tư"*).
+- **Thực hiện:**
+  - Nhà thầu thi công xây dựng sẽ lập hồ sơ khiếu nại (Claim) đòi bồi thường chi phí dừng chờ máy móc, chi phí nhân công nhàn rỗi và chi phí phát sinh lán trại do chờ bản vẽ thiết kế điều chỉnh.
+  - Sau khi TVGS và PMU thẩm tra xác định chi phí thiệt hại thực tế hợp lý, PMU phát hành văn bản **buộc Nhà thầu tư vấn thiết kế phải chịu trách nhiệm chi trả toàn bộ khoản tiền bồi thường này**.
+
+#### BƯỚC 4: Kích hoạt điều khoản "Chỉ định đơn vị Tư vấn khác thay thế để xử lý cấp bách"
+- **Căn cứ:** Điều khoản xử lý tình huống vi phạm của Hợp đồng tư vấn và pháp luật đấu thầu.
+- **Thực hiện:**
+  - Nhằm bảo vệ tiến độ dự án và tránh thiệt hại lan rộng, PMU báo cáo Người quyết định đầu tư/Chủ đầu tư phê duyệt phương án: **Cho phép Chủ đầu tư thuê một Đơn vị tư vấn thiết kế độc lập khác có đủ năng lực để lập hồ sơ điều chỉnh thiết kế cấp bách**.
+  - **Quy tắc tài chính:** **Toàn bộ chi phí thuê đơn vị tư vấn mới sẽ được Chủ đầu tư khấu trừ 100% vào giá trị hợp đồng chưa thanh toán của Nhà thầu thiết kế cũ**.
+
+#### BƯỚC 5: Chế tài Pháp lý, Chấm dứt hợp đồng & Cấm tham gia đấu thầu
+- **Chấm dứt hợp đồng (Termination for Default):** Chủ đầu tư ban hành Quyết định đơn phương chấm dứt hợp đồng do lỗi của Nhà thầu thiết kế, tịch thu bảo lãnh thực hiện hợp đồng (nếu có).
+- **Đăng tải vi phạm trên Hệ thống mạng đấu thầu quốc gia:** Công khai thông tin vi phạm nghĩa vụ hợp đồng của Nhà thầu thiết kế. Nhà thầu sẽ bị đánh giá "Không đạt uy tín" và bị cấm hoặc bị loại ngay từ vòng đánh giá tư cách trong tất cả các dự án đầu tư công sau này.
+- **Đề nghị Thanh tra Xây dựng xử phạt VPHC:** Gửi văn bản kiến nghị kèm đầy đủ hồ sơ biên bản đến Thanh tra Sở Xây dựng hoặc Thanh tra Bộ Xây dựng để ban hành Quyết định xử phạt vi phạm hành chính đối với nhà thầu theo **Khoản 1 Điều 12 Nghị định số 339/2026/NĐ-CP** (mức phạt đến 30.000.000 đồng) và buộc thực hiện nghĩa vụ.
+
+---
+
+### 📊 BẢNG TỔNG HỢP CÁC CHẾ TÀI ÁP DỤNG ĐỐI VỚI TƯ VẤN THIẾT KẾ:
+
+| Chế tài xử lý | Căn cứ pháp lý & Hợp đồng | Biện pháp cụ thể của Chủ đầu tư / PMU | Hậu quả pháp lý đối với Nhà thầu thiết kế |
+| :--- | :--- | :--- | :--- |
+| **1. Cảnh cáo vi phạm** | Hợp đồng tư vấn thiết kế & Điều 21 NĐ 207 | Phát hành thông báo vi phạm lần 1, lần 2, ấn định Deadline 24-48h | Hồ sơ lưu vết vi phạm chính thức |
+| **2. Phạt vi phạm tiến độ** | Hợp đồng xây dựng & NĐ 37/2015 | Phạt $0,5\\% - 1\\%$/tuần (tối đa đến $8\\% - 12\\%$ giá trị hợp đồng) | Khấu trừ trực tiếp vào tiền thanh toán |
+| **3. Bồi thường thiệt hại** | **Điều 35 Khoản 2** Luật Xây dựng 2025 | Bắt bồi thường chi phí dừng chờ máy móc, nhân công của Nhà thầu xây lắp | Phải nộp tiền bồi thường hoặc bị cấn trừ |
+| **4. Thay thế tư vấn khác** | Hợp đồng tư vấn & Điều 31 Luật Xây dựng | Thuê tư vấn khác xử lý cấp bách để cứu tiến độ dự án | Tư vấn cũ phải trả toàn bộ chi phí thuê tư vấn mới |
+| **5. Chế tài Đấu thầu** | Luật Đấu thầu 22/2023 & NĐ 214/2025 | Đăng tải vi phạm lên Mạng Đấu thầu quốc gia | Mất uy tín, bị loại khỏi các gói thầu công tương lai |
+| **6. Xử phạt hành chính** | **Điều 12 Khoản 1** Nghị định 339/2026 | Chuyển hồ sơ đề nghị Thanh tra Sở Xây dựng ra QĐ xử phạt | Phạt tiền $20 - 30$ triệu VNĐ + công khai vi phạm |
+
+---
+
+### 💡 LƯU Ý BẢO VỆ PHÁP LÝ CHO CÁN BỘ PMU KHI XỬ LÝ:
+1. **Tuyệt đối văn bản hóa mọi yêu cầu:** Mọi trao đổi yêu cầu điều chỉnh thiết kế hiện trường không được thực hiện qua điện thoại hay tin nhắn cá nhân. Bắt buộc phải có **Văn bản chính thức của PMU/TVGS** có dấu tiếp nhận hoặc dấu bưu điện/email công vụ ghi rõ ngày giờ để làm căn cứ pháp lý tính toán số ngày chậm trễ khi phạt hợp đồng.
+2. **Không tự ý cho thợ làm sai thiết kế khi chưa có bản vẽ điều chỉnh duyệt:** Cán bộ PMU không được tự ý chỉ đạo nhà thầu thi công "cứ làm đại đi rồi sửa bản vẽ sau", vì nếu xảy ra sự cố sụp đổ kết cấu hoặc bị Thanh tra kiểm toán kết luận thi công sai thiết kế thì cán bộ PMU và TVGS sẽ phải chịu trách nhiệm hình sự liên đới.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -2291,6 +2401,7 @@ Thuộc các trường hợp nghiêm trọng sau:
             const isTilingPaving = /lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(message) && (/yêu cầu kỹ thuật|tiêu chuẩn|quy trình|nghiệm thu|dung sai|kỹ thuật/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
             const isToleranceQuery = /sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(message) && (/thi công|nghiệm thu|chấp nhận|kết cấu|hình học/i.test(message));
             const isScaffoldingQuery = /giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(message) && (/yêu cầu|bắt buộc|kiểm tra|nghiệm thu|lắp dựng|an toàn|tiêu chuẩn/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
+            const isGstgViolation = /giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế/i.test(message) && (/xử lý|chậm trễ|không nghiêm túc|vi phạm|kéo dài|tiến độ/i.test(message));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
@@ -2301,7 +2412,8 @@ Thuộc các trường hợp nghiêm trọng sau:
                 (isConcreteAcceptance && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
                 (isTilingPaving && (!llmReply.includes("TCVN 9377") || !llmReply.includes("|"))) ||
                 (isToleranceQuery && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
-                (isScaffoldingQuery && (!llmReply.includes("QCVN 18") || !llmReply.includes("|")))) {
+                (isScaffoldingQuery && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
+                (isGstgViolation && (!llmReply.includes("Điều 21") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
