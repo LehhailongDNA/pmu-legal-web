@@ -774,12 +774,24 @@ document.addEventListener("DOMContentLoaded", () => {
     activePersona = personaKey;
     const cfg = personaConfig[personaKey] || personaConfig.legal;
 
+    const aiNotice = (!aiConfig.apiKey && aiConfig.provider !== "ollama") ? `
+      <div class="alert alert-light border rounded-3 p-2 mt-2 mb-0 d-flex align-items-center justify-content-between">
+        <span class="small text-secondary" style="font-size: 0.76rem;">
+          <i class="bi bi-stars text-primary me-1"></i><strong>Kích hoạt AI Linh Hoạt:</strong> Kết nối Google Gemini API (miễn phí 100%) để AI tự động suy luận và phân tích sâu sắc mọi câu hỏi như ChatGPT.
+        </span>
+        <button class="btn btn-sm btn-outline-primary py-0 px-2 text-nowrap ms-2" style="font-size: 0.72rem;" data-bs-toggle="modal" data-bs-target="#aiSettingsModal">
+          <i class="bi bi-key me-1"></i>Nhập Key Miễn Phí
+        </button>
+      </div>
+    ` : "";
+
     chatMessages.innerHTML = `
       <div class="chat-bubble assistant">
         <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
           <i class="bi ${cfg.icon}"></i> ${cfg.name}
         </div>
-        ${cfg.greeting}
+        <div>${cfg.greeting}</div>
+        ${aiNotice}
       </div>
     `;
 
@@ -1307,26 +1319,75 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
       const artLabel = a.articleNumber ? `Điều ${a.articleNumber}. ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
       md += `- **${a.docCode}** (*${a.docTitle}*) — **${artLabel}**\n`;
     });
-    md += `\n`;
+    md += `\n---\n\n`;
 
-    md += `**3. Nội dung quy định chi tiết trích xuất từ văn bản gốc:**\n\n`;
-    topArticles.forEach((a, idx) => {
+    // 3. Generalized Semantic Synthesis for Any Question
+    const primaryArticle = topArticles.find(a => (a.content || a.snippet || "").length > 200) || topArticles[0];
+    const pContent = primaryArticle ? (primaryArticle.content || primaryArticle.snippet || "") : "";
+    const pLines = pContent.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+
+    const isTimeline = /thời gian|thời hạn|bao lâu|khi nào|mấy ngày|tiến độ/i.test(qLower);
+    const isContent = /nội dung|bao gồm|những gì|gồm những|các bước|quy trình|hồ sơ/i.test(qLower);
+    const isAuthority = /thẩm quyền|cơ quan nào|ai|cấp nào|trách nhiệm của/i.test(qLower);
+
+    const structuredPoints = [];
+    const timelineMatches = [];
+    const authorityMatches = [];
+
+    for (const line of pLines) {
+      if (/^(\d+\.|\b[a-z]\)|\-|\+)\s+/i.test(line)) {
+        structuredPoints.push(line);
+      }
+      const tMatch = line.match(/(?:thời hạn|thời gian|trong thời hạn|không quá|ít nhất)\s+([^,.;:]+(?:ngày|ngày làm việc|tháng|năm))/i);
+      if (tMatch) {
+        timelineMatches.push({ line, match: tMatch[0] });
+      }
+      if (/thẩm quyền|phê duyệt|chấp thuận|do .*? thực hiện|giao cho/i.test(line)) {
+        authorityMatches.push(line);
+      }
+    }
+
+    md += `### 🎯 TỔNG HỢP NỘI DUNG GIẢI ĐÁP:\n\n`;
+
+    if (isTimeline && timelineMatches.length > 0) {
+      md += `| Quy định thời hạn | Chi tiết nội dung thực hiện | Căn cứ điều khoản |\n`;
+      md += `| :--- | :--- | :--- |\n`;
+      timelineMatches.slice(0, 8).forEach(tm => {
+        const cleanLine = tm.line.replace(/^[0-9a-z\.\-\+\)]+\s*/i, "").slice(0, 120);
+        md += `| **${tm.match}** | ${cleanLine}... | ${primaryArticle.docCode} Điều ${primaryArticle.articleNumber || ''} |\n`;
+      });
+      md += `\n`;
+    } else if (isContent && structuredPoints.length > 0) {
+      md += `Căn cứ theo quy định tại **${primaryArticle.docCode}** (${primaryArticle.articleTitle || `Điều ${primaryArticle.articleNumber}`}), các nội dung cụ thể bao gồm:\n\n`;
+      structuredPoints.slice(0, 20).forEach(pt => {
+        if (/^\d+\./.test(pt)) {
+          md += `\n**${pt}**\n`;
+        } else {
+          md += `  - ${pt}\n`;
+        }
+      });
+      md += `\n`;
+    } else if (isAuthority && authorityMatches.length > 0) {
+      md += `Quy định cụ thể về thẩm quyền và phân cấp trách nhiệm:\n\n`;
+      authorityMatches.slice(0, 8).forEach(am => {
+        md += `- ${am}\n`;
+      });
+      md += `\n`;
+    }
+
+    md += `\n---\n\n### 📖 TRÍCH DẪN NGUYÊN VĂN QUY ĐỊNH ĐỂ ĐỐI CHIẾU:\n\n`;
+    topArticles.slice(0, 3).forEach((a, idx) => {
       const artLabel = a.articleNumber ? `Điều ${a.articleNumber}: ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
       let contentClean = (a.content || a.snippet || "").trim();
-      if (contentClean.length > 800) {
-        contentClean = contentClean.slice(0, 800) + "... *(xem tiếp toàn văn tại văn bản)*";
-      }
-
       md += `##### **${idx + 1}. ${artLabel} (${a.docCode})**\n`;
       md += `> ${contentClean.replace(/\n+/g, "\n> ")}\n\n`;
     });
 
-    md += `**4. Kết luận/Áp dụng cho Ban Quản lý Dự án (PMU):**\n`;
-    md += `1. **Áp dụng trực tiếp:** Căn cứ theo quy định tại **${topDoc.docCode}**, người thực hiện cần tuân thủ đầy đủ điều kiện, trình tự thủ tục và thẩm quyền nêu trên.\n`;
-    md += `2. **Kiểm soát tính hiệu lực:** Đảm bảo áp dụng đúng hệ thống văn bản quy phạm pháp luật năm 2025-2026, loại bỏ các viện dẫn văn bản cũ đã hết hiệu lực.\n`;
-    md += `3. **Lưu trữ hồ sơ PMU:** Lập biên bản, tờ trình hoặc quyết định phê duyệt theo đúng biểu mẫu đính kèm trong thư viện pháp lý.\n\n`;
+    md += `### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):\n`;
+    md += `1. **Kiểm tra tính áp dụng:** Cần đối chiếu kỹ quy mô, loại hình dự án và thẩm quyền phân cấp đối với quy định tại **${topDoc.docCode}**.\n`;
+    md += `2. **Tuân thủ biểu mẫu:** Đảm bảo toàn bộ tài liệu, hồ sơ trình phê duyệt tuân thủ biểu mẫu hiện hành theo quy định mới nhất.\n\n`;
 
-    md += `---\n*📌 Gợi ý: Bạn có thể bấm vào nút **Cài đặt AI** ở thanh trên để cấu hình API Key (Google Gemini miễn phí hoặc OpenAI/DeepSeek) để nhận phân tích chuyên sâu tự động.*\n`;
+    md += `---\n*💡 **Mẹo:** Bạn có thể bấm vào nút **Cài đặt AI** ở thanh trên để cấu hình API Key (Google Gemini 100% miễn phí) để kích hoạt tính năng Generative AI thông minh tự động suy luận và phân tích sâu mọi tình huống thực tế.*\n`;
 
     return md;
   }
