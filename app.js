@@ -695,6 +695,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           });
 
+          if (clean.includes("thẩm tra") && (artTitleLower.includes("thẩm tra") || artSnippetLower.includes("thẩm tra") || (art.number == 3 && lowerCode.includes("135/2025")) || (art.number == 26 && lowerCode.includes("135/2025")) || (art.number == 36 && lowerCode.includes("135/2025")))) {
+            artScore += 1000;
+          }
           if (clean.includes("lấy ý kiến") && (artTitleLower.includes("lấy ý kiến") || artSnippetLower.includes("lấy ý kiến"))) {
             artScore += 600;
           }
@@ -1018,6 +1021,9 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
           });
 
           // Specific bonus for query intent match
+          if (clean.includes("thẩm tra") && (artTitleLower.includes("thẩm tra") || artSnippetLower.includes("thẩm tra") || (art.number == 3 && lowerDocCode.includes("135/2025")) || (art.number == 26 && lowerDocCode.includes("135/2025")) || (art.number == 36 && lowerDocCode.includes("135/2025")))) {
+            artScore += 1000;
+          }
           if (clean.includes("lấy ý kiến") && (artTitleLower.includes("lấy ý kiến") || artSnippetLower.includes("lấy ý kiến"))) {
             artScore += 600;
           }
@@ -1229,6 +1235,51 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 4. **Tránh nhầm lẫn giữa Nhiệm vụ quy hoạch và Đồ án quy hoạch:** 
    - Giai đoạn **Nhiệm vụ quy hoạch**: Chỉ lấy ý kiến cơ quan nhà nước có liên quan (07 ngày làm việc), **không bắt buộc** lấy ý kiến cộng đồng dân cư.
    - Giai đoạn **Đồ án quy hoạch**: Bắt buộc phải lấy ý kiến cộng đồng dân cư (20 - 30 ngày) và cơ quan, tổ chức (15 ngày).`;
+    }
+
+    // Specialized Handler for Verification vs Appraisal Comparison (Thẩm tra vs Thẩm định Báo cáo NCKT)
+    if (/thẩm tra/i.test(qLower) && /thẩm định/i.test(qLower) && (/khác nhau|so sánh|phân biệt|nghiệp vụ|là gì|như thế nào/i.test(qLower) || /nghiên cứu khả thi|nckt|thiết kế|dự án/i.test(qLower))) {
+      return `### ⚖️ Báo Cáo Phân Tích Pháp Lý: So Sánh Nghiệp Vụ THẨM TRA & THẨM ĐỊNH Báo Cáo Nghiên Cứu Khả Thi (FSR)
+
+**1. Vấn đề pháp lý:** ${question}
+
+**2. Căn cứ pháp lý cốt lõi:**
+- **Luật Xây dựng số 135/2025/QH15**:
+  - **Khoản 15 Điều 3:** Định nghĩa pháp lý về hoạt động **Thẩm tra**.
+  - **Khoản 16 Điều 3:** Định nghĩa pháp lý về hoạt động **Thẩm định**.
+  - **Khoản 8 Điều 3:** Hoạt động tư vấn xây dựng (bao gồm dịch vụ Thẩm tra).
+  - **Khoản 5 Điều 26:** Quy định công trình thuộc dự án bắt buộc phải thẩm tra thiết kế xây dựng làm cơ sở cho thẩm định.
+  - **Điều 36:** Quyền, nghĩa vụ và trách nhiệm của nhà thầu tư vấn thẩm tra.
+  - **Điều 27:** Thẩm định của cơ quan chuyên môn về xây dựng.
+- **Nghị định số 217/2026/NĐ-CP**:
+  - **Điều 31 & Điều 38:** Nội dung, thẩm quyền thẩm định và việc sử dụng báo cáo kết quả thẩm tra xác nhận an toàn, PCCC.
+  - **Điều 35 & Điều 36:** Hồ sơ trình thẩm định (bắt buộc phải có Báo cáo kết quả thẩm tra theo quy định).
+- **Nghị định số 206/2026/NĐ-CP**:
+  - Quy định phân định chi phí Thẩm tra (chi phí tư vấn đầu tư xây dựng) và chi phí Thẩm định (phí thẩm định dự án thuộc chi phí khác).
+
+---
+
+### 📊 BẢNG SO SÁNH TOÀN DIỆN VỀ NGHIỆP VỤ GIỮA THẨM TRA VÀ THẨM ĐỊNH:
+
+| Tiêu chí so sánh | THẨM TRA Báo cáo NCKT (Verification) | THẨM ĐỊNH Báo cáo NCKT (Appraisal) |
+| :--- | :--- | :--- |
+| **1. Bản chất pháp lý** | Là **hoạt động dịch vụ tư vấn kỹ thuật - chuyên môn độc lập** (Khoản 8 & 15 Điều 3 Luật XD 2025). Mang tính chất tham vấn chuyên môn, độc lập khách quan. | Là **hoạt động thực thi quản lý nhà nước / trách nhiệm của Người quyết định đầu tư, Chủ đầu tư** (Khoản 16 Điều 3 Luật XD 2025). Mang tính quyền lực pháp lý hành chính bắt buộc. |
+| **2. Chủ thể thực hiện** | **Tổ chức tư vấn xây dựng độc lập** (Nhà thầu tư vấn thẩm tra) có chứng chỉ năng lực hoạt động xây dựng phù hợp; hoặc chuyên gia tư vấn được thuê theo hợp đồng. | **Cơ quan chuyên môn về xây dựng** (Bộ Xây dựng, Sở Xây dựng...), **Hội đồng thẩm định**, hoặc **Cơ quan chuyên môn trực thuộc Người quyết định đầu tư**. |
+| **3. Vị trí trong quy trình** | Là **bước hỗ trợ kỹ thuật đầu vào, làm cơ sở** cho công tác thẩm định (Khoản 5 Điều 26 Luật XD 2025). Thực hiện trước hoặc song song theo yêu cầu của cơ quan thẩm định/chủ đầu tư. | Là **bước quyết định điều kiện pháp lý tiên quyết** để hoàn thành thủ tục chuẩn bị đầu tư và trình cấp có thẩm quyền phê duyệt dự án (Điều 26, 28 Luật XD 2025). |
+| **4. Trọng tâm nghiệp vụ** | **Soi chiếu chi tiết tính toán kỹ thuật:**<br>• Kiểm tra chi tiết mô hình tính toán kết cấu, an toàn nền móng, địa chất.<br>• Kiểm tra chi tiết giải pháp công nghệ, sơ đồ dây chuyền.<br>• Đo bóc, kiểm tra chi tiết khối lượng, đơn giá, định mức dự toán.<br>• Xác nhận các giải pháp an toàn công trình, an toàn PCCC. | **Đánh giá tổng thể tính pháp lý, quy hoạch & hiệu quả:**<br>• Đánh giá sự phù hợp với quy hoạch xây dựng, chỉ tiêu sử dụng đất, kiến trúc.<br>• Đánh giá khả năng đấu nối hạ tầng ngoài hàng rào.<br>• Đánh giá sự phù hợp Chủ trương đầu tư, hiệu quả KT-XH, hiệu quả tài chính.<br>• Đánh giá khả năng cân đối vốn, phương án GPMB, thủ tục ĐTM.<br>• Xem xét Báo cáo thẩm tra để đưa ra kết luận phê duyệt. |
+| **5. Sản phẩm đầu ra** | • **Báo cáo kết quả thẩm tra** của Tổ chức tư vấn.<br>• **Đóng dấu xác nhận thẩm tra** trên các bản vẽ thiết kế (theo Mẫu 14 Phụ lục I NĐ 217). | • **Văn bản thông báo kết quả thẩm định** (hoặc Báo cáo kết quả thẩm định) theo Mẫu số 03/04 Phụ lục I NĐ 217/2026/NĐ-CP. |
+| **6. Trách nhiệm pháp lý** | Chịu trách nhiệm trước Chủ đầu tư và pháp luật theo **Hợp đồng dịch vụ tư vấn** về tính chính xác của số liệu tính toán và các xác nhận kỹ thuật (Điều 36 Luật XD 2025). | Chịu trách nhiệm trước Người quyết định đầu tư và pháp luật theo **Thẩm quyền quản lý nhà nước** về kết luận thẩm định đủ điều kiện hoặc không đủ điều kiện phê duyệt. |
+| **7. Nguồn chi phí** | Thuộc **Chi phí tư vấn đầu tư xây dựng** (Khoản mục số 5 trong TMĐT) theo định mức Thông tư Bộ Xây dựng. | Thuộc **Chi phí khác** (Khoản mục số 6 trong TMĐT) theo biểu mức thu Phí thẩm định dự án của Bộ Tài chính. |
+
+---
+
+### 💡 Lưu ý kiểm soát nghiệp vụ thực tế cho Ban Quản lý Dự án (PMU):
+1. **Thẩm tra không thay thế thẩm định:** Cơ quan chuyên môn về xây dựng và Người quyết định đầu tư không được lấy Báo cáo thẩm tra thay cho trách nhiệm thẩm định của mình. Báo cáo thẩm tra chỉ là tài liệu tham khảo chuyên môn độc lập để cơ quan thẩm định xem xét, kết luận.
+2. **Các trường hợp bắt buộc phải có Báo cáo thẩm tra (Khoản 5 Điều 26 Luật XD 2025):**
+   - Công trình có ảnh hưởng lớn đến an toàn, lợi ích cộng đồng;
+   - Công trình có quy mô lớn, kỹ thuật phức tạp;
+   - Công trình thuộc diện thẩm định thiết kế về PCCC.
+3. **Điều kiện năng lực nhà thầu thẩm tra:** PMU phải kiểm tra chứng chỉ năng lực hoạt động xây dựng của tổ chức tư vấn thẩm tra và chứng chỉ hành nghề của các cá nhân chủ trì thẩm tra trên Hệ thống thông tin quốc gia về hoạt động xây dựng. Tổ chức thẩm tra phải độc lập về pháp lý và tài chính với nhà thầu lập thiết kế xây dựng.`;
     }
 
     // Specialized Handler for Feasibility Study Report Appraisal Contents (Nội dung thẩm định Báo cáo NCKT - Luật XD 135/2025 & NĐ 217/2026)
@@ -1579,14 +1630,17 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
         try {
           let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
           if (llmReply && llmReply.trim().length > 30) {
-            // Check if comparison or planning question or feasibility study needs authoritative table formatting
+            // Check if comparison or planning question or feasibility study or verification vs appraisal needs authoritative table formatting
             const isComparison = /so sánh|khác nhau|khác biệt/i.test(message) || (/chỉ định thầu/i.test(message) && /rút gọn/i.test(message));
             const isPlanningTimeline = /quy hoạch/i.test(message) && (/nhiệm vụ/i.test(message) || /lấy ý kiến/i.test(message) || /thời gian/i.test(message) || /thời hạn/i.test(message));
             const isFsrContent = (/nghiên cứu khả thi|kinh tế.*kỹ thuật|báo cáo nckt/i.test(message) || (/thẩm định/i.test(message) && /dự án/i.test(message))) && 
                                  (/nội dung/i.test(message) || /bao gồm/i.test(message) || /những gì/i.test(message) || /gồm những/i.test(message));
+            const isThamTraVsThamDinh = /thẩm tra/i.test(message) && /thẩm định/i.test(message);
+
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
-                (isFsrContent && (!llmReply.includes("Điều 26") || !llmReply.includes("|")))) {
+                (isFsrContent && (!llmReply.includes("Điều 26") || !llmReply.includes("|"))) ||
+                (isThamTraVsThamDinh && (!llmReply.includes("Khoản 15") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
