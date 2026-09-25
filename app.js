@@ -758,6 +758,25 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
 
+          // Technical Requirements & TCVN/QCVN Routing Booster
+          const isTechSpecQuery = /yêu cầu kỹ thuật|tiêu chuẩn kỹ thuật|quy chuẩn kỹ thuật|quy phạm|dung sai|độ phẳng|độ dốc|sai số|kỹ thuật thi công/i.test(clean);
+          if (isTechSpecQuery && isDocTCVN) {
+            artScore += 2000;
+          }
+
+          // Booster for Tiling, Paving & Floor Finishing (TCVN 9377-1:2012, TCVN 8264:2009, TCXDVN 303)
+          if (/lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(clean)) {
+            if (lowerCode.includes("9377-1") || lowerCode.includes("8264") || lowerCode.includes("1453") || lowerCode.includes("303")) {
+              artScore += 4500;
+            }
+            if (artTitleLower.includes("lát") || artSnippetLower.includes("lát") || artTitleLower.includes("láng") || artSnippetLower.includes("láng")) {
+              artScore += 2500;
+            }
+            if (lowerCode.includes("70/2026") || lowerCode.includes("144/2025") || lowerCode.includes("339/2026") || lowerCode.includes("08/2022") || lowerDocTitle.includes("quy hoạch")) {
+              artScore -= 4000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number?.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -1115,6 +1134,25 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
           if (clean.includes("bê tông") && (clean.includes("nghiệm thu") || clean.includes("thi công") || clean.includes("đổ") || clean.includes("cốp pha") || clean.includes("cốt thép") || clean.includes("checklist") || clean.includes("kiểm tra"))) {
             if (lowerDocCode.includes("4453") || artTitleLower.includes("bê tông") || artSnippetLower.includes("bê tông") || (lowerDocCode.includes("207/2026") && art.number == 22)) {
               artScore += 3000;
+            }
+          }
+
+          // Technical Requirements & TCVN/QCVN Routing Booster
+          const isTechSpecQuery = /yêu cầu kỹ thuật|tiêu chuẩn kỹ thuật|quy chuẩn kỹ thuật|quy phạm|dung sai|độ phẳng|độ dốc|sai số|kỹ thuật thi công/i.test(clean);
+          if (isTechSpecQuery && isDocTCVN) {
+            artScore += 2000;
+          }
+
+          // Booster for Tiling, Paving & Floor Finishing (TCVN 9377-1:2012, TCVN 8264:2009, TCXDVN 303)
+          if (/lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(clean)) {
+            if (lowerDocCode.includes("9377-1") || lowerDocCode.includes("8264") || lowerDocCode.includes("1453") || lowerDocCode.includes("303")) {
+              artScore += 4500;
+            }
+            if (artTitleLower.includes("lát") || artSnippetLower.includes("lát") || artTitleLower.includes("láng") || artSnippetLower.includes("láng")) {
+              artScore += 2500;
+            }
+            if (lowerDocCode.includes("70/2026") || lowerDocCode.includes("144/2025") || lowerDocCode.includes("339/2026") || lowerDocCode.includes("08/2022") || lowerDocTitle.includes("quy hoạch")) {
+              artScore -= 4000;
             }
           }
 
@@ -1664,6 +1702,102 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
    - Tuyệt đối nghiêm cấm việc tháo dỡ toàn bộ hệ cây chống sàn tầng dưới khi đang đổ bê tông sàn tầng trên liền kề nếu chưa được tính toán kiểm tra khả năng truyền tải trọng thi công.`;
     }
 
+    // Specialized Handler for Floor Tiling & Paving Technical Requirements (TCVN 9377-1:2012, TCVN 8264:2009 & NĐ 207/2026)
+    if (/lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(qLower) && (/yêu cầu kỹ thuật|tiêu chuẩn|quy trình|nghiệm thu|dung sai|kỹ thuật/i.test(qLower) || !qLower.includes("quy hoạch"))) {
+      return `### 📐 Báo Cáo Kỹ Thuật & Nghiệm Thu: Yêu Cầu Kỹ Thuật Trong Thi Công Lát Nền Công Trình
+
+**1. Vấn đề pháp lý & kỹ thuật:** ${question}
+
+**2. Căn cứ tiêu chuẩn kỹ thuật & Quy định pháp lý áp dụng:**
+- **TCVN 9377-1:2012** — *Công tác hoàn thiện trong xây dựng - Thi công và nghiệm thu - Phần 1: Lát và láng* (Tiêu chuẩn kỹ thuật cốt lõi quy định chi tiết vật liệu, chuẩn bị lớp nền, quy trình thi công lát và dung sai kiểm tra nghiệm thu).
+- **TCVN 8264:2009** — *Gạch ốp lát - Quy phạm thi công và nghiệm thu*.
+- **TCVN 1453:2023** (và **TCVN 6414:1998**) — *Gạch gốm ốp lát - Yêu cầu kỹ thuật*.
+- **TCXDVN 336:2005** — *Vữa dán gạch ốp lát - Yêu cầu kỹ thuật và phương pháp thử*.
+- **Nghị định số 207/2026/NĐ-CP** của Chính phủ:
+  - **Điều 22:** Nghiệm thu công việc xây dựng hoàn thành (Thời hạn kiểm tra không quá 24 giờ, thành phần ký biên bản nghiệm thu hoàn thiện).
+  - **Điều 15 & Điều 20:** Quản lý chất lượng thi công, kiểm tra vật liệu hoàn thiện đầu vào của Nhà thầu và Tư vấn giám sát (TVGS).
+
+---
+
+### 🧱 I. CÁC YÊU CẦU KỸ THUẬT CỐT LÕI (THEO MỤC 4.1 TCVN 9377-1:2012):
+
+#### 1. Yêu cầu đối với Lớp nền (Basal Layer - Mục 4.1.2):
+- **Độ cứng vững & ổn định:** Lớp nền (bê tông sàn, lớp láng nền, lớp bê tông lót) phải đủ độ cứng, ổn định, không bị co ngót biến dạng hoặc lún nứt trước khi lát.
+- **Vệ sinh & Bề mặt tiếp xúc:**
+  - Bề mặt nền phải được vệ sinh sạch sẽ, loại bỏ triệt để bụi bẩn, vụn vữa thừa, dầu mỡ, chất chống dính cốp pha.
+  - Phải tạo nhám bề mặt nếu mặt bê tông quá nhẵn bóng để tăng độ bám dính.
+- **Độ ẩm lớp nền:** Phải tưới nước làm ẩm đều bề mặt lớp nền trước khi rải vữa lót/quét hồ dầu (không để đọng vũng nước cục bộ).
+- **Cao độ & Độ dốc thoát nước của lớp nền:** Cao độ và độ dốc lớp nền phải phù hợp với chiều dày lớp vữa lót và lớp vật liệu lát phủ bên trên theo đúng bản vẽ thiết kế hoàn thiện.
+- **Nghiệm thu phần che khuất:** Các công tác ngầm (đường ống điện, ống cấp thoát nước âm sàn, lớp chống thấm sàn vệ sinh/ban công/mái) phải được **nghiệm thu đạt yêu cầu kỹ thuật và thử nước ngâm sàn không thấm dột trước khi cho phép thi công lớp lát**.
+
+#### 2. Yêu cầu đối với Vật liệu lát & Vật liệu gắn kết (Mục 4.1.1):
+- **Gạch/Đá lát:**
+  - Phải đúng chủng loại, kích thước, quy cách, màu sắc, hoa văn theo hồ sơ thiết kế và mẫu được Chủ đầu tư/TVGS phê duyệt.
+  - Gạch không bị cong vênh nứt mẻ, không sứt cạnh, men không có vết rạn, đồng nhất màu sắc trong cùng một lô.
+  - Đối với gạch ceramic có độ hút nước cao: Phải ngâm nước đủ no nước và để ráo nước bề mặt trước khi lát. Đối với gạch granite, porcelain, đá tự nhiên hút nước thấp: Sử dụng keo dán chuyên dụng hoặc hồ dầu tăng cường độ bám.
+- **Vật liệu gắn kết (Vữa xi măng - cát hoặc Keo dán gạch):**
+  - **Vữa xi măng - cát:** Thường dùng mác 50 đến 75 (theo thiết kế); cát phải qua sàng loại bỏ tạp chất và rác hữu cơ; tỷ lệ nước trộn vừa đủ dẻo, không quá khô hoặc quá nhão.
+  - **Keo dán gạch chuyên dụng:** Đạt tiêu chuẩn TCXDVN 336:2005 / ISO 13007, pha trộn đúng tỷ lệ của nhà sản xuất, sử dụng trong thời gian mở cho phép (thường $\le 20-30$ phút sau khi trộn).
+
+---
+
+### ⚙️ II. QUY TRÌNH KỸ THUẬT THI CÔNG LÁT NỀN 05 BƯỚC CHUẨN:
+
+1. **Bước 1: Khảo sát, trắc đạc & Đánh mốc cao độ:**
+   - Sử dụng máy laser, thủy bình xác định cao độ hoàn thiện $+0.000$ của sàn.
+   - Bật mực tim trục, định vị đường thẳng chia ô gạch, tính toán cắt gạch sao cho các viên cắt nằm ở góc khuất hoặc chân tường kín.
+   - Đặt các viên gạch mốc chuẩn (viên tiêu chuẩn) tại các góc phòng và tim trục để căng dây chuẩn.
+2. **Bước 2: Chuẩn bị & Trải lớp vữa đệm / keo dán:**
+   - Quét lớp hồ dầu kết nối (xi măng nguyên chất hòa nước) lên mặt nền ẩm.
+   - Rải đều lớp vữa lót xi măng - cát (chiều dày thiết kế $15 - 30\\text{ mm}$), dùng thước cán phẳng theo cao độ mốc và theo đúng độ dốc thoát nước.
+   - Trường hợp thi công bằng keo dán gạch: Dùng bay răng cưa kéo keo nghiêng góc $60^\\circ$ tạo các đường rãnh gân keo đều khắp mặt nền.
+3. **Bước 3: Đặt gạch & Căn chỉnh gõ phẳng:**
+   - Đặt viên gạch đúng hướng hoa văn (theo mũi tên ở đáy viên gạch nếu có).
+   - Dùng búa cao su gõ nhẹ và đều từ tâm ra 4 mép gạch để ép vữa/keo điền đầy tuyệt đối đáy gạch, không tạo bọng rỗng (tránh bị ộp/bộp).
+   - Sử dụng ke dấu cộng (ke chữ thập) căn đều khe mạch gạch ($1,5\\text{ mm} - 3\\text{ mm}$ tùy loại gạch).
+   - Dùng thước nhôm 2m đặt chéo và áp sát mặt gạch để kiểm tra độ phẳng tức thì giữa các viên liền kề.
+4. **Bước 4: Chít mạch (Chà ron) làm đầy khe:**
+   - Thời điểm chít mạch: Thực hiện sau khi lát tối thiểu từ **24 giờ đến 48 giờ** khi vữa/keo gắn kết đã đủ cường độ ninh kết cứng chắc.
+   - Cạo vét sạch bụi bẩn, cát thừa bám trong khe mạch gạch trước khi chít.
+   - Dùng bột trét mạch/keo miết mạch chuyên dụng miết đầy sâu vào tận đáy khe mạch, dùng bay cao su vuốt phẳng nhẵn, không lõm quá sâu.
+5. **Bước 5: Vệ sinh & Bảo dưỡng mặt lát:**
+   - Dùng giẻ sạch ẩm hoặc mút xốp lau sạch toàn bộ vết vữa/keo chít mạch vương vãi trên bề mặt gạch trước khi keo khô cứng.
+   - **Bảo dưỡng:** Che đậy bạt/nylon, dưỡng ẩm nhẹ từ 1 - 3 ngày đối với mặt lát dùng vữa xi măng ngoài trời.
+   - **Cấm đi lại:** Tuyệt đối không cho người đi lại trên sàn lát trong vòng **24 - 48 giờ đầu tiên** sau khi hoàn thành.
+
+---
+
+### 📊 III. BẢNG TIÊU CHUẨN DUNG SAI KIỂM TRA NGHIỆM THU THEO TCVN 9377-1:2012:
+
+*(Căn cứ theo **Mục 4.1.3.7, Bảng 1, Bảng 2 & Mục 6 TCVN 9377-1:2012**)*
+
+| Chỉ tiêu kỹ thuật kiểm tra | Gạch lát ceramic, granite, đá nhân tạo, granito | Gạch lát đất sét nung / gạch gốm | Đá tự nhiên không mài mặt | Phương pháp & Dụng cụ kiểm tra |
+| :--- | :---: | :---: | :---: | :--- |
+| **1. Độ phẳng bề mặt (Khe hở dưới thước 3m)** | $\\le$ **3 mm** *(thước 2m $\\le 2\\text{ mm}$)* | $\\le$ **4 mm** | $\\le$ **3 mm** | Đặt thước tầm 2m - 3m áp sát bề mặt ở mọi phương vị, dùng thước nêm đo khe hở |
+| **2. Chênh lệch cao độ giữa 2 mép gạch liền kề (Bảng 2)** | $\\le$ **0,5 mm** *(tuyệt đối không gờ sắc)* | $\\le$ **3,0 mm** | $\\le$ **3,0 mm** | Dùng thước đo dưỡng chuyên dụng hoặc thước cặp cơ khí |
+| **3. Dung sai cao độ tổng thể** | $\\le$ **1 cm** ($\\pm 10\\text{ mm}$) | $\\le$ **2 cm** | $\\le$ **2 cm** | Đo bằng máy thủy bình, laser hoặc ni-vô chuẩn |
+| **4. Dung sai độ dốc thoát nước** | $\\le$ **0,3 %** so với thiết kế | $\\le$ **0,5 %** | $\\le$ **0,5 %** | Dùng ni-vô góc nghiêng, thử dội nước thoát hết, không đọng vũng |
+| **5. Độ bám dính & Độ đặc chắc (Hiện tượng bộp)** | **100% không bị bộp** | **100% không bị bộp** | **100% không bị bộp** | Gõ nhẹ bằng búa đầu cao su hoặc thanh kim loại khắp mặt viên gạch |
+| **6. Quy cách mạch lát (Đường ron)** | Thẳng hàng, sắc nét, đều đặn, đầy khít chất trám mạch | Thẳng hàng, đều đặn, đầy khít mạch | Thẳng hàng, đầy khít mạch | Kiểm tra trực quan bằng mắt thường và đo thước rút |
+
+---
+
+### 💡 IV. LƯU Ý NGHIỆP VỤ KIỂM SOÁT CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
+
+1. **Quy tắc "Gõ bộp bóc bỏ ngay":**
+   - Theo quy định tại Mục 6.1.5 TCVN 9377-1:2012, kiểm tra độ bám dính bằng cách gõ nhẹ lên mặt lát. Bất kỳ viên gạch nào phát ra **tiếng kêu bộp rỗng (do thiếu vữa hoặc vữa khô mất nước)** đều bắt buộc phải cậy lên vệ sinh lớp nền và lát lại bằng vữa/keo mới.
+2. **Kiểm tra độ dốc các khu vực ướt (nhà vệ sinh, ban công, logia, sân thượng):**
+   - Độ dốc thiết kế thường từ **$1\\% - 2\\%$** hướng về phía phễu thu sàn (ga thoát sàn).
+   - Nghiệm thu bắt buộc phải thực hiện test dội nước thực tế: Toàn bộ nước phải thoát tự do về hố ga trong vòng 5-10 phút, **tuyệt đối không đọng vũng nước cục bộ** ở bất kỳ góc sàn nào.
+3. **Kiểm soát mạch co giãn (Expansion Joint):**
+   - Với các sàn có diện tích lớn (hành lang dài $> 6-8m$ hoặc sàn rộng $> 25-30m^2$), phải bố trí các khe co giãn chèn keo silicon/chất trám đàn hồi để tránh hiện tượng gạch kích nở gây phồng rộp, đội gạch khi nhiệt độ thay đổi.
+4. **Hồ sơ nghiệm thu công việc xây dựng theo Điều 22 NĐ 207/2026/NĐ-CP:**
+   - Biên bản nghiệm thu công tác lát nền phải đính kèm:
+     - Chứng chỉ chất lượng xuất xưởng và kết quả thí nghiệm kiểm định gạch lát, keo dán gạch;
+     - Biên bản nghiệm thu lớp nền và nghiệm thu thử thấm sàn trước khi lát;
+     - Bản vẽ hoàn công và ảnh chụp hiện trường hoàn thiện.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -1929,6 +2063,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
             const isOneBagVsTwoBag = (/1.*túi|một.*túi/i.test(message) && /2.*túi|hai.*túi/i.test(message)) || 
                                      (/giai đoạn/i.test(message) && /túi/i.test(message) && (/khác|so sánh|phân biệt/i.test(message) || (/1/i.test(message) && /2/i.test(message))));
             const isConcreteAcceptance = /bê tông/i.test(message) && (/nghiệm thu/i.test(message) || /checklist|check list|nội dung nào|cần hoàn thành|kiểm tra/i.test(message));
+            const isTilingPaving = /lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(message) && (/yêu cầu kỹ thuật|tiêu chuẩn|quy trình|nghiệm thu|dung sai|kỹ thuật/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
@@ -1936,7 +2071,8 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
                 (isThamTraVsThamDinh && (!llmReply.includes("Khoản 15") || !llmReply.includes("|"))) ||
                 (isWorkingAtHeight && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
                 (isOneBagVsTwoBag && (!llmReply.includes("Điều 30") || !llmReply.includes("|"))) ||
-                (isConcreteAcceptance && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|")))) {
+                (isConcreteAcceptance && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
+                (isTilingPaving && (!llmReply.includes("TCVN 9377") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
