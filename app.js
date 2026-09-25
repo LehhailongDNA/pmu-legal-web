@@ -638,7 +638,17 @@ document.addEventListener("DOMContentLoaded", () => {
   ]);
 
   function extractSearchFeatures(query) {
-    const clean = (query || "").toLowerCase().replace(/[?,.:;!"'()\[\]{}]/g, " ").replace(/\s+/g, " ").trim();
+    let clean = (query || "").toLowerCase().replace(/[?,.:;!"'()\[\]{}]/g, " ").replace(/\s+/g, " ").trim();
+    // Normalize digit numbers to statutory terms
+    clean = clean.replace(/\b1\s*giai\s*đoạn\b/g, "một giai đoạn")
+                 .replace(/\b2\s*giai\s*đoạn\b/g, "hai giai đoạn")
+                 .replace(/\b1\s*túi\b/g, "một túi")
+                 .replace(/\b2\s*túi\b/g, "hai túi")
+                 .replace(/\b1gđ\b/g, "một giai đoạn")
+                 .replace(/\b2gđ\b/g, "hai giai đoạn")
+                 .replace(/\b1ths\b/g, "một túi hồ sơ")
+                 .replace(/\b2ths\b/g, "hai túi hồ sơ");
+
     const rawWords = clean.split(" ").filter(w => w.length > 0);
     
     const phrases = [];
@@ -728,6 +738,17 @@ document.addEventListener("DOMContentLoaded", () => {
             if (lowerCode.includes("qcvn 18") || artTitleLower.includes("an toàn trong thi công") || artSnippetLower.includes("an toàn trong thi công")) {
               artScore += 1200;
             }
+          }
+
+          // Booster for 1 Giai đoạn 1 túi vs 1 Giai đoạn 2 túi (Luật Đấu thầu 22/2023)
+          if (clean.includes("một túi") && (artTitleLower.includes("một túi") || artSnippetLower.includes("một túi") || (art.number == 30 && lowerCode.includes("22/2023")))) {
+            artScore += 3500;
+          }
+          if (clean.includes("hai túi") && (artTitleLower.includes("hai túi") || artSnippetLower.includes("hai túi") || (art.number == 31 && lowerCode.includes("22/2023")))) {
+            artScore += 3500;
+          }
+          if (clean.includes("một giai đoạn") && !clean.includes("hai giai đoạn") && (artTitleLower.includes("hai giai đoạn") || art.number == 32 || art.number == 33)) {
+            artScore -= 5000;
           }
 
           keywords.forEach(kw => {
@@ -1070,6 +1091,17 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
             if (lowerDocCode.includes("qcvn 18") || artTitleLower.includes("an toàn trong thi công") || artSnippetLower.includes("an toàn trong thi công")) {
               artScore += 1200;
             }
+          }
+
+          // Booster for 1 Giai đoạn 1 túi vs 1 Giai đoạn 2 túi (Luật Đấu thầu 22/2023)
+          if (clean.includes("một túi") && (artTitleLower.includes("một túi") || artSnippetLower.includes("một túi") || (art.number == 30 && lowerDocCode.includes("22/2023")))) {
+            artScore += 3500;
+          }
+          if (clean.includes("hai túi") && (artTitleLower.includes("hai túi") || artSnippetLower.includes("hai túi") || (art.number == 31 && lowerDocCode.includes("22/2023")))) {
+            artScore += 3500;
+          }
+          if (clean.includes("một giai đoạn") && !clean.includes("hai giai đoạn") && (artTitleLower.includes("hai giai đoạn") || art.number == 32 || art.number == 33)) {
+            artScore -= 5000;
           }
 
           keywords.forEach(kw => {
@@ -1498,6 +1530,54 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 4. **Quyền đình chỉ thi công:** Tư vấn giám sát và cán bộ PMU có quyền và nghĩa vụ **đình chỉ ngay lập tức** công việc nếu phát hiện người lao động không cài dây an toàn đúng cách, giàn giáo chưa được nghiệm thu an toàn, hoặc khi thời tiết chuyển biến xấu có mưa giông gió mạnh.`;
     }
 
+    // Specialized Handler for Bidding Procedure Comparison (1 Giai đoạn 1 túi vs 1 Giai đoạn 2 túi - Luật Đấu thầu 22/2023)
+    if ((/1.*túi|một.*túi/i.test(qLower) && /2.*túi|hai.*túi/i.test(qLower)) || 
+        (/giai đoạn/i.test(qLower) && /túi/i.test(qLower) && (/khác|so sánh|phân biệt/i.test(qLower) || (/1/i.test(qLower) && /2/i.test(qLower))))) {
+      return `### ⚖️ Báo Cáo Phân Tích Pháp Lý: So Sánh Phương Thức Đấu Thầu "Một Giai Đoạn Một Túi Hồ Sơ" & "Một Giai Đoạn Hai Túi Hồ Sơ"
+
+**1. Vấn đề pháp lý:** ${question}
+
+**2. Căn cứ pháp lý áp dụng:**
+- **Luật Đấu thầu số 22/2023/QH15**:
+  - **Điều 30:** Phương thức một giai đoạn một túi hồ sơ (1GĐ 1THS).
+  - **Điều 31:** Phương thức một giai đoạn hai túi hồ sơ (1GĐ 2THS).
+  - **Điều 58:** Quy trình đánh giá hồ sơ dự thầu đối với phương thức một giai đoạn một túi hồ sơ.
+  - **Điều 59:** Quy trình đánh giá hồ sơ dự thầu đối với phương thức một giai đoạn hai túi hồ sơ.
+- **Nghị định số 214/2025/NĐ-CP** của Chính phủ:
+  - **Mục 1 Chương III (Điều 24 - Điều 36):** Quy trình chi tiết lựa chọn nhà thầu đối với phương thức một giai đoạn một túi hồ sơ.
+  - **Mục 2 Chương III (Điều 37 - Điều 45):** Quy trình chi tiết lựa chọn nhà thầu đối với phương thức một giai đoạn hai túi hồ sơ (Quy định phê duyệt danh sách đạt kỹ thuật trước khi mở tài chính).
+- **Thông tư số 79/2025/TT-BTC** (và các Thông tư hướng dẫn về E-HSMT):
+  - Hướng dẫn lập E-HSMT và cơ chế khóa/mã hóa túi tài chính tự động trên Hệ thống mạng đấu thầu quốc gia.
+
+---
+
+### 📊 BẢNG SO SÁNH TOÀN DIỆN VỀ NGHIỆP VỤ GIỮA 02 PHƯƠNG THỨC:
+
+| Tiêu chí so sánh | Một Giai Đoạn Một Túi Hồ Sơ (1GĐ 1THS) | Một Giai Đoạn Hai Túi Hồ Sơ (1GĐ 2THS) |
+| :--- | :--- | :--- |
+| **1. Căn cứ pháp lý** | **Điều 30 & Điều 58** Luật Đấu thầu số 22/2023/QH15 | **Điều 31 & Điều 59** Luật Đấu thầu số 22/2023/QH15 |
+| **2. Bản chất phương thức** | Đánh giá đồng thời hoặc đánh giá rút gọn kết hợp kỹ thuật và tài chính. Thủ tục đơn giản, thời gian nhanh chóng cho gói thầu thông dụng. | Đánh giá tách bạch tuyệt đối 02 bước: **"Kỹ thuật đạt thì mới xem xét đến giá"**. Bảo đảm tối đa chất lượng chuyên môn cho gói thầu phức tạp. |
+| **3. Phạm vi / Trường hợp áp dụng (Khoản 1)** | • Đấu thầu rộng rãi, hạn chế gói thầu: **Xây lắp, Mua sắm hàng hóa, Phi tư vấn, Hỗn hợp thông thường** (không đòi hỏi kỹ thuật cao).<br>• **Chào hàng cạnh tranh** (hàng hóa, xây lắp, phi tư vấn).<br>• **Chỉ định thầu** (áp dụng cho mọi loại gói thầu kể cả tư vấn).<br>• **Mua sắm trực tiếp** (hàng hóa). | • **Gói thầu Cung cấp dịch vụ tư vấn** (Bắt buộc 100% khi đấu thầu rộng rãi, hạn chế).<br>• Đấu thầu rộng rãi, hạn chế gói thầu: Xây lắp, hàng hóa, phi tư vấn, hỗn hợp **đòi hỏi kỹ thuật cao** theo pháp luật về khoa học công nghệ. |
+| **4. Quy cách nộp hồ sơ của Nhà thầu (Khoản 2)** | Nhà thầu nộp **01 bộ hồ sơ duy nhất**, trong đó đề xuất về kỹ thuật và đề xuất về tài chính được đóng chung trong một túi hồ sơ (hoặc 1 file E-HSDT đồng nhất trên mạng). | Nhà thầu nộp đồng thời nhưng **tách riêng biệt thành 02 túi hồ sơ độc lập**:<br>1) Hồ sơ đề xuất về kỹ thuật (HSĐXKT)<br>2) Hồ sơ đề xuất về tài chính (HSĐXTC). |
+| **5. Quy trình mở thầu (Khoản 3)** | **Mở thầu 01 lần duy nhất** ngay sau thời điểm đóng thầu. Công khai đồng thời toàn bộ nội dung: tư cách hợp lệ, bảo đảm dự thầu, tiến độ, giải pháp kỹ thuật và **công khai ngay giá dự thầu, thư giảm giá** của tất cả nhà thầu. | **Mở thầu 02 lần độc lập**:<br>• **Lần 1 (sau đóng thầu):** Chỉ mở HSĐXKT. Túi tài chính được niêm phong/hệ thống mạng tự động khóa bảo mật.<br>• **Lần 2:** Chỉ mở HSĐXTC của các nhà thầu đã được Chủ đầu tư phê duyệt **đạt yêu cầu kỹ thuật**. Nhà thầu trượt kỹ thuật sẽ không được mở túi giá. |
+| **6. Trình tự đánh giá HSDT (Điều 58 vs Điều 59)** | Có thể áp dụng đánh giá tuần tự (Hợp lệ $\rightarrow$ Năng lực $\rightarrow$ Kỹ thuật $\rightarrow$ Giá) hoặc phương pháp đánh giá "xếp hạng trước, đánh giá chi tiết sau" (chỉ đánh giá chi tiết nhà thầu có giá thấp nhất / điểm tổng hợp cao nhất). | Bắt buộc 2 bước chặt chẽ:<br>• **Bước 1:** Đánh giá HSĐXKT $\rightarrow$ Thẩm định & Phê duyệt Danh sách nhà thầu đạt kỹ thuật $\rightarrow$ Công khai trên Mạng Đấu thầu quốc gia.<br>• **Bước 2:** Mở HSĐXTC $\rightarrow$ Đánh giá tài chính $\rightarrow$ Xếp hạng nhà thầu $\rightarrow$ Mời thương thảo. |
+| **7. Tính bảo mật giá & Tính khách quan** | Giá dự thầu được biết ngay từ đầu, Tổ chuyên gia chịu áp lực so sánh giá trong quá trình chấm điểm. | Giá dự thầu được bảo mật tuyệt đối trong quá trình chấm kỹ thuật. Điểm kỹ thuật hoàn toàn độc lập, khách quan, không bị định kiến bởi giá cao hay thấp. |
+| **8. Thời gian & Thủ tục hành chính** | Nhanh hơn, ít bước hành chính hơn (đánh giá tối đa 45 ngày; gói quy mô nhỏ 25 ngày). | Dài hơn, phát sinh thêm thủ tục thẩm định và ban hành Quyết định phê duyệt Danh sách nhà thầu đạt yêu cầu kỹ thuật trước khi mở túi tài chính. |
+
+---
+
+### 💡 Lưu ý kiểm soát nghiệp vụ quan trọng cho Ban Quản lý Dự án (PMU):
+
+1. **Tuyệt đối không áp dụng sai phương thức lựa chọn nhà thầu:**
+   - Đối với **Gói thầu tư vấn** (khảo sát, thiết kế, giám sát, quản lý dự án...): Khi tổ chức đấu thầu rộng rãi hoặc đấu thầu hạn chế, **bắt buộc 100% phải áp dụng phương thức một giai đoạn hai túi hồ sơ (Điều 31)**. Tuyệt đối không được phê duyệt kế hoạch lựa chọn nhà thầu áp dụng 1GĐ 1THS cho gói thầu tư vấn đấu thầu rộng rãi.
+   - Đối với gói thầu xây lắp, mua sắm hàng hóa thông thường: Phải áp dụng 1GĐ 1THS (Điều 30) để rút ngắn thời gian và đơn giản hóa thủ tục. Chỉ áp dụng 1GĐ 2THS khi gói thầu có yêu cầu kỹ thuật cao theo quy chuẩn/tiêu chuẩn đặc thù.
+2. **Cơ chế kiểm soát mở thầu trên Hệ thống mạng đấu thầu quốc gia:**
+   - Trong phương thức 1GĐ 2THS, Bên mời thầu chỉ được phép mở HSĐXTC sau khi Chủ đầu tư đã ký ban hành Quyết định phê duyệt danh sách nhà thầu đáp ứng yêu cầu kỹ thuật và đăng tải đầy đủ quyết định này lên hệ thống.
+3. **Tránh nhầm lẫn với Phương thức Hai giai đoạn (Điều 32, Điều 33):**
+   - Phương thức **Một giai đoạn** (Điều 30, 31): Đã có hồ sơ thiết kế, yêu cầu kỹ thuật đầy đủ, nhà thầu nộp ngay đề xuất giá từ đầu.
+   - Phương thức **Hai giai đoạn** (Điều 32, 33): Chỉ áp dụng cho gói thầu mua sắm, xây lắp, hỗn hợp có quy mô lớn, kỹ thuật công nghệ mới mà **chưa xác định được chính xác yêu cầu kỹ thuật cụ thể** tại thời điểm mời thầu (Giai đoạn 1 chưa nộp giá dự thầu, sang Giai đoạn 2 mới nộp giá).`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -1760,12 +1840,15 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
                                  (/nội dung/i.test(message) || /bao gồm/i.test(message) || /những gì/i.test(message) || /gồm những/i.test(message));
             const isThamTraVsThamDinh = /thẩm tra/i.test(message) && /thẩm định/i.test(message);
             const isWorkingAtHeight = /trên cao|ngã cao|rơi ngã/i.test(message) || (/an toàn/i.test(message) && (/thi công/i.test(message) || /lao động/i.test(message)) && /cao/i.test(message));
+            const isOneBagVsTwoBag = (/1.*túi|một.*túi/i.test(message) && /2.*túi|hai.*túi/i.test(message)) || 
+                                     (/giai đoạn/i.test(message) && /túi/i.test(message) && (/khác|so sánh|phân biệt/i.test(message) || (/1/i.test(message) && /2/i.test(message))));
 
             if ((isComparison && !llmReply.includes("|")) || 
                 (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
                 (isFsrContent && (!llmReply.includes("Điều 26") || !llmReply.includes("|"))) ||
                 (isThamTraVsThamDinh && (!llmReply.includes("Khoản 15") || !llmReply.includes("|"))) ||
-                (isWorkingAtHeight && (!llmReply.includes("QCVN 18") || !llmReply.includes("|")))) {
+                (isWorkingAtHeight && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
+                (isOneBagVsTwoBag && (!llmReply.includes("Điều 30") || !llmReply.includes("|")))) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
