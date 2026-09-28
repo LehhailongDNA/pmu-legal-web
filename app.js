@@ -1428,60 +1428,54 @@ document.addEventListener("DOMContentLoaded", () => {
   // 5. CLIENT-SIDE RAG AI ASSISTANT (MATCH LOCAL AI QUALITY)
   // ==========================================
   const defaultSystemPrompts = {
-    legal: `# VAI TRÒ VÀ NHIỆM VỤ
-Bạn là Trợ lý AI Chuyên viên Pháp lý cao cấp chuyên trách hệ thống văn bản quy phạm pháp luật về đầu tư xây dựng. Nhiệm vụ của bạn là tra cứu, đối chiếu, trích dẫn và giải thích các quy định pháp luật dựa trên câu hỏi của người dùng.
+    legal: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế.
 
-# NGUYÊN TẮC BẤT DI BẤT DỊCH (STRICT CONSTRAINTS)
-1. Chỉ sử dụng thông tin có trong cơ sở dữ liệu/thư viện gốc và tài liệu được nạp vào hệ thống.
-2. TUYỆT ĐỐI KHÔNG:
-   - Tự suy diễn, bịa đặt điều khoản, số hiệu văn bản hoặc ngày ban hành.
-   - Ngoại suy tinh thần pháp luật nếu câu chữ trong văn bản không thể hiện rõ.
-3. BẮT BUỘC 100% TIẾNG VIỆT CHUẨN MỰC.
-4. TRÌNH BÀY ĐỊNH DẠNG MARKDOWN CHUYÊN NGHIỆP:
-   - Sử dụng Tiêu đề (#, ##, ###), In đậm, Danh sách gạch đầu dòng.
-   - BẮT BUỘC SỬ DỤNG BẢNG SO SÁNH MARKDOWN (| Tiêu chí | Cột 1 | Cột 2 |) nếu câu hỏi yêu cầu so sánh, đối chiếu hoặc phân tích đa tiêu chí (Ví dụ: Chỉ định thầu thông thường vs Chỉ định thầu rút gọn).
+Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
 
-# ĐỊNH DẠNG ĐẦU RA
-1. 📌 Vấn đề pháp lý: [Tóm tắt ngắn gọn câu hỏi]
-2. 🏛️ Căn cứ pháp lý: [Tên văn bản, Điều/Khoản/Điểm trích dẫn chính xác]
-3. 📋 Nội dung quy định & Bảng đối chiếu: [Bảng so sánh Markdown chi tiết]
-4. 💡 Lưu ý kiểm soát & Khuyến nghị cho PMU: [Hướng dẫn cụ thể cho Ban QLDA]`,
+Tránh lạm dụng format danh sách liệt kê (bullet points) cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
 
-    verifier: `# VAI TRÒ VÀ NHIỆM VỤ
-Bạn là Trợ lý Thẩm tra Hồ sơ Pháp lý Dự án Đầu tư Xây dựng. Nhiệm vụ của bạn là rà soát tính đầy đủ, tính hợp pháp, tính thống nhất và hiệu lực của danh mục hồ sơ/tài liệu pháp lý dự án (chủ trương đầu tư, đất đai, quy hoạch, thẩm duyệt PCCC, ĐTM, quyết định phê duyệt dự án...).
+NGUYÊN TẮC:
+1. Giọng điệu tự nhiên như người đang gõ phím trao đổi công việc, có nhận định rõ ràng, đi thẳng vào trọng tâm vấn đề.
+2. Tuyệt đối không sử dụng icon hay emoji nào trong toàn bộ câu trả lời.
+3. Không ép buộc cấu trúc tiêu đề khuôn mẫu nếu không cần thiết; lồng ghép viện dẫn văn bản, số Điều/Khoản tự nhiên vào câu nói để người đọc nắm ngay bản chất pháp lý.
+4. Chỉ lập bảng khi cần so sánh đa tiêu chí, và chỉ dùng gạch đầu dòng khi liệt kê các điều kiện hoặc quy trình bắt buộc riêng rẽ.
+5. Không sử dụng ký hiệu toán học chứa dấu dollar ($). Dùng các ký hiệu thông thường như ≤, ≥, ±, m², m³.`,
 
-# CẤU TRÚC BÁO CÁO THẨM ĐỊNH (MARKDOWN & BẢNG):
-1. I. Tóm tắt điều hành & Đánh giá sơ bộ
-2. II. Bảng rà soát danh mục tài liệu & Căn cứ pháp lý đối chiếu (Dạng bảng Markdown)
-3. III. Điểm không nhất quán / Rủi ro pháp lý phát hiện
-4. IV. Kiến nghị & Giải pháp hoàn thiện hồ sơ cho PMU`,
+    verifier: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong công tác thẩm tra hồ sơ pháp lý dự án.
 
-    technical: `# VAI TRÒ VÀ NHIỆM VỤ
-Bạn là Kỹ sư Thẩm tra Thiết kế Xây dựng chịu trách nhiệm kiểm tra tính pháp lý của hồ sơ thiết kế và thẩm tra danh mục, tính tương thích của Quy chuẩn (QCVN bắt buộc) và Tiêu chuẩn (TCVN/tiêu chuẩn nước ngoài) được áp dụng.
+Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
 
-# CẤU TRÚC BÁO CÁO THẨM TRA KỸ THUẬT:
-1. I. Căn cứ kỹ thuật (Luật Xây dựng 2025, NĐ 217/2026, QCVN 06:2022, QCVN 01:2021...)
-2. II. Bảng rà soát Tiêu chuẩn - Quy chuẩn bắt buộc áp dụng (Dạng bảng Markdown)
-3. III. Phân tích chi tiết an toàn công trình & phòng chống cháy nổ
-4. IV. Kiến nghị điều chỉnh thiết kế & Mẫu dấu thẩm tra (Mẫu 14 Phụ lục I NĐ 217)`,
+NGUYÊN TẮC:
+1. Không dùng bất kỳ icon hay emoji nào.
+2. Chỉ rõ điểm nghẽn pháp lý, rủi ro cụ thể và giải pháp tháo gỡ thực tế cho PMU.
+3. Không dùng ký hiệu dollar ($).`,
 
-    cost: `# VAI TRÒ VÀ NHIỆM VỤ
-Bạn là Trợ Lý Thẩm Tra & Quản Lý Chi Phí Đầu Tư Xây Dựng (TMĐT & Dự Toán) theo Nghị định số 206/2026/NĐ-CP và Thông tư hướng dẫn của Bộ Xây dựng.
+    technical: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế về mặt kỹ thuật, quy chuẩn và tiêu chuẩn xây dựng.
 
-# CẤU TRÚC BÁO CÁO THẨM TRA CHI PHÍ:
-1. I. Bảng tổng hợp cơ cấu 07 khoản mục chi phí Tổng mức đầu tư (Dạng bảng Markdown)
-2. II. Căn cứ quản lý chi phí & định mức đơn giá áp dụng
-3. III. Kiểm tra phương pháp tính chi phí dự phòng và trượt giá
-4. IV. Kiến nghị giá trị TMĐT/Dự toán trình phê duyệt`,
+Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
 
-    bidding: `# VAI TRÒ VÀ NHIỆM VỤ
-Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá HSDT theo Luật Đấu thầu số 22/2023/QH15, Nghị định số 214/2025/NĐ-CP và Nghị định số 274/2026/NĐ-CP.
+NGUYÊN TẮC:
+1. Tuyệt đối không dùng icon hay emoji.
+2. Nêu rõ dung sai, chỉ tiêu kỹ thuật và viện dẫn đúng số hiệu TCVN, QCVN.
+3. Không dùng ký hiệu dollar ($).`,
 
-# CẤU TRÚC BÁO CÁO THẨM ĐỊNH ĐẤU THẦU:
-1. I. Bảng đối chiếu tiêu chuẩn HSMT và quy định pháp luật (Dạng bảng Markdown)
-2. II. Bảng rà soát 4 bước đánh giá HSDT (Tính hợp lệ -> Năng lực -> Kỹ thuật -> Tài chính)
-3. III. Đánh giá tiêu chí hạn chế cạnh tranh / sai khác cần làm rõ
-4. IV. Kiến nghị xử lý cho Tổ chuyên gia và Chủ đầu tư`
+    cost: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong quản lý chi phí, dự toán và định mức xây dựng.
+
+Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
+
+NGUYÊN TẮC:
+1. Không dùng icon/emoji.
+2. Lập luận dứt khoát, gắn liền với Nghị định 206/2026/NĐ-CP và bài toán thực tế của Ban QLDA.
+3. Không dùng ký hiệu dollar ($).`,
+
+    bidding: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong lĩnh vực đấu thầu.
+
+Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
+
+NGUYÊN TẮC:
+1. Không dùng icon/emoji.
+2. Đánh giá tính hợp lệ, rủi ro hạn chế cạnh tranh rõ ràng, có chính kiến dứt khoát theo Luật Đấu thầu 22/2023 và NĐ 214/2025, NĐ 274/2026.
+3. Không dùng ký hiệu dollar ($).`
   };
 
   /**
@@ -1674,8 +1668,8 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
       if (state.domain === "CONSTRUCTION_CONTRACT" && !/hợp đồng|thiết kế|giám sát tác giả|135\/2025|207\/2026/i.test(text)) return false;
       if (state.domain === "OCCUPATIONAL_SAFETY" && !/an toàn|ngã cao|giàn giáo|qcvn 18/i.test(text)) return false;
 
-      // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu hoặc danh sách hành động nghiệp vụ
-      const hasStructure = text.includes("|") || /quy trình|các bước|bước 1|lưu ý|trách nhiệm|khuyến nghị/i.test(text);
+      // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu, danh sách hành động hoặc đối thoại nghiệp vụ rõ ràng
+      const hasStructure = text.includes("|") || /quy trình|các bước|bước \d+|lưu ý|trách nhiệm|khuyến nghị|theo quy định|căn cứ|thực tế|cần|phải|trường hợp|nguyên tắc/i.test(text);
       if (!hasStructure) return false;
 
       return true;
@@ -2007,44 +2001,37 @@ NGỮ CẢNH PHÁP LÝ & TIÊU CHUẨN TRÍCH XUẤT TỪ THƯ VIỆN PMU:
 ${contextItems}
 
 ==================================================
-CÂU HỎI NGHIỆP VỤ CẦN GIẢI QUYẾT:
+CÂU HỎI NGHIỆP VỤ:
 "${question}"
 
 ==================================================
-YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
-1. CHỈ SỬ DỤNG DUY NHẤT các dữ liệu và điều khoản có trong phần "NGỮ CẢNH" ở trên. Không sử dụng kiến thức huấn luyện cũ ngoài ngữ cảnh này.
-2. BẮT BUỘC 100% TIẾNG VIỆT CHUẨN MỰC: Trình bày định dạng Markdown đẹp mắt, cấu trúc rõ ràng.
-3. ĐỐI VỚI CÂU HỎI SO SÁNH / PHÂN TÍCH ĐA TIÊU CHÍ (Ví dụ: Chỉ định thầu thông thường vs Chỉ định thầu rút gọn): BẮT BUỘC PHẢI DÙNG BẢNG MARKDOWN (| Tiêu chí | Đối tượng A | Đối tượng B |) để đối chiếu trực quan từng khía cạnh: Điều kiện áp dụng, Hạn mức gói thầu, Trình tự thực hiện, Hồ sơ thủ tục và Thời gian thực hiện.
-4. TRÍCH DẪN ĐIỀU KHOẢN CHÍNH XÁC: Ghi rõ tên văn bản (Luật Đấu thầu 22/2023, Luật Xây dựng 135/2025, NĐ 217/2026, NĐ 206/2026, NĐ 214/2025, NĐ 274/2026...), số Điều, Khoản và Mẫu biểu áp dụng.
-5. NGUYÊN TẮC TỔNG HỢP ĐA VĂN BẢN (MULTI-TIER SYNTHESIS - BẮT BUỘC):
-   - Một vấn đề pháp lý luôn có sự liên kết chặt chẽ giữa nhiều văn bản (Luật, Nghị định hướng dẫn, Thông tư mẫu biểu, Quy chuẩn kỹ thuật).
-   - TUYỆT ĐỐI KHÔNG chỉ trả lời dựa trên một văn bản đơn lẻ nếu trong Ngữ cảnh có nhiều văn bản cùng điều chỉnh.
-   - BẮT BUỘC phải xâu chuỗi và tổng hợp đầy đủ từ các tầng văn bản:
-     + Tầng LUẬT: Nêu nguyên tắc chung, đối tượng áp dụng và thẩm quyền.
-     + Tầng NGHỊ ĐỊNH: Nêu chi tiết quy trình, thủ tục, hồ sơ, điều kiện và thời hạn.
-     + Tầng THÔNG TƯ / TIÊU CHUẨN: Nêu rõ biểu mẫu, định mức, chỉ tiêu kỹ thuật số liệu.
-6. Cấu trúc bài viết:
-   - 📌 1. Căn cứ pháp lý đa tầng (Luật -> Nghị định -> Thông tư -> Tiêu chuẩn)
-   - 📋 2. Nội dung quy định & Bảng đối chiếu chi tiết
-   - 🔍 3. Biểu mẫu / Quy trình thực hiện cụ thể
-   - 💡 4. Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU).
-7. QUY TẮC HIỂN THỊ KÝ HIỆU KỸ THUẬT & TOÁN HỌC (TUYỆT ĐỐI TUÂN THỦ):
-   - TUYỆT ĐỐI KHÔNG sử dụng cú pháp LaTeX toán học có chứa dấu đô la ($...$ hoặc $$...$$).
-   - Hãy sử dụng trực tiếp các ký tự thông thường chuẩn tiếng Việt:
-     + Dùng "≤" thay cho $\\le$ hoặc $\\leq$
-     + Dùng "≥" thay cho $\\ge$ hoặc $\\geq$
-     + Dùng "±" thay cho $\\pm$
-     + Dùng "m²" thay cho $m^2$, "m³" thay cho $m^3$
-     + Dùng "R28", "R7", "R3" thay cho $R_{28}$, $R_7$, $R_3$
-     + Dùng "150 x 150 x 150 mm" hoặc "150 × 150 × 150 mm" thay cho các công thức LaTeX.`;
+HƯỚNG DẪN TRẢ LỜI (BẮT BUỘC TUÂN THỦ):
+1. VAI TRÒ & PHONG CÁCH DIỄN ĐẠT:
+   - Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế.
+   - Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
+   - Tránh lạm dụng format danh sách liệt kê (bullet points) cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
+   - TUYỆT ĐỐI KHÔNG sử dụng icon hoặc emoji nào trong câu trả lời (bỏ toàn bộ các icon như 📌, 🏛️, 📋, 💡, 🚨, ⚖️, ...).
+
+2. CĂN CỨ VÀ NỘI DUNG PHÁP LÝ:
+   - Chỉ sử dụng các dữ liệu và điều khoản có trong phần "NGỮ CẢNH" ở trên. Không tự suy diễn hay bịa đặt điều luật không có trong ngữ cảnh.
+   - Lồng ghép tên văn bản, số Điều/Khoản một cách tự nhiên vào câu chữ để đồng nghiệp tra cứu, không liệt kê rườm rà.
+   - Chỉ dùng bảng Markdown khi thực sự cần so sánh đối chiếu đa tiêu chí hoặc làm rõ hai quy trình.
+   - Chỉ dùng gạch đầu dòng khi liệt kê các điều kiện bắt buộc độc lập hoặc các bước thủ tục tuần tự.
+
+3. QUY TẮC HIỂN THỊ KÝ HIỆU KỸ THUẬT:
+   - Tuyệt đối không dùng ký hiệu toán học có dấu dollar ($...$). Dùng trực tiếp các ký tự thông thường: ≤, ≥, ±, m², m³, R28.`;
   }
 
-  // Utility to eliminate confusing LaTeX $...$ symbols and normalize engineering math notations
+  // Utility to eliminate confusing LaTeX $...$ symbols, remove emojis/icons, and normalize engineering notations
   function cleanMathSymbols(text) {
     if (!text || typeof text !== "string") return text;
     let s = text;
 
-    // 1. Convert backslash LaTeX symbols to clean readable unicode
+    // 1. Strip emojis and decorative icons to ensure natural professional text
+    s = s.replace(/[\u{1F300}-\u{1FAD6}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1F1E6}-\u{1F1FF}]/gu, "");
+    s = s.replace(/[ \t]{2,}/g, " ");
+
+    // 2. Convert backslash LaTeX symbols to clean readable unicode
     s = s.replace(/\\le\b|\\leq\b/g, "≤");
     s = s.replace(/\\ge\b|\\geq\b/g, "≥");
     s = s.replace(/\\pm\b/g, "±");
@@ -2063,14 +2050,14 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
     s = s.replace(/\\mathbf\{([^}]+)\}/g, "$1");
     s = s.replace(/\\%/g, "%");
 
-    // 2. Normalize common construction engineering expressions
+    // 3. Normalize common construction engineering expressions
     s = s.replace(/R_\{?28\}?/gi, "R28");
     s = s.replace(/R_\{?3\}?/gi, "R3");
     s = s.replace(/R_\{?7\}?/gi, "R7");
     s = s.replace(/m\^2\b/g, "m²");
     s = s.replace(/m\^3\b/g, "m³");
 
-    // 3. Process $$...$$ multi-line math blocks
+    // 4. Process $$...$$ multi-line math blocks
     s = s.replace(/\$\$([\s\S]*?)\$\$/g, (m, inner) => {
       return inner
         .replace(/\\le\b|\\leq\b|\ble\b/gi, "≤")
@@ -2082,7 +2069,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         .trim();
     });
 
-    // 4. Process $...$ inline math blocks
+    // 5. Process $...$ inline math blocks
     s = s.replace(/\$([^\$\n]+)\$/g, (m, inner) => {
       return inner
         .replace(/\\le\b|\\leq\b|\ble\b/gi, "≤")
@@ -2097,13 +2084,13 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
         .trim();
     });
 
-    // 5. Catch any stray malformed patterns like $ge 5 MPa$, $le 2m$, etc.
+    // 6. Catch any stray malformed patterns like $ge 5 MPa$, $le 2m$, etc.
     s = s.replace(/\$(ge|le|pm|approx|times)\b/gi, (m, op) => {
       const map = { ge: "≥", le: "≤", pm: "±", approx: "≈", times: "×" };
       return map[op.toLowerCase()] || op;
     });
 
-    // 6. Strip all leftover unescaped dollar signs completely
+    // 7. Strip all leftover unescaped dollar signs completely
     s = s.replace(/\$/g, "");
 
     return s;
@@ -2113,18 +2100,18 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
     const code = (docCode || "").toLowerCase();
     const title = (docTitle || "").toLowerCase();
 
-    if (code.includes("qcvn") || title.includes("qcvn")) return { tier: 4, name: "Quy chuẩn kỹ thuật quốc gia (Bắt buộc áp dụng)", badge: "📐 QCVN Bắt Buộc" };
-    if (code.includes("tcvn") || title.includes("tcvn")) return { tier: 4, name: "Tiêu chuẩn kỹ thuật xây dựng (Tiêu chuẩn áp dụng)", badge: "📏 Tiêu Chuẩn TCVN" };
-    if (code.includes("tt-") || title.includes("thông tư") || code.includes("qd-") || title.includes("quyết định")) return { tier: 3, name: "Thông tư & Hướng dẫn thi hành (Biểu mẫu / Định mức)", badge: "📋 Thông Tư / Mẫu Biểu" };
-    if (code.includes("nd-cp") || code.includes("nđ-cp") || title.includes("nghị định")) return { tier: 2, name: "Nghị định của Chính phủ (Trình tự, Hồ sơ & Thời hạn chi tiết)", badge: "🏛️ Nghị Định Hướng Dẫn" };
-    if (title.includes("luật") || code.includes("/qh") || title.includes("luật số")) return { tier: 1, name: "Văn bản Luật (Khung pháp lý, Thẩm quyền & Nguyên tắc)", badge: "⚖️ Căn Cứ Luật" };
-    return { tier: 5, name: "Văn bản pháp lý liên quan khác", badge: "📄 Văn Bản Khác" };
+    if (code.includes("qcvn") || title.includes("qcvn")) return { tier: 4, name: "Quy chuẩn kỹ thuật quốc gia (Bắt buộc áp dụng)", badge: "QCVN Bắt Buộc" };
+    if (code.includes("tcvn") || title.includes("tcvn")) return { tier: 4, name: "Tiêu chuẩn kỹ thuật xây dựng (Tiêu chuẩn áp dụng)", badge: "Tiêu Chuẩn TCVN" };
+    if (code.includes("tt-") || title.includes("thông tư") || code.includes("qd-") || title.includes("quyết định")) return { tier: 3, name: "Thông tư & Hướng dẫn thi hành (Biểu mẫu / Định mức)", badge: "Thông Tư / Mẫu Biểu" };
+    if (code.includes("nd-cp") || code.includes("nđ-cp") || title.includes("nghị định")) return { tier: 2, name: "Nghị định của Chính phủ (Trình tự, Hồ sơ & Thời hạn chi tiết)", badge: "Nghị Định Hướng Dẫn" };
+    if (title.includes("luật") || code.includes("/qh") || title.includes("luật số")) return { tier: 1, name: "Văn bản Luật (Khung pháp lý, Thẩm quyền & Nguyên tắc)", badge: "Căn Cứ Luật" };
+    return { tier: 5, name: "Văn bản pháp lý liên quan khác", badge: "Văn Bản Khác" };
   }
 
   // Dynamic Synthesizer (Fallback when user has no API Key)
   function synthesizeDynamicAnswer(question, persona, searchResults) {
     if (!searchResults || searchResults.length === 0) {
-      return `### 🔍 Kết Quả Tra Cứu Cho "${question}"\n\nKhông tìm thấy điều khoản hoặc tiêu chuẩn kỹ thuật nào tương thích trực tiếp trong cơ sở dữ liệu thư viện hiện tại.\n\n*Gợi ý:* Vui lòng thử tìm kiếm bằng số hiệu văn bản cụ thể (ví dụ: *Luật 22/2023*, *NĐ 217*, *NĐ 206*, *NĐ 214*, *QCVN 06*, *TCVN 14334*...) hoặc cấu hình kết nối Model LLM (Gemini, Agnes AI, ChatGPT) để được phân tích chuyên sâu.`;
+      return `### Kết Quả Tra Cứu Cho "${question}"\n\nKhông tìm thấy điều khoản hoặc tiêu chuẩn kỹ thuật nào tương thích trực tiếp trong cơ sở dữ liệu thư viện hiện tại.\n\n*Gợi ý:* Vui lòng thử tìm kiếm bằng số hiệu văn bản cụ thể (ví dụ: *Luật 22/2023*, *NĐ 217*, *NĐ 206*, *NĐ 214*, *QCVN 06*, *TCVN 14334*...) hoặc cấu hình kết nối Model LLM (Gemini, Agnes AI, ChatGPT) để được phân tích chuyên sâu.`;
     }
 
     const qLower = question.toLowerCase();
@@ -2133,7 +2120,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
     // Specialized Handler for Bidding / Direct Appointment Comparison (Chỉ định thầu vs Chỉ định thầu rút gọn)
     if (/chỉ định thầu/i.test(qLower) && (/rút gọn/i.test(qLower) || /khác nhau/i.test(qLower) || /so sánh/i.test(qLower) || /quy trình/i.test(qLower))) {
-      return `### ⚖️ Báo Cáo Phân Tích: So Sánh Chỉ Định Thầu Thông Thường & Chỉ Định Thầu Rút Gọn
+      return `### Báo Cáo Phân Tích: So Sánh Chỉ Định Thầu Thông Thường & Chỉ Định Thầu Rút Gọn
 
 **1. Vấn đề pháp lý:** So sánh sự khác biệt giữa hình thức **Chỉ định thầu** thông thường và **Chỉ định thầu rút gọn** theo quy định pháp luật Đấu thầu hiện hành.
 
@@ -2143,7 +2130,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### 📊 BẢNG SO SÁNH CHI TIẾT GIỮA HAI QUY TRÌNH:
+### BẢNG SO SÁNH CHI TIẾT GIỮA HAI QUY TRÌNH:
 
 | Tiêu chí so sánh | Chỉ định thầu thông thường | Chỉ định thầu rút gọn |
 | :--- | :--- | :--- |
@@ -2156,7 +2143,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### 💡 Lưu ý kiểm soát rủi ro nghiệp vụ cho Ban Quản lý Dự án (PMU):
+### Lưu ý kiểm soát rủi ro nghiệp vụ cho Ban Quản lý Dự án (PMU):
 1. **Tuyệt đối không chia nhỏ gói thầu:** Không được chia dự án thành các gói thầu có giá trị dưới 500 triệu hoặc dưới 01 tỷ VNĐ nhằm mục đích áp dụng chỉ định thầu rút gọn (hành vi bị nghiêm cấm theo Khoản 6 Điều 16 Luật Đấu thầu 22/2023).
 2. **Kiểm tra tư cách hợp lệ & năng lực nhà thầu:** Dù áp dụng quy trình rút gọn, nhà thầu vẫn bắt buộc phải có tên trên Hệ thống mạng đấu thầu quốc gia, không trong thời gian bị cấm tham gia hoạt động đấu thầu và có đủ năng lực tài chính, nhân sự tương ứng quy mô gói thầu.
 3. **Lưu trữ hồ sơ:** Toàn bộ biên bản làm việc, báo giá, dự thảo hợp đồng và quyết định chỉ định thầu phải được lưu trữ đầy đủ trong hồ sơ quản lý chất lượng và thanh quyết toán dự án.`;
@@ -2164,7 +2151,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
     // Specialized Handler for Planning Approval & Consultation Timelines (Quy hoạch đô thị và nông thôn - Luật 47/2024/QH15)
     if (/quy hoạch/i.test(qLower) && (/nhiệm vụ/i.test(qLower) || /lấy ý kiến/i.test(qLower) || /thời gian/i.test(qLower) || /thời hạn/i.test(qLower) || /thẩm định/i.test(qLower))) {
-      return `### 📋 Báo Cáo Tra Cứu Pháp Lý: Thời Gian Lấy Ý Kiến & Thẩm Định Nhiệm Vụ Quy Hoạch
+      return `### Báo Cáo Tra Cứu Pháp Lý: Thời Gian Lấy Ý Kiến & Thẩm Định Nhiệm Vụ Quy Hoạch
 
 **1. Vấn đề pháp lý:** ${question}
 
@@ -2178,7 +2165,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### ⏱️ QUY ĐỊNH CỤ THỂ VỀ THỜI GIAN THEO LUẬT SỐ 47/2024/QH15:
+### ⏱ QUY ĐỊNH CỤ THỂ VỀ THỜI GIAN THEO LUẬT SỐ 47/2024/QH15:
 
 #### 1. Thời hạn lấy ý kiến về Nhiệm vụ quy hoạch (Khoản 4 Điều 36):
 - **Đối tượng lấy ý kiến:** Cơ quan quản lý nhà nước có liên quan (bao gồm các sở, ban, ngành và chính quyền địa phương liên quan).
@@ -2191,7 +2178,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### 📊 BẢNG TỔNG HỢP SO SÁNH THỜI HẠN LẤY Ý KIẾN & THẨM ĐỊNH QUY HOẠCH:
+### BẢNG TỔNG HỢP SO SÁNH THỜI HẠN LẤY Ý KIẾN & THẨM ĐỊNH QUY HOẠCH:
 
 | Giai đoạn thực hiện | Đối tượng lấy ý kiến / thẩm định | Thời hạn quy định | Căn cứ pháp lý |
 | :--- | :--- | :--- | :--- |
@@ -2204,7 +2191,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):
+### Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):
 1. **Kiểm soát thời hạn 07 ngày làm việc:** Khi gửi văn bản xin ý kiến địa phương và các đơn vị liên quan cho Nhiệm vụ quy hoạch, văn bản phát hành cần ghi rõ thời hạn phản hồi là 07 ngày làm việc theo đúng Khoản 4 Điều 36 Luật 47/2024/QH15.
 2. **Quy tắc hết thời hạn:** Trường hợp hết thời hạn 07 ngày làm việc mà cơ quan được lấy ý kiến không có văn bản trả lời thì được coi là đồng ý và phải chịu trách nhiệm về nội dung thuộc phạm vi quản lý của mình.
 3. **Báo cáo tiếp thu, giải trình (Khoản 5 Điều 36):** Cơ quan, đơn vị tổ chức lập nhiệm vụ quy hoạch có trách nhiệm tổng hợp, giải trình đầy đủ bằng văn bản và công bố công khai trước khi trình phê duyệt.
@@ -2215,7 +2202,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
     // Specialized Handler for Verification vs Appraisal Comparison (Thẩm tra vs Thẩm định Báo cáo NCKT)
     if (/thẩm tra/i.test(qLower) && /thẩm định/i.test(qLower) && (/khác nhau|so sánh|phân biệt|nghiệp vụ|là gì|như thế nào/i.test(qLower) || /nghiên cứu khả thi|nckt|thiết kế|dự án/i.test(qLower))) {
-      return `### ⚖️ Báo Cáo Phân Tích Pháp Lý: So Sánh Nghiệp Vụ THẨM TRA & THẨM ĐỊNH Báo Cáo Nghiên Cứu Khả Thi (FSR)
+      return `### Báo Cáo Phân Tích Pháp Lý: So Sánh Nghiệp Vụ THẨM TRA & THẨM ĐỊNH Báo Cáo Nghiên Cứu Khả Thi (FSR)
 
 **1. Vấn đề pháp lý:** ${question}
 
@@ -2235,7 +2222,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### 📊 BẢNG SO SÁNH TOÀN DIỆN VỀ NGHIỆP VỤ GIỮA THẨM TRA VÀ THẨM ĐỊNH:
+### BẢNG SO SÁNH TOÀN DIỆN VỀ NGHIỆP VỤ GIỮA THẨM TRA VÀ THẨM ĐỊNH:
 
 | Tiêu chí so sánh | THẨM TRA Báo cáo NCKT (Verification) | THẨM ĐỊNH Báo cáo NCKT (Appraisal) |
 | :--- | :--- | :--- |
@@ -2249,7 +2236,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### 💡 Lưu ý kiểm soát nghiệp vụ thực tế cho Ban Quản lý Dự án (PMU):
+### Lưu ý kiểm soát nghiệp vụ thực tế cho Ban Quản lý Dự án (PMU):
 1. **Thẩm tra không thay thế thẩm định:** Cơ quan chuyên môn về xây dựng và Người quyết định đầu tư không được lấy Báo cáo thẩm tra thay cho trách nhiệm thẩm định của mình. Báo cáo thẩm tra chỉ là tài liệu tham khảo chuyên môn độc lập để cơ quan thẩm định xem xét, kết luận.
 2. **Các trường hợp bắt buộc phải có Báo cáo thẩm tra (Khoản 5 Điều 26 Luật XD 2025):**
    - Công trình có ảnh hưởng lớn đến an toàn, lợi ích cộng đồng;
@@ -2261,7 +2248,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
     // Specialized Handler for Feasibility Study Report Appraisal Contents (Nội dung thẩm định Báo cáo NCKT - Luật XD 135/2025 & NĐ 217/2026)
     if ((/nghiên cứu khả thi|kinh tế.*kỹ thuật|báo cáo nckt/i.test(qLower) || (/thẩm định/i.test(qLower) && /dự án/i.test(qLower))) && 
         (/nội dung/i.test(qLower) || /bao gồm/i.test(qLower) || /những gì/i.test(qLower) || /gồm những/i.test(qLower))) {
-      return `### 📋 Báo Cáo Tra Cứu Pháp Lý: Nội Dung Thẩm Định Báo Cáo Nghiên Cứu Khả Thi Đầu Tư Xây Dựng
+      return `### Báo Cáo Tra Cứu Pháp Lý: Nội Dung Thẩm Định Báo Cáo Nghiên Cứu Khả Thi Đầu Tư Xây Dựng
 
 **1. Vấn đề pháp lý:** ${question}
 
@@ -2276,7 +2263,7 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
 
 ---
 
-### 🏛️ QUY ĐỊNH CỤ THỂ: PHÂN ĐỊNH 02 KHỐI NỘI DUNG THẨM ĐỊNH
+### QUY ĐỊNH CỤ THỂ: PHÂN ĐỊNH 02 KHỐI NỘI DUNG THẨM ĐỊNH
 
 Theo quy định pháp luật xây dựng hiện hành, việc thẩm định Báo cáo nghiên cứu khả thi (FSR) được phân định rõ ràng giữa **02 chủ thể thẩm định độc lập nhưng phối hợp đồng bộ**:
 
@@ -2328,7 +2315,7 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
 
 ---
 
-### 📊 BẢNG TỔNG HỢP SO SÁNH NỘI DUNG THẨM ĐỊNH GIỮA 02 CƠ QUAN:
+### BẢNG TỔNG HỢP SO SÁNH NỘI DUNG THẨM ĐỊNH GIỮA 02 CƠ QUAN:
 
 | Nhóm nội dung thẩm định | Cơ quan chuyên môn về xây dựng (Điều 27 Luật XD & Điều 38 NĐ 217) | Người quyết định đầu tư / Chủ đầu tư (Điều 26 Luật XD & Điều 31 NĐ 217) |
 | :--- | :--- | :--- |
@@ -2343,7 +2330,7 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
 
 ---
 
-### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):
+### Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU):
 1. **Trình tự thực hiện trước - sau:**
    - Hồ sơ Báo cáo NCKT phải gửi **Cơ quan chuyên môn về xây dựng thẩm định trước** để có Văn bản thông báo kết quả thẩm định (Mẫu số 03 Phụ lục I NĐ 217/2026/NĐ-CP).
    - Sau khi có kết quả của Cơ quan chuyên môn về xây dựng, Ban QLDA/Chủ đầu tư mới hoàn thiện hồ sơ gửi **Cơ quan chủ trì thẩm định của Người quyết định đầu tư** để tổng hợp, thẩm định các nội dung còn lại trước khi trình phê duyệt dự án.
@@ -2353,7 +2340,7 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
 
     // Specialized Handler for Safety When Working at Heights (An toàn khi thi công trên cao - QCVN 18:2021/BXD & Luật XD 2025)
     if (/trên cao|ngã cao|rơi ngã/i.test(qLower) || (/an toàn/i.test(qLower) && (/thi công/i.test(qLower) || /lao động/i.test(qLower)) && /cao/i.test(qLower))) {
-      return `### 🛡️ Báo Cáo Tra Cứu Pháp Lý: Quy Định Về An Toàn Khi Thi Công Trên Cao Trong Xây Dựng
+      return `### Báo Cáo Tra Cứu Pháp Lý: Quy Định Về An Toàn Khi Thi Công Trên Cao Trong Xây Dựng
 
 **1. Vấn đề pháp lý:** ${question}
 
@@ -2372,7 +2359,7 @@ Người quyết định đầu tư (giao cơ quan chuyên môn trực thuộc l
 
 ---
 
-### 🧱 CÁC NGUYÊN TẮC & QUY ĐỊNH KỸ THUẬT BẮT BUỘC THEO QCVN 18:2021/BXD:
+### CÁC NGUYÊN TẮC & QUY ĐỊNH KỸ THUẬT BẮT BUỘC THEO QCVN 18:2021/BXD:
 
 #### 1. Định nghĩa và Ngưỡng độ cao bắt buộc áp dụng biện pháp an toàn (Mục 2.7.1):
 - **Ngưỡng độ cao quy định:** Làm việc ở độ cao từ **2,0 m trở lên** so với mặt sàn hoặc mặt đất tự nhiên được coi là làm việc trên cao và bắt buộc phải áp dụng các biện pháp phòng ngừa ngã cao.
@@ -2413,7 +2400,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 📊 BẢNG TỔNG HỢP CÁC YÊU CẦU KỸ THUẬT AN TOÀN THI CÔNG TRÊN CAO:
+### BẢNG TỔNG HỢP CÁC YÊU CẦU KỸ THUẬT AN TOÀN THI CÔNG TRÊN CAO:
 
 | Hạng mục kiểm soát | Tiêu chuẩn kỹ thuật quy định | Căn cứ quy chuẩn / pháp luật |
 | :--- | :--- | :--- |
@@ -2428,7 +2415,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 💡 Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU) & Tư vấn Giám sát:
+### Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU) & Tư vấn Giám sát:
 1. **Phê duyệt Biện pháp an toàn chi tiết:** Trước khi nhà thầu thi công bất kỳ hạng mục nào trên cao (lắp dựng kết cấu thép, đổ bê tông sàn cao tầng, hoàn thiện mặt ngoài, lợp mái...), PMU và Tư vấn giám sát bắt buộc phải phê duyệt **Biện pháp bảo đảm an toàn lao động riêng biệt** cho công tác đó (Khoản 2 Điều 51 Luật Xây dựng 2025).
 2. **Hệ thống cấp phép làm việc trên cao (Permit to Work - PTW):** Áp dụng quy trình kiểm tra và ký Giấy phép làm việc trên cao theo từng ca thi công. Cán bộ an toàn của nhà thầu và giám sát an toàn PMU kiểm tra thực địa trước khi cho công nhân lên sàn công tác.
 3. **Thiết lập vùng nguy hiểm bên dưới:** Bắt buộc căng dây phản quang, dựng rào chắn và đặt biển báo cấm người qua lại tại bán kính nguy hiểm có nguy cơ rơi vật thể bên dưới. Tuyệt đối cấm quăng, ném phế thải, vật liệu từ trên cao xuống đất.
@@ -2438,7 +2425,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
     // Specialized Handler for Bidding Procedure Comparison (1 Giai đoạn 1 túi vs 1 Giai đoạn 2 túi - Luật Đấu thầu 22/2023)
     if ((/1.*túi|một.*túi/i.test(qLower) && /2.*túi|hai.*túi/i.test(qLower)) || 
         (/giai đoạn/i.test(qLower) && /túi/i.test(qLower) && (/khác|so sánh|phân biệt/i.test(qLower) || (/1/i.test(qLower) && /2/i.test(qLower))))) {
-      return `### ⚖️ Báo Cáo Phân Tích Pháp Lý: So Sánh Phương Thức Đấu Thầu "Một Giai Đoạn Một Túi Hồ Sơ" & "Một Giai Đoạn Hai Túi Hồ Sơ"
+      return `### Báo Cáo Phân Tích Pháp Lý: So Sánh Phương Thức Đấu Thầu "Một Giai Đoạn Một Túi Hồ Sơ" & "Một Giai Đoạn Hai Túi Hồ Sơ"
 
 **1. Vấn đề pháp lý:** ${question}
 
@@ -2456,7 +2443,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 📊 BẢNG SO SÁNH TOÀN DIỆN VỀ NGHIỆP VỤ GIỮA 02 PHƯƠNG THỨC:
+### BẢNG SO SÁNH TOÀN DIỆN VỀ NGHIỆP VỤ GIỮA 02 PHƯƠNG THỨC:
 
 | Tiêu chí so sánh | Một Giai Đoạn Một Túi Hồ Sơ (1GĐ 1THS) | Một Giai Đoạn Hai Túi Hồ Sơ (1GĐ 2THS) |
 | :--- | :--- | :--- |
@@ -2471,7 +2458,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 💡 Lưu ý kiểm soát nghiệp vụ quan trọng cho Ban Quản lý Dự án (PMU):
+### Lưu ý kiểm soát nghiệp vụ quan trọng cho Ban Quản lý Dự án (PMU):
 
 1. **Tuyệt đối không áp dụng sai phương thức lựa chọn nhà thầu:**
    - Đối với **Gói thầu tư vấn** (khảo sát, thiết kế, giám sát, quản lý dự án...): Khi tổ chức đấu thầu rộng rãi hoặc đấu thầu hạn chế, **bắt buộc 100% phải áp dụng phương thức một giai đoạn hai túi hồ sơ (Điều 31)**. Tuyệt đối không được phê duyệt kế hoạch lựa chọn nhà thầu áp dụng 1GĐ 1THS cho gói thầu tư vấn đấu thầu rộng rãi.
@@ -2485,7 +2472,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
     // Specialized Handler for Concrete Works Acceptance Checklist (Nghiệm thu công tác bê tông - TCVN 4453:1995 & NĐ 207/2026)
     if (/bê tông/i.test(qLower) && (/nghiệm thu/i.test(qLower) || /checklist|check list|nội dung nào|cần hoàn thành|kiểm tra/i.test(qLower))) {
-      return `### 📋 Báo Cáo Kỹ Thuật & Pháp Lý: Danh Mục Kiểm Tra (Checklist) Nghiệm Thu Công Tác Bê Tông Toàn Khối
+      return `### Báo Cáo Kỹ Thuật & Pháp Lý: Danh Mục Kiểm Tra (Checklist) Nghiệm Thu Công Tác Bê Tông Toàn Khối
 
 **1. Vấn đề pháp lý & kỹ thuật:** ${question}
 
@@ -2504,7 +2491,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 📋 BẢNG CHECKLIST NGHIỆM THU CÔNG TÁC BÊ TÔNG (03 GIAI ĐOẠN CHI TIẾT):
+### BẢNG CHECKLIST NGHIỆM THU CÔNG TÁC BÊ TÔNG (03 GIAI ĐOẠN CHI TIẾT):
 
 #### GIAI ĐOẠN 1: CHECKLIST NGHIỆM THU TRƯỚC KHI ĐỔ BÊ TÔNG (PRE-POUR CHECKLIST)
 *(Điều kiện tiên quyết để Tư vấn giám sát ký Phiếu cho phép đổ bê tông)*
@@ -2543,7 +2530,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 💡 Lưu ý kiểm soát nghiệp vụ sống còn cho Ban Quản lý Dự án (PMU) & TVGS:
+### Lưu ý kiểm soát nghiệp vụ sống còn cho Ban Quản lý Dự án (PMU) & TVGS:
 
 1. **Nguyên tắc "Không nghiệm thu ván khuôn, cốt thép — Tuyệt đối không cho đổ bê tông":**
    - Phiếu yêu cầu nghiệm thu phải gửi trước 24 giờ. Cán bộ giám sát PMU/TVGS phải kiểm tra thực địa, chụp ảnh lưu trữ và ký xác nhận Biên bản nghiệm thu cốt thép, cốp pha trước khi cấp **Lệnh đổ bê tông**.
@@ -2557,7 +2544,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
     // Specialized Handler for Floor Tiling & Paving Technical Requirements (TCVN 9377-1:2012, TCVN 8264:2009 & NĐ 207/2026)
     if (/lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(qLower) && (/yêu cầu kỹ thuật|tiêu chuẩn|quy trình|nghiệm thu|dung sai|kỹ thuật/i.test(qLower) || !qLower.includes("quy hoạch"))) {
-      return `### 📐 Báo Cáo Kỹ Thuật & Nghiệm Thu: Yêu Cầu Kỹ Thuật Trong Thi Công Lát Nền Công Trình
+      return `### Báo Cáo Kỹ Thuật & Nghiệm Thu: Yêu Cầu Kỹ Thuật Trong Thi Công Lát Nền Công Trình
 
 **1. Vấn đề pháp lý & kỹ thuật:** ${question}
 
@@ -2572,7 +2559,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 🧱 I. CÁC YÊU CẦU KỸ THUẬT CỐT LÕI (THEO MỤC 4.1 TCVN 9377-1:2012):
+### I. CÁC YÊU CẦU KỸ THUẬT CỐT LÕI (THEO MỤC 4.1 TCVN 9377-1:2012):
 
 #### 1. Yêu cầu đối với Lớp nền (Basal Layer - Mục 4.1.2):
 - **Độ cứng vững & ổn định:** Lớp nền (bê tông sàn, lớp láng nền, lớp bê tông lót) phải đủ độ cứng, ổn định, không bị co ngót biến dạng hoặc lún nứt trước khi lát.
@@ -2594,7 +2581,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### ⚙️ II. QUY TRÌNH KỸ THUẬT THI CÔNG LÁT NỀN 05 BƯỚC CHUẨN:
+### II. QUY TRÌNH KỸ THUẬT THI CÔNG LÁT NỀN 05 BƯỚC CHUẨN:
 
 1. **Bước 1: Khảo sát, trắc đạc & Đánh mốc cao độ:**
    - Sử dụng máy laser, thủy bình xác định cao độ hoàn thiện +0.000 của sàn.
@@ -2620,7 +2607,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 📊 III. BẢNG TIÊU CHUẨN DUNG SAI KIỂM TRA NGHIỆM THU THEO TCVN 9377-1:2012:
+### III. BẢNG TIÊU CHUẨN DUNG SAI KIỂM TRA NGHIỆM THU THEO TCVN 9377-1:2012:
 
 *(Căn cứ theo **Mục 4.1.3.7, Bảng 1, Bảng 2 & Mục 6 TCVN 9377-1:2012**)*
 
@@ -2635,7 +2622,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### 💡 IV. LƯU Ý NGHIỆP VỤ KIỂM SOÁT CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
+### IV. LƯU Ý NGHIỆP VỤ KIỂM SOÁT CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
 
 1. **Quy tắc "Gõ bộp bóc bỏ ngay":**
    - Theo quy định tại Mục 6.1.5 TCVN 9377-1:2012, kiểm tra độ bám dính bằng cách gõ nhẹ lên mặt lát. Bất kỳ viên gạch nào phát ra **tiếng kêu bộp rỗng (do thiếu vữa hoặc vữa khô mất nước)** đều bắt buộc phải cậy lên vệ sinh lớp nền và lát lại bằng vữa/keo mới.
@@ -2653,7 +2640,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
     // Specialized Handler for Construction Tolerances & Permissible Deviations (Dung sai cho phép & Sai số trong thi công - TCVN 4453, TCVN 5593, TCVN 9377, NĐ 207/2026)
     if (/sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(qLower) && (/thi công|nghiệm thu|chấp nhận|kết cấu|hình học/i.test(qLower))) {
-      return `### 📐 Báo Cáo Kỹ Thuật & Nghiệm Thu: Quy Định Về Sai Số (Dung Sai Cho Phép) Được Chấp Nhận Trong Thi Công Xây Dựng
+      return `### Báo Cáo Kỹ Thuật & Nghiệm Thu: Quy Định Về Sai Số (Dung Sai Cho Phép) Được Chấp Nhận Trong Thi Công Xây Dựng
 
 **1. Vấn đề pháp lý & kỹ thuật:** ${question}
 
@@ -2673,7 +2660,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ---
 
-### ⚖️ I. NGUYÊN TẮC CỐT LÕI 03 CẤP ĐỘ ĐÁNH GIÁ "SAI SỐ CÓ ĐƯỢC CHẤP NHẬN HAY KHÔNG":
+### I. NGUYÊN TẮC CỐT LÕI 03 CẤP ĐỘ ĐÁNH GIÁ "SAI SỐ CÓ ĐƯỢC CHẤP NHẬN HAY KHÔNG":
 
 #### CẤP ĐỘ 1: Sai số NẰM TRONG GIỚI HẠN Dung sai cho phép (Tolerances ≤ Tiêu chuẩn) → ĐƯỢC TỰ ĐỘNG NGHIỆM THU
 - **Nguyên tắc:** Nếu sai số đo đạc thực tế tại hiện trường (bằng máy thủy bình, toàn đạc, thước laser, thước nêm) nằm trong phạm vi dung sai quy định tại TCVN hoặc Chỉ dẫn kỹ thuật dự án → Hạng mục được đánh giá là **Đạt yêu cầu kỹ thuật** và Tư vấn giám sát (TVGS) ký biên bản nghiệm thu bình thường.
@@ -2695,7 +2682,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 ---
 
-### 📊 II. BẢNG TỔNG HỢP CÁC MỨC DUNG SAI / SAI SỐ CHO PHÉP ĐIỂN HÌNH TRONG THI CÔNG:
+### II. BẢNG TỔNG HỢP CÁC MỨC DUNG SAI / SAI SỐ CHO PHÉP ĐIỂN HÌNH TRONG THI CÔNG:
 
 #### 1. KẾT CẤU BÊ TÔNG & BÊ TÔNG CỐT THÉP TOÀN KHỐI (THEO TCVN 4453:1995 BẢNG 20):
 
@@ -2731,7 +2718,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 ---
 
-### 💡 III. LƯU Ý NGHIỆP VỤ QUẢN TRỊ RỦI RO CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
+### III. LƯU Ý NGHIỆP VỤ QUẢN TRỊ RỦI RO CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
 
 1. **Chỉ dẫn kỹ thuật của Dự án là căn cứ pháp lý cao nhất:**
    - Trong hồ sơ mời thầu và hợp đồng xây dựng, **Chỉ dẫn kỹ thuật (Technical Specifications)** được Chủ đầu tư phê duyệt sẽ quy định cụ thể mức dung sai cho từng hạng mục. Nếu Chỉ dẫn kỹ thuật dự án quy định dung sai chặt chẽ hơn TCVN (ví dụ sàn phẳng hở ≤ 2 mm thay vì 3 mm) thì bắt buộc phải áp dụng theo Chỉ dẫn kỹ thuật dự án.
@@ -2743,7 +2730,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
     // Specialized Handler for Scaffolding Inspection & Safety Requirements (Giàn giáo / Dàn giáo thi công - QCVN 18:2021/BXD Mục 2.2, TCXDVN 296:2004, TCVN 4453, TCVN 5308)
     if (/giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(qLower) && (/yêu cầu|bắt buộc|kiểm tra|nghiệm thu|lắp dựng|an toàn|tiêu chuẩn/i.test(qLower) || !qLower.includes("quy hoạch"))) {
-      return `### 🛡️ Báo Cáo Kỹ Thuật & An Toàn: Các Yêu Cầu Bắt Buộc Khi Kiểm Tra, Nghiệm Thu Lắp Dựng Giàn Giáo Thi Công
+      return `### Báo Cáo Kỹ Thuật & An Toàn: Các Yêu Cầu Bắt Buộc Khi Kiểm Tra, Nghiệm Thu Lắp Dựng Giàn Giáo Thi Công
 
 **1. Vấn đề pháp lý & kỹ thuật:** ${question}
 
@@ -2758,7 +2745,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 ---
 
-### 🧱 I. CÁC TIÊU CHÍ KỸ THUẬT BẮT BUỘC PHẢI ĐẠT KHI KIỂM TRA LẮP DỰNG GIÀN GIÁO:
+### I. CÁC TIÊU CHÍ KỸ THUẬT BẮT BUỘC PHẢI ĐẠT KHI KIỂM TRA LẮP DỰNG GIÀN GIÁO:
 
 #### 1. Yêu cầu đối với Nền móng & Hệ chân đế giàn giáo (Mục 2.2.3.6 QCVN 18):
 - **Độ ổn định của nền:** Nền đất phải được đầm chặt, có rãnh thoát nước, không để đọng nước làm lún sụt chân giáo. Tuyệt đối không đặt chân giáo trên nền đất yếu, gạch kê tạm, ván mục hoặc mép hố móng chưa gia cố.
@@ -2795,7 +2782,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 ---
 
-### 📋 II. BẢNG CHECKLIST NGHIỆM THU AN TOÀN LẮP DỰNG GIÀN GIÁO:
+### II. BẢNG CHECKLIST NGHIỆM THU AN TOÀN LẮP DỰNG GIÀN GIÁO:
 
 | STT | Hạng mục kiểm tra bắt buộc | Tiêu chuẩn & Chỉ tiêu kỹ thuật đối chiếu | Căn cứ quy chuẩn | Đánh giá |
 | :---: | :--- | :--- | :--- | :---: |
@@ -2811,7 +2798,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 ---
 
-### 💡 III. QUY TRÌNH QUẢN TRỊ AN TOÀN CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
+### III. QUY TRÌNH QUẢN TRỊ AN TOÀN CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
 
 1. **Quy tắc "Không có Thẻ Xanh — Tuyệt đối cấm lên giáo" (Scafftag System):**
    - Giàn giáo sau khi lắp dựng xong bắt buộc phải được Cán bộ an toàn Nhà thầu và Tư vấn giám sát (TVGS) kiểm tra thực địa theo bảng checklist trên.
@@ -2826,7 +2813,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
     // Specialized Handler for Design Consultant Default in Author Supervision (Xử lý Tư vấn thiết kế vi phạm trách nhiệm giám sát tác giả - Điều 21 NĐ 207, Điều 35 Luật XD 135, Điều 12 NĐ 339)
     if (/giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế/i.test(qLower) && (/xử lý|chậm trễ|không nghiêm túc|vi phạm|kéo dài|tiến độ/i.test(qLower))) {
-      return `### ⚖️ Báo Cáo Nghiệp Vụ & Pháp Lý: Quy Trình Xử Lý Khi Nhà Thầu Tư Vấn Thiết Kế Vi Phạm Trách Nhiệm Giám Sát Tác Giả
+      return `### Báo Cáo Nghiệp Vụ & Pháp Lý: Quy Trình Xử Lý Khi Nhà Thầu Tư Vấn Thiết Kế Vi Phạm Trách Nhiệm Giám Sát Tác Giả
 
 **1. Vấn đề pháp lý:** ${question}
 
@@ -2846,7 +2833,7 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 ---
 
-### 🚨 I. NHẬN DIỆN HÀNH VI VI PHẠM PHÁP LÝ & HỢP ĐỒNG:
+### I. NHẬN DIỆN HÀNH VI VI PHẠM PHÁP LÝ & HỢP ĐỒNG:
 
 Theo quy định tại Điều 21 Nghị định 207/2026/NĐ-CP và Hợp đồng tư vấn thiết kế, việc nhà thầu thiết kế:
 1. **Chậm trễ cử người có thẩm quyền đến hiện trường** để phối hợp giải quyết bất cập khi Chủ đầu tư/TVGS có văn bản yêu cầu;
@@ -2857,7 +2844,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 🛠️ II. QUY TRÌNH 05 BƯỚC ĐANH THÉP CHỦ ĐẦU TƯ / PMU XỬ LÝ NHÀ THẦU THIẾT KẾ:
+### II. QUY TRÌNH 05 BƯỚC ĐANH THÉP CHỦ ĐẦU TƯ / PMU XỬ LÝ NHÀ THẦU THIẾT KẾ:
 
 #### BƯỚC 1: Lập Biên bản ghi nhận hiện trường & Phát hành Văn bản cảnh báo (Notice of Default)
 - **Hành động của PMU & TVGS:**
@@ -2890,7 +2877,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 📊 BẢNG TỔNG HỢP CÁC CHẾ TÀI ÁP DỤNG ĐỐI VỚI TƯ VẤN THIẾT KẾ:
+### BẢNG TỔNG HỢP CÁC CHẾ TÀI ÁP DỤNG ĐỐI VỚI TƯ VẤN THIẾT KẾ:
 
 | Chế tài xử lý | Căn cứ pháp lý & Hợp đồng | Biện pháp cụ thể của Chủ đầu tư / PMU | Hậu quả pháp lý đối với Nhà thầu thiết kế |
 | :--- | :--- | :--- | :--- |
@@ -2903,7 +2890,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 💡 LƯU Ý BẢO VỆ PHÁP LÝ CHO CÁN BỘ PMU KHI XỬ LÝ:
+### LƯU Ý BẢO VỆ PHÁP LÝ CHO CÁN BỘ PMU KHI XỬ LÝ:
 1. **Tuyệt đối văn bản hóa mọi yêu cầu:** Mọi trao đổi yêu cầu điều chỉnh thiết kế hiện trường không được thực hiện qua điện thoại hay tin nhắn cá nhân. Bắt buộc phải có **Văn bản chính thức của PMU/TVGS** có dấu tiếp nhận hoặc dấu bưu điện/email công vụ ghi rõ ngày giờ để làm căn cứ pháp lý tính toán số ngày chậm trễ khi phạt hợp đồng.
 2. **Không tự ý cho thợ làm sai thiết kế khi chưa có bản vẽ điều chỉnh duyệt:** Cán bộ PMU không được tự ý chỉ đạo nhà thầu thi công "cứ làm đại đi rồi sửa bản vẽ sau", vì nếu xảy ra sự cố sụp đổ kết cấu hoặc bị Thanh tra kiểm toán kết luận thi công sai thiết kế thì cán bộ PMU và TVGS sẽ phải chịu trách nhiệm hình sự liên đới.`;
     }
@@ -2912,7 +2899,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
     if ((/quy hoạch chi tiết/i.test(qLower) || /đồ án/i.test(qLower) || /tổng mặt bằng/i.test(qLower)) &&
         (/tỷ lệ/i.test(qLower) || /1\/500/i.test(qLower) || /1\/1000/i.test(qLower) || /1\/2000/i.test(qLower)) &&
         (/nhiều tỷ lệ|bắt buộc|hồ đập|hồ chứa|khoáng sản|mỏ|tuyển khoáng|6000|600|vùng hồ/i.test(qLower))) {
-      return `### ⚖️ Báo Cáo Phân Tích Pháp Lý & Nghiệp Vụ Kỹ Thuật: Quy Định Tỷ Lệ Bản Đồ Trong Đồ Án Quy Hoạch Chi Tiết Dự Án Khai Thác Khoáng Sản & Hồ Đập
+      return `### Báo Cáo Phân Tích Pháp Lý & Nghiệp Vụ Kỹ Thuật: Quy Định Tỷ Lệ Bản Đồ Trong Đồ Án Quy Hoạch Chi Tiết Dự Án Khai Thác Khoáng Sản & Hồ Đập
 
 **1. Vấn đề pháp lý & Kỹ thuật:** ${question}
 
@@ -2933,7 +2920,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 🎯 I. TRẢ LỜI TRỰC TIẾP CÁC CÂU HỎI TRỌNG TÂM:
+### I. TRẢ LỜI TRỰC TIẾP CÁC CÂU HỎI TRỌNG TÂM:
 
 #### 1. Một đồ án quy hoạch chi tiết có thể áp dụng nhiều tỷ lệ bản đồ không hay bắt buộc phải là 1/500?
 - **TRẢ LỜI:** **HOÀN TOÀN CÓ THỂ VÀ LUÔN LUÔN ÁP DỤNG NHIỀU TỶ LỆ TRONG CÙNG MỘT ĐỒ ÁN!**
@@ -2950,7 +2937,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 📊 II. BẢNG PHÂN VÙNG VÀ XÁC ĐỊNH TỶ LỆ BẢN ĐỒ TRONG ĐỒ ÁN 600 HA:
+### II. BẢNG PHÂN VÙNG VÀ XÁC ĐỊNH TỶ LỆ BẢN ĐỒ TRONG ĐỒ ÁN 600 HA:
 
 | Phân khu trong phạm vi 600 ha | Các hạng mục công trình cụ thể | Tỷ lệ bản đồ áp dụng | Căn cứ & Mục đích kỹ thuật |
 | :--- | :--- | :--- | :--- |
@@ -2961,7 +2948,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### ⚙️ III. BẢN CHẤT KHOA HỌC KỸ THUẬT & TRÁNH LÃNG PHÍ KINH PHÍ:
+### III. BẢN CHẤT KHOA HỌC KỸ THUẬT & TRÁNH LÃNG PHÍ KINH PHÍ:
 
 1. **Vùng lòng hồ chỉ là diện tích ngập nước:**
    - Trong vùng lòng hồ chứa (rộng hàng trăm hecta đồi núi ngập nước), **không có công trình xây dựng dân dụng hay nhà máy**.
@@ -2975,7 +2962,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 🏛️ IV. THỦ TỤC PHÁP LÝ THEN CHỐT ĐỂ BAN QLDA / CHỦ ĐẦU TƯ ĐƯỢC CHẤP THUẬN 100%:
+### IV. THỦ TỤC PHÁP LÝ THEN CHỐT ĐỂ BAN QLDA / CHỦ ĐẦU TƯ ĐƯỢC CHẤP THUẬN 100%:
 
 Để việc áp dụng tỷ lệ hỗn hợp (Khu xây dựng 1/500, Vùng lòng hồ 1/1.000 - 1/2.000) được cơ quan quản lý nhà nước (Sở Xây dựng / Bộ Xây dựng) **thẩm định thông qua mà không bị từ chối**, Chủ đầu tư và PMU cần thực hiện chặt chẽ theo bước sau:
 
@@ -2990,7 +2977,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 💡 V. TỔNG KẾT & LƯU Ý NGHIỆP VỤ CHO BAN QLDA (PMU):
+### V. TỔNG KẾT & LƯU Ý NGHIỆP VỤ CHO BAN QLDA (PMU):
 
 1. **Khai trường mỏ 6.000 ha:** Không đưa vào phạm vi đồ án quy hoạch chi tiết xây dựng. Chỉ đưa vào sơ đồ vị trí tỷ lệ 1/5.000 - 1/10.000 để thuyết minh mối liên hệ mỏ với khu tuyển khoáng.
 2. **Đồ án 600 ha:** Áp dụng mô hình **bản đồ ghép tỷ lệ**:
@@ -3002,12 +2989,12 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
     // Specialized Handler for Mineral Recovery / Tận thu đá Bazan khi thi công mặt bằng
     if (/tận thu|thu hồi khoáng sản|đá bazan|bazan|khoáng sản.*mặt bằng|mặt bằng.*khoáng sản|tận thu đá/i.test(qLower)) {
-      return `### 📋 BÁO CÁO PHÂN TÍCH PHÁP LÝ: QUY TRÌNH THU HỒI (TẬN THU) ĐÁ BAZAN KHI THI CÔNG MẶT BẰNG DỰ ÁN
+      return `### BÁO CÁO PHÂN TÍCH PHÁP LÝ: QUY TRÌNH THU HỒI (TẬN THU) ĐÁ BAZAN KHI THI CÔNG MẶT BẰNG DỰ ÁN
 
-📌 **1. Vấn đề pháp lý:**
+ **1. Vấn đề pháp lý:**
 - Quy trình, thẩm quyền và nghĩa vụ tài chính khi thu hồi (tận thu) đá Bazan (khoáng sản làm vật liệu xây dựng thông thường) dôi dư phát sinh trong quá trình san gạt, hạ cốt nền, thi công mặt bằng công trình xây dựng.
 
-🏛️ **2. Căn cứ pháp lý đa tầng:**
+ **2. Căn cứ pháp lý đa tầng:**
 - **Luật Địa chất và Khoáng sản số 54/2024/QH15** (được sửa đổi, bổ sung bởi Luật số 147/2025/QH15):
   - **Khoản 26 Điều 2**: Định nghĩa pháp lý: *"Thu hồi khoáng sản là hoạt động kết hợp nhằm lấy được khoáng sản trong quá trình thực hiện dự án đầu tư xây dựng công trình hoặc các hoạt động khác theo kế hoạch được cơ quan quản lý nhà nước có thẩm quyền phê duyệt hoặc chấp thuận."*
   - **Điều 75**: *Quy định chung về thu hồi khoáng sản*:
@@ -3025,7 +3012,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 📊 BẢNG ĐỐI CHIẾU: 2 TRƯỜNG HỢP XỬ LÝ ĐÁ BAZAN THU HỒI
+### BẢNG ĐỐI CHIẾU: 2 TRƯỜNG HỢP XỬ LÝ ĐÁ BAZAN THU HỒI
 
 | Tiêu chí | Trường hợp 1: Sử dụng lại cho chính công trình | Trường hợp 2: Vận chuyển ra ngoài / Tiêu thụ / Cấp cho dự án khác |
 | :--- | :--- | :--- |
@@ -3037,7 +3024,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### 🚀 QUY TRÌNH 5 BƯỚC THU HỒI ĐÁ BAZAN CHO BAN QLDA / CHỦ ĐẦU TƯ:
+### QUY TRÌNH 5 BƯỚC THU HỒI ĐÁ BAZAN CHO BAN QLDA / CHỦ ĐẦU TƯ:
 
 1. **Bước 1: Rà soát Hồ sơ thiết kế & Bóc tách khối lượng đá dôi dư:**
    - Căn cứ Hồ sơ thiết kế bản vẽ thi công san nền, hồ sơ khảo sát địa chất và phương án đào đắp đã được cấp có thẩm quyền phê duyệt.
@@ -3068,7 +3055,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
 ---
 
-### ⚠️ CẢNH BÁO RỦI RO PHÁP LÝ QUAN TRỌNG CHO BAN QLDA (PMU):
+### CẢNH BÁO RỦI RO PHÁP LÝ QUAN TRỌNG CHO BAN QLDA (PMU):
 
 > **TUYỆT ĐỐI KHÔNG TỰ Ý BÁN HOẶC CHỞ ĐÁ BAZAN RA KHỎI DỰ ÁN KHI CHƯA CÓ VĂN BẢN CHẤP THUẬN CỦA UBND TỈNH**:
 > Rất nhiều Ban QLDA và Nhà thầu thi công nhầm tưởng đá bazan đào ra khi hạ cốt mặt bằng là "vật liệu thải" nên tự ý hợp đồng bán cho các bãi đá nghiền hoặc vận chuyển đi san lấp nơi khác. Hành vi này bị cơ quan Cảnh sát Môi trường và Thanh tra coi là **"Khai thác, tiêu thụ khoáng sản trái phép"**, có thể bị xử lý hình sự theo **Điều 227 Bộ luật Hình sự** hoặc xử phạt vi phạm hành chính, truy thu toàn bộ số tiền bất hợp pháp và tịch thu phương tiện!`;
@@ -3076,19 +3063,19 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
     // Specialized Handler for Construction Commencement Conditions (Điều kiện khởi công công trình xây dựng - Điều 48 Luật 135/2025 & Điều 12 NĐ 207/2026)
     if (/khởi công/i.test(qLower) && (/điều kiện|quy định|như thế nào|thế nào|thủ tục|hồ sơ|thông báo/i.test(qLower))) {
-      return `### 📋 BÁO CÁO PHÂN TÍCH PHÁP LÝ: ĐIỀU KIỆN KHỞI CÔNG XÂY DỰNG CÔNG TRÌNH
+      return `### BÁO CÁO PHÂN TÍCH PHÁP LÝ: ĐIỀU KIỆN KHỞI CÔNG XÂY DỰNG CÔNG TRÌNH
 
-📌 **1. Vấn đề pháp lý:**
+ **1. Vấn đề pháp lý:**
 - Quy định điều kiện khởi công xây dựng công trình; các trường hợp đặc thù, thủ tục gửi Thông báo khởi công và chế tài xử lý vi phạm hành chính khi khởi công không đủ điều kiện.
 
-🏛️ **2. Căn cứ pháp lý đa tầng:**
+ **2. Căn cứ pháp lý đa tầng:**
 - **Luật Xây dựng số 135/2025/QH15** — **Điều 48**: *Điều kiện khởi công xây dựng công trình* (Khung điều kiện chuẩn, các trường hợp đặc thù, khởi công từng phần và nhà ở riêng lẻ).
 - **Nghị định số 207/2026/NĐ-CP** của Chính phủ — **Điều 12**: *Điều kiện khởi công xây dựng công trình* (Trình tự gửi Thông báo khởi công, mẫu biểu Phụ lục V, cập nhật CSDL quốc gia).
 - **Nghị định số 339/2026/NĐ-CP** của Chính phủ — **Điều 21**: *Xử phạt vi phạm hành chính về trật tự xây dựng & điều kiện khởi công*.
 
 ---
 
-### ⚖️ I. NĂM (05) ĐIỀU KIỆN KHỞI CÔNG BẮT BUỘC THEO KHOẢN 1 ĐIỀU 48 LUẬT XÂY DỰNG 135/2025/QH15:
+### I. NĂM (05) ĐIỀU KIỆN KHỞI CÔNG BẮT BUỘC THEO KHOẢN 1 ĐIỀU 48 LUẬT XÂY DỰNG 135/2025/QH15:
 
 Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi đáp ứng **đồng thời 05 điều kiện** sau:
 
@@ -3100,7 +3087,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
 
 ---
 
-### 🚨 II. CÁC TRƯỜNG HỢP NGOẠI LỆ & ĐẶC THÙ (KHOẢN 2 & KHOẢN 3 ĐIỀU 48):
+### II. CÁC TRƯỜNG HỢP NGOẠI LỆ & ĐẶC THÙ (KHOẢN 2 & KHOẢN 3 ĐIỀU 48):
 
 | Trường hợp công trình | Điều kiện khởi công áp dụng | Căn cứ pháp lý |
 | :--- | :--- | :--- |
@@ -3111,7 +3098,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
 
 ---
 
-### 📮 III. QUY TRÌNH & THỦ TỤC GỬI THÔNG BÁO KHỞI CÔNG (ĐIỀU 12 NGHỊ ĐỊNH 207/2026/NĐ-CP):
+### III. QUY TRÌNH & THỦ TỤC GỬI THÔNG BÁO KHỞI CÔNG (ĐIỀU 12 NGHỊ ĐỊNH 207/2026/NĐ-CP):
 
 1. **Thời điểm gửi:** Chủ đầu tư phải gửi Thông báo khởi công **trước ngày chính thức khởi công** xây dựng công trình.
 2. **Cơ quan tiếp nhận:** Cơ quan quản lý nhà nước về xây dựng tại địa phương (Sở Xây dựng hoặc UBND cấp huyện theo phân cấp).
@@ -3121,7 +3108,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
 
 ---
 
-### 💰 IV. CHẾ TÀI XỬ PHẠT VI PHẠM HÀNH CHÍNH (NGHỊ ĐỊNH SỐ 339/2026/NĐ-CP):
+### IV. CHẾ TÀI XỬ PHẠT VI PHẠM HÀNH CHÍNH (NGHỊ ĐỊNH SỐ 339/2026/NĐ-CP):
 
 - **Không gửi thông báo khởi công:** Phạt tiền từ **10.000.000 đồng đến 20.000.000 đồng** (Điều 21).
 - **Khởi công khi chưa đủ điều kiện (chưa có mặt bằng, chưa duyệt TKBVTC, chưa ký hợp đồng):** Phạt tiền từ **30.000.000 đồng đến 50.000.000 đồng** đối với Chủ đầu tư (Điều 21).
@@ -3129,7 +3116,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
 
 ---
 
-### 💡 V. LƯU Ý BẢO VỆ PHÁP LÝ CHO BAN QUẢN LÝ DỰ ÁN (PMU):
+### V. LƯU Ý BẢO VỆ PHÁP LÝ CHO BAN QUẢN LÝ DỰ ÁN (PMU):
 
 1. **Biên bản bàn giao mặt bằng là chốt chặn số 1:** Tuyệt đối không ký Lệnh khởi công cho nhà thầu khi chưa có Biên bản bàn giao tim mốc, ranh giới và mặt bằng thi công có xác nhận của địa phương/Hội đồng GPMB.
 2. **Lưu trữ Giấy biên nhận thông báo khởi công:** Luôn lưu giữ Giấy biên nhận hoặc mã số hồ sơ nộp thành công trên Cổng dịch vụ công trực tuyến để xuất trình cho Thanh tra Xây dựng khi kiểm tra đột xuất tại công trường.`;
@@ -3159,7 +3146,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
     }
     const sortedTiers = Array.from(tiersMap.entries()).sort((a, b) => a[0] - b[0]);
 
-    let md = `### 📋 ${personaTitle}\n\n`;
+    let md = `### ${personaTitle}\n\n`;
     md += `**1. Vấn đề pháp lý:** ${question}\n\n`;
     md += `**2. Hệ thống văn bản quy phạm pháp luật liên quan (Tổng hợp đa tầng từ Luật -> Nghị định -> Thông tư -> Quy chuẩn):**\n`;
     sortedTiers.forEach(([tierNum, tData]) => {
@@ -3174,7 +3161,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
     // 3. Multi-Document Cross-Synthesis
     const isTimeline = /thời gian|thời hạn|bao lâu|khi nào|mấy ngày|tiến độ/i.test(qLower);
 
-    md += `### 🎯 NỘI DUNG TỔNG HỢP LIÊN VĂN BẢN (XÂU CHUỖI TỪNG CẤP ĐỘ PHÁP LÝ):\n\n`;
+    md += `### NỘI DUNG TỔNG HỢP LIÊN VĂN BẢN (XÂU CHUỖI TỪNG CẤP ĐỘ PHÁP LÝ):\n\n`;
 
     if (isTimeline) {
       // Gather all timeline rules across all tiers
@@ -3230,7 +3217,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
       });
     });
 
-    md += `---\n### 📊 BẢNG ĐỐI CHIẾU TRÁCH NHIỆM & QUY ĐỊNH ĐA TẦNG PHÁP LÝ:\n\n`;
+    md += `---\n### BẢNG ĐỐI CHIẾU TRÁCH NHIỆM & QUY ĐỊNH ĐA TẦNG PHÁP LÝ:\n\n`;
     md += `| Cấp bậc văn bản | Số hiệu văn bản & Điều khoản | Nội dung quy định then chốt | Ý nghĩa thực thi cho PMU |\n`;
     md += `| :--- | :--- | :--- | :--- |\n`;
     sortedTiers.forEach(([tierNum, tData]) => {
