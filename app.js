@@ -372,8 +372,123 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. Smart Internal Target Resolver
   function resolveInternalAnchor(link, targetAnchor, root) {
     if (!root) root = docContent;
+    if (!link) return null;
 
-    // A. Direct ID or slug variations
+    const linkText = (link.textContent || "").trim();
+
+    // Parse parameters from attributes or linkText
+    const linkClause = link.dataset.clause || 
+      (targetAnchor && (targetAnchor.match(/(?:sec|khoan)-([0-9\.\-]+)/i) || [])[1]?.replace(/-/g, ".")) ||
+      (linkText.match(/(?:khoản|mục|điểm)\s*([0-9]+(?:\.[0-9]+)*)/i) || [])[1];
+
+    const linkPart = link.dataset.part || 
+      (targetAnchor && (targetAnchor.match(/(?:phan|muc)-([ivxlcdm]+)/i) || [])[1]?.toUpperCase()) ||
+      (linkText.match(/(?:Mục|Phần)\s*([IVXLCDM]+)\b/i) || [])[1];
+
+    const linkAppendix = link.dataset.appendix || 
+      (targetAnchor && (targetAnchor.match(/(?:pl|phu-luc)-([ivxlcdm\d]+)/i) || [])[1]?.toUpperCase()) ||
+      (linkText.match(/Phụ lục\s*([IVXLCDM\d]+)/i) || [])[1];
+
+    const isTable = (targetAnchor && /b[aả]ng-/i.test(targetAnchor)) || /B[aả]ng\s*([0-9A-Za-z\.\-]+)/i.test(linkText);
+
+    const allBlocks = Array.from(root.querySelectorAll("p, h1, h2, h3, h4, h5, h6, th, td, div"));
+
+    // A. Table Reference Search (e.g. targetAnchor="bảng-3-1", text="Bảng 3.1 Phụ lục III")
+    if (isTable) {
+      const tableNumMatch = (targetAnchor && targetAnchor.match(/b[aả]ng-([a-z0-9\.\-]+)/i)) ||
+                            linkText.match(/B[aả]ng\s*([0-9A-Za-z\.\-]+)/i);
+      if (tableNumMatch) {
+        const rawNum = tableNumMatch[1].replace(/[\-_]/g, ".").toLowerCase();
+        const normNum = tableNumMatch[1].replace(/[\._]/g, "-").toLowerCase();
+
+        // 1. Direct attribute or id match
+        let el = root.querySelector(`[data-target-table="${rawNum}"]`) ||
+                 root.querySelector(`[data-target-table-norm="${normNum}"]`) ||
+                 document.getElementById(`bảng-${normNum}`) ||
+                 document.getElementById(`bang-${normNum}`) ||
+                 document.getElementById(`bảng-${rawNum}`) ||
+                 document.getElementById(`bang-${rawNum}`);
+        if (el) return el;
+
+        // 2. Start from appendix if specified
+        let startIdx = 0;
+        if (linkAppendix) {
+          const plRegex = new RegExp(`^(?:PHỤ LỤC|Phụ lục)\\s*${linkAppendix}\\b`, "i");
+          const idx = allBlocks.findIndex(b => plRegex.test(b.textContent.trim()));
+          if (idx !== -1) startIdx = idx;
+        }
+
+        const tableRegex = new RegExp(`^(?:BẢNG|Bảng|BIỂU|Biểu)\\s*${rawNum.replace(/\./g, "\\.")}\\b`, "i");
+        for (let i = startIdx; i < allBlocks.length; i++) {
+          const b = allBlocks[i];
+          if (b.closest("a")) continue;
+          if (tableRegex.test(b.textContent.trim())) {
+            return b.closest("p, tr, table") || b;
+          }
+        }
+      }
+    }
+
+    // B. Specific Clause / Item Search (PRIORITY OVER GENERIC PARENT ANCHOR)
+    // E.g. "khoản 5 Mục I", "khoản 5.4 Phụ lục này", "khoản 4 Mục I Phụ lục III", "khoản 3.6 mục I"
+    if (linkClause) {
+      let startIdx = 0;
+
+      // 1. If explicit appendix is targeted:
+      if (linkAppendix) {
+        const plRegex = new RegExp(`^(?:PHỤ LỤC|Phụ lục)\\s*${linkAppendix}\\b`, "i");
+        const idx = allBlocks.findIndex(b => plRegex.test(b.textContent.trim()));
+        if (idx !== -1) startIdx = idx;
+      } else {
+        // Find nearest preceding appendix before the clicked link
+        const linkBlock = link.closest("p, h1, h2, h3, h4, h5, h6, td, th, div");
+        const linkPos = linkBlock ? allBlocks.indexOf(linkBlock) : -1;
+        if (linkPos > 0) {
+          for (let i = linkPos; i >= 0; i--) {
+            const txt = allBlocks[i].textContent.trim();
+            if (/^(?:PHỤ LỤC|Phụ lục)\s*([IVXLCDM\d]+)/i.test(txt)) {
+              startIdx = i;
+              break;
+            }
+          }
+        }
+      }
+
+      // 2. If part / section is specified (e.g. "Mục I", "Phần I"):
+      if (linkPart) {
+        const pRegex = new RegExp(`^(?:PHẦN|Phần|MỤC|Mục)\\s*${linkPart}\\b|^${linkPart}\\.\\s+[A-ZÀ-Ỹ]`, "i");
+        for (let i = startIdx; i < allBlocks.length; i++) {
+          if (pRegex.test(allBlocks[i].textContent.trim())) {
+            startIdx = i;
+            break;
+          }
+        }
+      }
+
+      // 3. Search forward from startIdx for the clause/item
+      const cEsc = linkClause.replace(/\./g, "\\.");
+      const cRegex = new RegExp(`^(?:${cEsc}\\.?\\s+[A-ZÀ-Ỹ]|Khoản\\s*${cEsc}\\b|Mục\\s*${cEsc}\\b|Điểm\\s*${cEsc}\\b)`, "i");
+      for (let i = startIdx + 1; i < allBlocks.length; i++) {
+        const b = allBlocks[i];
+        if (b.closest("a")) continue; // Avoid matching links
+        const txt = b.textContent.trim();
+        if (cRegex.test(txt)) {
+          return b;
+        }
+      }
+
+      // 4. Fallback search across all blocks if not found after startIdx
+      for (let i = 0; i < allBlocks.length; i++) {
+        const b = allBlocks[i];
+        if (b.closest("a")) continue;
+        const txt = b.textContent.trim();
+        if (cRegex.test(txt)) {
+          return b;
+        }
+      }
+    }
+
+    // C. Direct ID or slug variations (Only when NO specific clause was requested)
     if (targetAnchor) {
       let el = document.getElementById(targetAnchor) || root.querySelector("#" + CSS.escape(targetAnchor));
       if (el) return el;
@@ -391,93 +506,32 @@ document.addEventListener("DOMContentLoaded", () => {
       if (el) return el;
     }
 
-    const linkText = link.textContent.trim();
-
-    // B. Table Search (e.g. targetAnchor="bảng-3-2", text="Bảng 3.2", text="Bảng 3.5 của Phụ lục này")
-    const tableNumMatch = (targetAnchor && targetAnchor.match(/b[aả]ng-([a-z0-9\.\-]+)/i)) ||
-                          linkText.match(/B[aả]ng\s*([0-9A-Za-z\.\-]+)/i);
-    if (tableNumMatch) {
-      const rawNum = tableNumMatch[1].replace(/[\-_]/g, ".").toLowerCase();
-      const normNum = tableNumMatch[1].replace(/[\._]/g, "-").toLowerCase();
-
-      let el = root.querySelector(`[data-target-table="${rawNum}"]`) ||
-               root.querySelector(`[data-target-table-norm="${normNum}"]`) ||
-               document.getElementById(`bảng-${normNum}`) ||
-               document.getElementById(`bang-${normNum}`) ||
-               document.getElementById(`bảng-${rawNum}`) ||
-               document.getElementById(`bang-${rawNum}`);
+    // D. Section / Part search if no clause (e.g. data-part="I" or targetAnchor="muc-iv")
+    if (linkPart) {
+      const pSlug = toSlug(`phan-${linkPart}`);
+      let el = document.getElementById(pSlug) || document.getElementById(`muc-${linkPart.toLowerCase()}`);
       if (el) return el;
 
-      const tableRegex = new RegExp(`^(?:BẢNG|Bảng|BIỂU|Biểu)\\s*${rawNum.replace('.', '\\.')}\\b`, "i");
-      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6, th, td");
-      for (const c of candidates) {
-        if (tableRegex.test(c.textContent.trim())) {
-          return c.closest("p, tr, table") || c;
-        }
-      }
-    }
-
-    // C. Clause / Part / Section Search (e.g. data-part="I", data-clause="2", or targetAnchor="muc-iv")
-    const part = link.dataset.part;
-    const clause = link.dataset.clause;
-
-    if (clause) {
-      const cSlug = clause.toString().replace(/\./g, "-");
-      let el = document.getElementById(`khoan-${cSlug}`) ||
-               document.getElementById(`muc-${cSlug}`) ||
-               document.getElementById(`sec-${cSlug}`);
-      if (el) return el;
-
-      const cRegex = new RegExp(`^(?:${clause}\\.|Mục\\s*${clause}\\b|Khoản\\s*${clause}\\b)`, "i");
-      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
-      for (const c of candidates) {
-        if (cRegex.test(c.textContent.trim())) {
-          return c;
-        }
-      }
-    }
-
-    if (part) {
-      const pSlug = toSlug(`phan-${part}`);
-      let el = document.getElementById(pSlug) || document.getElementById(`muc-${part.toLowerCase()}`);
-      if (el) return el;
-
-      const pRegex = new RegExp(`^(?:PHẦN|Phần|MỤC|Mục)\\s*${part}\\b`, "i");
-      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
-      for (const c of candidates) {
+      const pRegex = new RegExp(`^(?:PHẦN|Phần|MỤC|Mục)\\s*${linkPart}\\b|^${linkPart}\\.\\s+[A-ZÀ-Ỹ]`, "i");
+      for (const c of allBlocks) {
+        if (c.closest("a")) continue;
         if (pRegex.test(c.textContent.trim())) {
           return c;
         }
       }
     }
 
-    // D. Section search from targetAnchor like "muc-iv", "muc-6", "muc-ii", "muc-5-1"
-    if (targetAnchor && /muc-([a-z0-9\.\-]+)/i.test(targetAnchor)) {
-      const sRaw = targetAnchor.match(/muc-([a-z0-9\.\-]+)/i)[1].replace(/-/g, ".").toLowerCase();
-      let el = document.getElementById(targetAnchor) || document.getElementById(`muc-${sRaw}`);
-      if (el) return el;
-
-      const sRegex = new RegExp(`^(?:MỤC|Mục|${sRaw}\\.)\\s*${sRaw}\\b`, "i");
-      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
-      for (const c of candidates) {
-        if (sRegex.test(c.textContent.trim()) || c.textContent.trim().toLowerCase().startsWith(`${sRaw}.`)) {
-          return c;
-        }
-      }
-    }
-
-    // E. Appendix Search (e.g. data-appendix="III" or linkText "Phụ lục III")
-    const appendix = link.dataset.appendix || (linkText.match(/Phụ lục\s*([IVXLCDM\d]+)/i) || [])[1];
-    if (appendix) {
-      const aSlug = toSlug(`phu-luc-${appendix}`);
+    // E. Appendix Search if no clause (e.g. data-appendix="III" or linkText "Phụ lục III")
+    if (linkAppendix) {
+      const aSlug = toSlug(`phu-luc-${linkAppendix}`);
       let el = document.getElementById(aSlug) ||
-               document.getElementById(`pl-${appendix.toLowerCase()}`) ||
-               document.getElementById(`phu-luc-so-${appendix.toLowerCase()}`);
+               document.getElementById(`pl-${linkAppendix.toLowerCase()}`) ||
+               document.getElementById(`phu-luc-so-${linkAppendix.toLowerCase()}`);
       if (el) return el;
 
-      const aRegex = new RegExp(`^(?:PHỤ LỤC|Phụ lục)\\s*${appendix}\\b`, "i");
-      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
-      for (const c of candidates) {
+      const aRegex = new RegExp(`^(?:PHỤ LỤC|Phụ lục)\\s*${linkAppendix}\\b`, "i");
+      for (const c of allBlocks) {
+        if (c.closest("a")) continue;
         if (aRegex.test(c.textContent.trim())) {
           return c;
         }
@@ -493,9 +547,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // G. Fallback: Search element with exact or starting text
-    if (linkText.length > 3 && linkText.length < 50) {
-      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6, th, td");
-      for (const c of candidates) {
+    if (linkText.length > 5 && linkText.length < 50) {
+      for (const c of allBlocks) {
+        if (c.closest("a")) continue;
         if (c.textContent.trim().toLowerCase().startsWith(linkText.toLowerCase())) {
           return c;
         }
