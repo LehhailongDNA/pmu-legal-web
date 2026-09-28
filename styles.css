@@ -504,3 +504,23 @@ main {
   }
 }
 
+/* Document Images & PDF Evidence */
+.document-content img,
+#docContent img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  margin: 16px auto;
+  border: 1px solid #dee2e6;
+  display: block;
+  background-color: #fff;
+  cursor: zoom-in;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.document-content img:hover,
+#docContent img:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+

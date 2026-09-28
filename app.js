@@ -29,6 +29,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const docxActionBanner = document.getElementById("docxActionBanner");
   const copyLinkBtn = document.getElementById("copyLinkBtn");
 
+  if (docContent) {
+    docContent.addEventListener("click", (e) => {
+      if (e.target && e.target.tagName === "IMG") {
+        window.open(e.target.src, "_blank");
+      }
+    });
+  }
+
   const chatForm = document.getElementById("chatForm");
   const chatInput = document.getElementById("chatInput");
   const chatMessages = document.getElementById("chatMessages");
