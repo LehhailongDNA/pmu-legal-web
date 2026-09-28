@@ -1007,7 +1007,11 @@ document.addEventListener("DOMContentLoaded", () => {
   ]);
 
   const GENERIC_PHRASES = new Set([
-    "quy định", "quy định về", "định về", "về việc", "hướng dẫn", "hướng dẫn về", "thực hiện"
+    "quy định", "quy định về", "định về", "về việc", "hướng dẫn", "hướng dẫn về",
+    "thực hiện", "thực hiện hợp", "hiện hợp đồng", "nội dung gì", "cần phải",
+    "phải thực", "trong thực", "thực hiện những", "những nội", "nội dung trong",
+    "cần thực hiện", "phải làm gì", "được thực hiện", "trong hợp đồng", "cho việc",
+    "liên quan đến", "như thế nào"
   ]);
 
   function extractSearchFeatures(query) {
@@ -1032,6 +1036,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const rawWords = clean.split(" ").filter(w => w.length > 0);
     
     const phrases = [];
+    // Extract domain compound phrases first so multi-word terms are preserved
+    const DOMAIN_COMPOUNDS = [
+      "tư vấn giám sát", "nhà thầu giám sát", "giám sát thi công", "hợp đồng giám sát",
+      "giám sát tác giả", "tư vấn thiết kế", "nhà thầu thiết kế", "tư vấn thẩm tra",
+      "thẩm tra thiết kế", "thẩm tra dự toán", "điều kiện khởi công", "thông báo khởi công",
+      "chỉ định thầu", "chỉ định thầu rút gọn", "đánh giá e-hsdt", "tận thu khoáng sản",
+      "hệ thống điều hòa", "điều hòa trung tâm", "nghiệm thu lắp đặt", "chạy thử liên động"
+    ];
+    DOMAIN_COMPOUNDS.forEach(dc => {
+      if (clean.includes(dc)) phrases.push(dc);
+    });
+
     for (let i = 0; i < rawWords.length - 1; i++) {
       const p2 = rawWords[i] + " " + rawWords[i+1];
       if (!GENERIC_PHRASES.has(p2)) phrases.push(p2);
@@ -1546,6 +1562,9 @@ NGUYÊN TẮC:
       } else if (/mẫu.*thẩm tra|thẩm tra.*mẫu|báo cáo.*thẩm tra.*mẫu|mẫu số.*thẩm tra|mẫu dấu.*thẩm tra|dấu thẩm tra/i.test(qLower)) {
         domain = "VERIFICATION_REPORT_TEMPLATES";
         domainName = "Mẫu Báo Cáo Thẩm Tra & Mẫu Dấu";
+      } else if (/tư vấn giám sát|nhà thầu giám sát|giám sát thi công|đơn vị giám sát|tổ chức giám sát|kỹ sư giám sát|nhiệm vụ giám sát|trách nhiệm giám sát/i.test(qLower) || (/giám sát/i.test(qLower) && (/hợp đồng/i.test(qLower) || /nội dung/i.test(qLower)))) {
+        domain = "CONSTRUCTION_SUPERVISION";
+        domainName = "Tư Vấn Giám Sát Thi Công Xây Dựng";
       }
 
       // Phân loại Ý định (Intent Classification)
@@ -1635,6 +1654,15 @@ NGUYÊN TẮC:
           requiredArticles: ["PL I", 8, 16]
         };
       }
+      if (domain === "CONSTRUCTION_SUPERVISION" || (/giám sát/i.test(qLower) && (/tư vấn/i.test(qLower) || /nhà thầu/i.test(qLower) || /thi công/i.test(qLower) || /nội dung/i.test(qLower) || /hợp đồng/i.test(qLower)))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "CONSTRUCTION_SUPERVISION_DUTIES",
+          domain: "CONSTRUCTION_SUPERVISION",
+          targetDocs: ["135/2025", "207/2026", "339/2026"],
+          requiredArticles: [63, 20, 29]
+        };
+      }
 
       // Điều hướng tìm kiếm & tổng hợp thông thường theo Domain
       return {
@@ -1691,6 +1719,13 @@ NGUYÊN TẮC:
       } else if (domain === "VERIFICATION_REPORT_TEMPLATES") {
         const hasTemplate = candidates.some(c => (c.docCode || "").includes("217/2026") || (c.docCode || "").includes("206/2026"));
         domainScore = hasTemplate ? 0.48 : 0.1;
+      } else if (domain === "CONSTRUCTION_SUPERVISION") {
+        const hasSupervision = candidates.some(c => 
+          ((c.docCode || "").includes("135/2025") && (c.articleNumber == 63 || c.articleNumber == 60)) ||
+          ((c.docCode || "").includes("207/2026") && (c.articleNumber == 20 || (c.articleNumber || "").toString().startsWith("PL IV"))) ||
+          ((c.docCode || "").includes("339/2026") && c.articleNumber == 29)
+        );
+        domainScore = hasSupervision ? 0.50 : 0.1;
       } else {
         domainScore = 0.35;
       }
@@ -1717,6 +1752,7 @@ NGUYÊN TẮC:
       if (state.domain === "OCCUPATIONAL_SAFETY" && !/an toàn|ngã cao|giàn giáo|qcvn 18/i.test(text)) return false;
       if (state.domain === "HVAC_MEP_ACCEPTANCE" && !/điều hòa|thông gió|chạy thử|5639|207\/2026|áp lực|chân không|chiller/i.test(text)) return false;
       if (state.domain === "VERIFICATION_REPORT_TEMPLATES" && !/mẫu số 02|mẫu số 11|mẫu số 14|217\/2026|phụ lục i|thẩm tra/i.test(text)) return false;
+      if (state.domain === "CONSTRUCTION_SUPERVISION" && !/giám sát|tư vấn giám sát|điều 63|điều 20|207\/2026|135\/2025|nghiệm thu|chất lượng/i.test(text)) return false;
 
       // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu, danh sách hành động hoặc đối thoại nghiệp vụ rõ ràng
       const hasStructure = text.includes("|") || /quy trình|các bước|bước \d+|lưu ý|trách nhiệm|khuyến nghị|theo quy định|căn cứ|thực tế|cần|phải|trường hợp|nguyên tắc/i.test(text);
@@ -1835,6 +1871,14 @@ NGUYÊN TẮC:
               }
               if (lowerDocCode.includes("206/2026") && (art.number == 8 || art.number == 16)) artScore += 5000;
               if (lowerDocCode.includes("339/2026") || isDocTCVN) artScore -= 8000;
+            } else if (targetDomain === "CONSTRUCTION_SUPERVISION") {
+              if (lowerDocCode.includes("135/2025") && (art.number == 63 || art.number == 60)) artScore += 7500;
+              if (lowerDocCode.includes("207/2026")) {
+                if (art.number == 20) artScore += 8000;
+                if ([14, 18, 19, 22, 23, 24].includes(Number(art.number)) || (art.number || "").toString().startsWith("PL IV") || artSnippetLower.includes("phụ lục iv")) artScore += 5000;
+              }
+              if (lowerDocCode.includes("339/2026") && art.number == 29) artScore += 4500;
+              if (lowerDocCode.includes("214/2025") || (lowerDocCode.includes("22/2023") && !clean.includes("đấu thầu")) || isDocTCVN) artScore -= 8500;
             }
           }
 
@@ -2023,6 +2067,24 @@ NGUYÊN TẮC:
             }
             if (lowerDocCode.includes("339/2026") || (lowerDocCode.includes("135/2025") && (art.number == 35 || art.number == 36)) || isDocTCVN) {
               artScore -= 8500;
+            }
+          }
+
+          // Booster for Construction Supervision Consultant (Luật 135/2025 Điều 63; NĐ 207/2026 Điều 20, PL IV; NĐ 339/2026 Điều 29)
+          if (clean.includes("giám sát") && (clean.includes("tư vấn") || clean.includes("nhà thầu") || clean.includes("thi công") || clean.includes("hợp đồng") || clean.includes("nhiệm vụ") || clean.includes("trách nhiệm") || clean.includes("nội dung"))) {
+            if (lowerDocCode.includes("135/2025") && (art.number == 63 || art.number == 60)) {
+              artScore += 8000;
+            }
+            if (lowerDocCode.includes("207/2026")) {
+              if (art.number == 20) artScore += 8500;
+              if (artTitleLower.includes("giám sát thi công") || (art.number || "").toString().startsWith("PL IV") || artSnippetLower.includes("phụ lục iv")) artScore += 5000;
+              if ([14, 18, 19, 22, 23, 24].includes(Number(art.number))) artScore += 4000;
+            }
+            if (lowerDocCode.includes("339/2026") && art.number == 29) {
+              artScore += 4500;
+            }
+            if (lowerDocCode.includes("214/2025") || (lowerDocCode.includes("22/2023") && !clean.includes("đấu thầu"))) {
+              artScore -= 9500;
             }
           }
 
@@ -3300,6 +3362,46 @@ Báo cáo thẩm tra không thể chỉ có một chữ ký của Giám đốc d
 - Đại diện theo pháp luật của tổ chức tư vấn thẩm tra ký tên và đóng dấu pháp nhân của công ty.
 
 Nếu thuê tư vấn độc lập thẩm tra thiết kế và chi phí cùng lúc, tư vấn có thể phát hành Báo cáo thẩm tra tích hợp cả thiết kế và dự toán, nhưng cấu trúc nội dung và chữ ký các chủ môn vẫn phải bảo đảm đầy đủ các thành phần như Mẫu số 02 hoặc Mẫu số 11 nêu trên.`;
+    }
+
+    // Specialized Handler for Construction Supervision Duties & Contract Execution (Điều 63 Luật 135/2025; Điều 20 & PL IV NĐ 207/2026; Điều 29 NĐ 339/2026)
+    if (/giám sát/i.test(qLower) && (/tư vấn/i.test(qLower) || /nhà thầu/i.test(qLower) || /thi công/i.test(qLower) || /hợp đồng/i.test(qLower) || /nhiệm vụ/i.test(qLower) || /trách nhiệm/i.test(qLower) || /nội dung/i.test(qLower))) {
+      return `### Nội dung thực hiện hợp đồng của Nhà thầu tư vấn giám sát thi công xây dựng
+
+Khi thực hiện hợp đồng tư vấn giám sát (TVGS), anh em đừng nghĩ đơn giản là cử mấy kỹ sư ra đứng ngó thợ làm rồi ký biên bản nghiệm thu. Hợp đồng giám sát bản chất là hợp đồng dịch vụ tư vấn kỹ thuật có trách nhiệm pháp lý rất nặng, gắn liền trực tiếp với chất lượng công trình, an toàn sinh mạng người lao động và tiến độ giải ngân của Chủ đầu tư.
+
+Hệ thống pháp lý quy định trực tiếp về quyền, nghĩa vụ và trách nhiệm của tư vấn giám sát gồm 3 văn bản cốt lõi:
+- Luật Xây dựng số 135/2025/QH15: Điều 63 (Quyền, nghĩa vụ và trách nhiệm của nhà thầu giám sát thi công xây dựng công trình).
+- Nghị định số 207/2026/NĐ-CP: Điều 20 (Nội dung thực hiện giám sát thi công xây dựng công trình), các Điều 14, 18, 19, 22, 23, 24 và Phụ lục IV (chế độ lập báo cáo giám sát định kỳ và hoàn thành).
+- Nghị định số 339/2026/NĐ-CP: Điều 29 (Xử phạt vi phạm hành chính đối với chủ đầu tư hoặc tổ chức tư vấn giám sát, mức phạt lên tới 60 triệu đồng kèm biện pháp khắc phục hậu quả).
+
+Trong quá trình thực hiện hợp đồng, nhà thầu tư vấn giám sát phải triển khai 4 nhóm công việc trọng tâm sau:
+
+#### 1. Kiểm tra các điều kiện khởi công và chấp thuận đầu vào của nhà thầu thi công
+Trước khi cho phép nhà thầu đưa quân và máy móc vào thi công rầm rộ, TVGS phải thực hiện rà soát pháp lý hiện trường:
+- Kiểm tra tính đầy đủ của mặt bằng xây dựng và mốc định vị tim trục công trình.
+- Kiểm tra sự phù hợp về năng lực của nhà thầu thi công so với hồ sơ dự thầu và hợp đồng đã ký: danh sách nhân sự chủ chốt (Chỉ huy trưởng, cán bộ an toàn, kỹ sư phụ trách kỹ thuật có chứng chỉ hành nghề còn hạn), số lượng và kiểm định kỹ thuật an toàn của máy móc thiết bị thi công, tính hợp chuẩn của phòng thí nghiệm chuyên ngành xây dựng (LAS-XD).
+- Xem xét và có ý kiến chấp thuận bằng văn bản đối với: Biện pháp thi công tổng thể và chi tiết từng hạng mục; Biện pháp bảo đảm an toàn lao động, vệ sinh môi trường; Kế hoạch tổ chức thí nghiệm, quan trắc và tiến độ thi công chi tiết (Điều 19 Nghị định 207/2026/NĐ-CP).
+
+#### 2. Kiểm soát chất lượng vật tư, vật liệu và thiết bị lắp đặt vào công trình
+Nguyên tắc bất di bất dịch tại Điều 14 Nghị định 207/2026/NĐ-CP: Vật liệu, cấu kiện hay thiết bị chỉ được phép đưa vào thi công sau khi đã được TVGS kiểm tra và chấp thuận.
+- Kiểm tra chứng chỉ xuất xưởng, chứng nhận hợp chuẩn/hợp quy, chứng từ xuất xứ hàng hóa (CO/CQ) và hồ sơ kết quả thí nghiệm của nhà sản xuất.
+- Trực tiếp chứng kiến công tác lấy mẫu, niêm phong mẫu lưu và gửi thí nghiệm tại phòng LAS-XD theo đúng tần suất quy định trong chỉ dẫn kỹ thuật.
+- Khi phát hiện nghi ngờ về tính trung thực của kết quả thí nghiệm hoặc chất lượng vật liệu không đồng đều, TVGS có quyền và trách nhiệm yêu cầu Chủ đầu tư cho thực hiện thí nghiệm đối chứng hoặc kiểm định độc lập theo Điều 8 Nghị định 207/2026/NĐ-CP.
+
+#### 3. Giám sát thường trực quá trình thi công, xử lý sai lệch và nghiệm thu
+Đây là công việc cốt lõi diễn ra hàng ngày trên công trường:
+- Giám sát việc tuân thủ hồ sơ thiết kế bản vẽ thi công đã được phê duyệt, các quy chuẩn xây dựng và tiêu chuẩn áp dụng. Kịp thời phát hiện các điểm xung đột giữa các bộ môn (kiến trúc, kết cấu, MEP) để kiến nghị Chủ đầu tư yêu cầu tư vấn thiết kế xử lý.
+- Giám sát an toàn lao động và bảo vệ môi trường: Thường xuyên kiểm tra giàn giáo, lan can an toàn mép sàn, hệ thống điện thi công và trang bị bảo hộ lao động. Khi phát hiện công trình có nguy cơ mất an toàn sập đổ hoặc nhà thầu cố tình thi công sai thiết kế, TVGS có quyền tạm dừng thi công ngay lập tức và báo cáo bằng văn bản cho Chủ đầu tư (theo điểm d khoản 1 Điều 63 Luật 135/2025/QH15).
+- Tổ chức nghiệm thu chuyển bước: Thực hiện nghiệm thu công việc xây dựng che khuất (Điều 22), nghiệm thu bộ phận kết cấu chịu lực hoặc giai đoạn thi công (Điều 23) và tham gia nghiệm thu hoàn thành hạng mục/công trình (Điều 24).
+- Xác nhận khối lượng hoàn thành thực tế làm cơ sở lập hồ sơ thanh toán (Điều 18) và kiểm tra, ký xác nhận bản vẽ hoàn công đúng với thực tế thi công (Phụ lục IIb Nghị định 207/2026/NĐ-CP).
+
+#### 4. Chế độ báo cáo và trách nhiệm pháp lý bồi thường
+Về chế độ thông tin báo cáo gửi Chủ đầu tư, TVGS bắt buộc phải lập:
+- Báo cáo định kỳ (tháng/quý hoặc theo mốc giai đoạn thi công) theo đúng biểu mẫu quy định tại Phụ lục IVa Nghị định số 207/2026/NĐ-CP.
+- Báo cáo hoàn thành công tác giám sát thi công xây dựng gói thầu hoặc toàn bộ công trình theo Phụ lục IVb Nghị định số 207/2026/NĐ-CP để phục vụ công tác kiểm tra nghiệm thu của cơ quan chuyên môn về xây dựng (Sở Xây dựng / cơ quan quản lý chuyên ngành).
+
+Lưu ý thực tế: Theo khoản 2 Điều 63 Luật Xây dựng 135/2025/QH15 và Điều 29 Nghị định 339/2026/NĐ-CP, nếu TVGS buông lỏng quản lý, ký khống khối lượng, nghiệm thu công trình không đạt chuẩn hoặc không kiểm tra năng lực nhà thầu phụ, đơn vị tư vấn không những bị phạt tiền từ 30 đến 60 triệu đồng mà còn phải bồi thường toàn bộ thiệt hại xảy ra và bị công khai vi phạm, tước quyền tham gia đấu thầu các dự án tiếp theo.`;
     }
 
     // Default dynamic synthesis report
