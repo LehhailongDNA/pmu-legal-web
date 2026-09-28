@@ -1434,6 +1434,9 @@ Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắ
 
 Tránh lạm dụng format danh sách liệt kê (bullet points) cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
 
+KHỐNG CHẾ MÔ HÌNH CHÍNH QUYỀN ĐỊA PHƯƠNG (BẮT BUỘC TUÂN THỦ):
+Hiện nay hệ thống chính quyền địa phương chỉ có 02 cấp: cấp Tỉnh/Thành phố trực thuộc trung ương và cấp Phường/Xã. Hoàn toàn KHÔNG CÒN cấp huyện (quận, huyện, thị xã). Tuyệt đối KHÔNG viện dẫn hoặc gán thẩm quyền cho cấp huyện, UBND cấp huyện hay phòng ban chuyên môn cấp huyện trong mọi thủ tục, cấp phép hay tiếp nhận thông báo. Mọi thẩm quyền thuộc về cấp Tỉnh hoặc cấp Phường/Xã theo phân cấp.
+
 NGUYÊN TẮC:
 1. Giọng điệu tự nhiên như người đang gõ phím trao đổi công việc, có nhận định rõ ràng, đi thẳng vào trọng tâm vấn đề.
 2. Tuyệt đối không sử dụng icon hay emoji nào trong toàn bộ câu trả lời.
@@ -1445,6 +1448,8 @@ NGUYÊN TẮC:
 
 Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
 
+KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã. Tuyệt đối không viện dẫn cấp huyện hay UBND huyện.
+
 NGUYÊN TẮC:
 1. Không dùng bất kỳ icon hay emoji nào.
 2. Chỉ rõ điểm nghẽn pháp lý, rủi ro cụ thể và giải pháp tháo gỡ thực tế cho PMU.
@@ -1453,6 +1458,8 @@ NGUYÊN TẮC:
     technical: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế về mặt kỹ thuật, quy chuẩn và tiêu chuẩn xây dựng.
 
 Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
+
+KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã.
 
 NGUYÊN TẮC:
 1. Tuyệt đối không dùng icon hay emoji.
@@ -1463,6 +1470,8 @@ NGUYÊN TẮC:
 
 Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
 
+KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã.
+
 NGUYÊN TẮC:
 1. Không dùng icon/emoji.
 2. Lập luận dứt khoát, gắn liền với Nghị định 206/2026/NĐ-CP và bài toán thực tế của Ban QLDA.
@@ -1471,6 +1480,8 @@ NGUYÊN TẮC:
     bidding: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong lĩnh vực đấu thầu.
 
 Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
+
+KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã.
 
 NGUYÊN TẮC:
 1. Không dùng icon/emoji.
@@ -2018,7 +2029,12 @@ HƯỚNG DẪN TRẢ LỜI (BẮT BUỘC TUÂN THỦ):
    - Chỉ dùng bảng Markdown khi thực sự cần so sánh đối chiếu đa tiêu chí hoặc làm rõ hai quy trình.
    - Chỉ dùng gạch đầu dòng khi liệt kê các điều kiện bắt buộc độc lập hoặc các bước thủ tục tuần tự.
 
-3. QUY TẮC HIỂN THỊ KÝ HIỆU KỸ THUẬT:
+3. KHỐNG CHẾ MÔ HÌNH CHÍNH QUYỀN ĐỊA PHƯƠNG (BẮT BUỘC TUÂN THỦ):
+   - Hiện nay hệ thống chính quyền địa phương chỉ có 02 cấp: cấp Tỉnh/Thành phố trực thuộc trung ương và cấp Phường/Xã. Hoàn toàn KHÔNG CÒN cấp huyện (quận, huyện, thị xã).
+   - Tuyệt đối KHÔNG viện dẫn, nhắc đến hay gán thẩm quyền cho cấp huyện, UBND cấp huyện, Phòng Quản lý đô thị hay Phòng Kinh tế - Hạ tầng cấp huyện trong bất kỳ thủ tục, thông báo, cấp phép hay quản lý trật tự xây dựng nào.
+   - Thẩm quyền chỉ phân định giữa cơ quan cấp Tỉnh (UBND tỉnh, Sở Xây dựng, Sở TN&MT...) và cấp cơ sở là UBND Phường/Xã theo phân cấp.
+
+4. QUY TẮC HIỂN THỊ KÝ HIỆU KỸ THUẬT:
    - Tuyệt đối không dùng ký hiệu toán học có dấu dollar ($...$). Dùng trực tiếp các ký tự thông thường: ≤, ≥, ±, m², m³, R28.`;
   }
 
@@ -3046,7 +3062,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
      4. Quyết định phê duyệt ĐTM hoặc Giấy phép môi trường của dự án.
 
 4. **Bước 4: Thẩm định thực địa và Ban hành Quyết định của UBND tỉnh:**
-   - Sở TN&MT phối hợp với chính quyền địa phương (UBND cấp huyện, xã) kiểm tra thực tế hiện trường thi công để xác thực nhu cầu hạ cốt mặt bằng.
+   - Sở TN&MT phối hợp với chính quyền địa phương (UBND cấp xã/phường) kiểm tra thực tế hiện trường thi công để xác thực nhu cầu hạ cốt mặt bằng.
    - Sở TN&MT thẩm định hồ sơ, dự thảo văn bản trình UBND cấp tỉnh ban hành **Giấy xác nhận đăng ký thu hồi khoáng sản** (quy định rõ vị trí, thời hạn, khối lượng đá bazan tối đa được thu hồi).
 
 5. **Bước 5: Thực hiện nghĩa vụ tài chính và Tổ chức thu hồi:**
@@ -3101,7 +3117,7 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
 ### III. QUY TRÌNH & THỦ TỤC GỬI THÔNG BÁO KHỞI CÔNG (ĐIỀU 12 NGHỊ ĐỊNH 207/2026/NĐ-CP):
 
 1. **Thời điểm gửi:** Chủ đầu tư phải gửi Thông báo khởi công **trước ngày chính thức khởi công** xây dựng công trình.
-2. **Cơ quan tiếp nhận:** Cơ quan quản lý nhà nước về xây dựng tại địa phương (Sở Xây dựng hoặc UBND cấp huyện theo phân cấp).
+2. **Cơ quan tiếp nhận:** Cơ quan quản lý nhà nước về xây dựng tại địa phương (Sở Xây dựng hoặc UBND cấp xã/phường theo phân cấp quản lý của mô hình chính quyền 2 cấp).
 3. **Hình thức gửi:** Gửi trực tiếp, qua dịch vụ bưu chính hoặc nộp trực tuyến qua Cổng dịch vụ công quốc gia / Hệ thống thông tin giải quyết TTHC cấp tỉnh.
 4. **Mẫu thông báo:** Thực hiện theo mẫu quy định tại **Phụ lục V** ban hành kèm theo Nghị định số 207/2026/NĐ-CP.
 5. **Trách nhiệm của cơ quan tiếp nhận:** Tiếp nhận, vào sổ theo dõi và cập nhật thông tin công trình vào Cơ sở dữ liệu quốc gia về hoạt động xây dựng để phục vụ công tác giám sát, kiểm tra trật tự xây dựng.
