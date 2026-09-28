@@ -1986,7 +1986,86 @@ YÊU CẦU ĐỐI VỚI BÁO CÁO PHÂN TÍCH (BẮT BUỘC TUÂN THỦ):
    - 📌 1. Căn cứ pháp lý đa tầng (Luật -> Nghị định -> Thông tư -> Tiêu chuẩn)
    - 📋 2. Nội dung quy định & Bảng đối chiếu chi tiết
    - 🔍 3. Biểu mẫu / Quy trình thực hiện cụ thể
-   - 💡 4. Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU).`;
+   - 💡 4. Lưu ý kiểm soát nghiệp vụ cho Ban Quản lý Dự án (PMU).
+7. QUY TẮC HIỂN THỊ KÝ HIỆU KỸ THUẬT & TOÁN HỌC (TUYỆT ĐỐI TUÂN THỦ):
+   - TUYỆT ĐỐI KHÔNG sử dụng cú pháp LaTeX toán học có chứa dấu đô la ($...$ hoặc $$...$$).
+   - Hãy sử dụng trực tiếp các ký tự thông thường chuẩn tiếng Việt:
+     + Dùng "≤" thay cho $\\le$ hoặc $\\leq$
+     + Dùng "≥" thay cho $\\ge$ hoặc $\\geq$
+     + Dùng "±" thay cho $\\pm$
+     + Dùng "m²" thay cho $m^2$, "m³" thay cho $m^3$
+     + Dùng "R28", "R7", "R3" thay cho $R_{28}$, $R_7$, $R_3$
+     + Dùng "150 x 150 x 150 mm" hoặc "150 × 150 × 150 mm" thay cho các công thức LaTeX.`;
+  }
+
+  // Utility to eliminate confusing LaTeX $...$ symbols and normalize engineering math notations
+  function cleanMathSymbols(text) {
+    if (!text || typeof text !== "string") return text;
+    let s = text;
+
+    // 1. Convert backslash LaTeX symbols to clean readable unicode
+    s = s.replace(/\\le\b|\\leq\b/g, "≤");
+    s = s.replace(/\\ge\b|\\geq\b/g, "≥");
+    s = s.replace(/\\pm\b/g, "±");
+    s = s.replace(/\\mp\b/g, "∓");
+    s = s.replace(/\\times\b/g, "×");
+    s = s.replace(/\\div\b/g, "÷");
+    s = s.replace(/\\approx\b/g, "≈");
+    s = s.replace(/\\neq\b/g, "≠");
+    s = s.replace(/\\equiv\b/g, "≡");
+    s = s.replace(/\\rightarrow\b|\\to\b/g, "→");
+    s = s.replace(/\\leftarrow\b/g, "←");
+    s = s.replace(/\\Rightarrow\b/g, "⇒");
+    s = s.replace(/\\circ\b/g, "°");
+    s = s.replace(/\\text\{([^}]+)\}/g, "$1");
+    s = s.replace(/\\mathrm\{([^}]+)\}/g, "$1");
+    s = s.replace(/\\mathbf\{([^}]+)\}/g, "$1");
+    s = s.replace(/\\%/g, "%");
+
+    // 2. Normalize common construction engineering expressions
+    s = s.replace(/R_\{?28\}?/gi, "R28");
+    s = s.replace(/R_\{?3\}?/gi, "R3");
+    s = s.replace(/R_\{?7\}?/gi, "R7");
+    s = s.replace(/m\^2\b/g, "m²");
+    s = s.replace(/m\^3\b/g, "m³");
+
+    // 3. Process $$...$$ multi-line math blocks
+    s = s.replace(/\$\$([\s\S]*?)\$\$/g, (m, inner) => {
+      return inner
+        .replace(/\\le\b|\\leq\b|\ble\b/gi, "≤")
+        .replace(/\\ge\b|\\geq\b|\bge\b/gi, "≥")
+        .replace(/\\pm\b|\bpm\b/gi, "±")
+        .replace(/\\times\b|\btimes\b/gi, "×")
+        .replace(/\\text\{([^}]+)\}/g, "$1")
+        .replace(/[\{\}]/g, "")
+        .trim();
+    });
+
+    // 4. Process $...$ inline math blocks
+    s = s.replace(/\$([^\$\n]+)\$/g, (m, inner) => {
+      return inner
+        .replace(/\\le\b|\\leq\b|\ble\b/gi, "≤")
+        .replace(/\\ge\b|\\geq\b|\bge\b/gi, "≥")
+        .replace(/\\pm\b|\bpm\b/gi, "±")
+        .replace(/\\times\b|\btimes\b/gi, "×")
+        .replace(/\\text\{([^}]+)\}/g, "$1")
+        .replace(/R_\{?28\}?/gi, "R28")
+        .replace(/m\^2\b/g, "m²")
+        .replace(/m\^3\b/g, "m³")
+        .replace(/[\{\}]/g, "")
+        .trim();
+    });
+
+    // 5. Catch any stray malformed patterns like $ge 5 MPa$, $le 2m$, etc.
+    s = s.replace(/\$(ge|le|pm|approx|times)\b/gi, (m, op) => {
+      const map = { ge: "≥", le: "≤", pm: "±", approx: "≈", times: "×" };
+      return map[op.toLowerCase()] || op;
+    });
+
+    // 6. Strip all leftover unescaped dollar signs completely
+    s = s.replace(/\$/g, "");
+
+    return s;
   }
 
   function categorizeDocument(docCode, docTitle) {
@@ -2288,7 +2367,7 @@ Theo quy chuẩn an toàn xây dựng, các biện pháp kỹ thuật phải đ�
 #### 5. Điều kiện thời tiết cấm thi công trên cao (Mục 2.7.1.6):
 Tuyệt đối **CẤM** người lao động làm việc trên cao trong các điều kiện sau:
 - Trời mưa to, giông lốc, có sấm sét;
-- Gió mạnh từ **cấp 5 trở lên** (tốc độ gió từ 8 m/s hoặc $\ge 29$ km/h);
+- Gió mạnh từ **cấp 5 trở lên** (tốc độ gió từ 8 m/s hoặc ≥ 29 km/h);
 - Trời tối, sương mù dày đặc làm hạn chế tầm nhìn dưới 10 mét hoặc nơi làm việc không đủ ánh sáng theo quy chuẩn chiếu sáng.
 
 ---
@@ -2298,10 +2377,10 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 | Hạng mục kiểm soát | Tiêu chuẩn kỹ thuật quy định | Căn cứ quy chuẩn / pháp luật |
 | :--- | :--- | :--- |
 | **Ngưỡng độ cao bắt buộc** | Từ **2,0 m trở lên** (hoặc dưới 2m nếu bên dưới có hố sâu, nước, vật nguy hiểm) | QCVN 18:2021/BXD Mục 2.7.1 |
-| **Quy cách Lan can an toàn** | Chiều cao: **0,9 m - 1,15 m**; có thanh ngang giữa; tấm chặn chân cao $\ge$ **150 mm** | QCVN 18:2021/BXD Mục 2.7.1 |
+| **Quy cách Lan can an toàn** | Chiều cao: **0,9 m - 1,15 m**; có thanh ngang giữa; tấm chặn chân cao ≥ **150 mm** | QCVN 18:2021/BXD Mục 2.7.1 |
 | **Hệ thống dây an toàn** | Bắt buộc loại **toàn thân (Full Body Harness)** kèm dây cứu sinh độc lập & giảm chấn | QCVN 23:2014/BLĐTBXH |
 | **Khoảng hở giàn giáo - tường** | Không được vượt quá **20 cm** ở mọi vị trí | QCVN 18:2021/BXD Mục 2.7.3.4 |
-| **Sàn công tác giàn giáo** | Lát kín khít, khe hở ván lát $\le$ **20 mm**, chống trơn trượt, chịu tải trọng thử nghiệm | QCVN 18:2021/BXD Mục 2.2 |
+| **Sàn công tác giàn giáo** | Lát kín khít, khe hở ván lát ≤ **20 mm**, chống trơn trượt, chịu tải trọng thử nghiệm | QCVN 18:2021/BXD Mục 2.2 |
 | **Độ tuổi & Sức khỏe** | Đủ 18 tuổi; khám sức khỏe chuyên khoa làm việc trên cao định kỳ 6 tháng/lần | Luật ATVSLĐ số 84/2015 |
 | **Chứng chỉ đào tạo** | Đã hoàn thành khóa huấn luyện an toàn **Nhóm 3**, được cấp Thẻ an toàn lao động | Nghị định 44/2016 & TT 06/2020 |
 | **Giới hạn thời tiết an toàn** | Cấm làm việc trên cao khi có gió từ **cấp 5 trở lên**, mưa bão, sấm sét, tối trời | QCVN 18:2021/BXD Mục 2.7.1.6 |
@@ -2391,8 +2470,8 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 | STT | Hạng mục kiểm tra chi tiết | Yêu cầu kỹ thuật & Chỉ tiêu đối chiếu | Căn cứ kỹ thuật | Kết quả đối chiếu |
 | :---: | :--- | :--- | :--- | :---: |
-| **1** | **Ván khuôn & Đà giáo** | • Đúng kích thước hình học, độ phẳng ($\le 3mm$), độ thẳng đứng (sai số $\le 5-10mm$).<br>• Cốp pha ghép kín khít, không hở mép tránh mất nước xi măng.<br>• Hệ cột chống, giằng ngang, giằng chéo ổn định, đặt trên nền cứng, không lún sụt.<br>• Có độ vồng thi công đối với dầm/sàn nhịp $\ge 4m$ (độ vồng $3L/1000$).<br>• Quét chất chống dính đều khắp bề mặt tiếp xúc. | TCVN 4453 Mục 3.5 & Bảng 1, 2 | Đạt / Không đạt |
-| **2** | **Cốt thép & Lớp bảo vệ** | • Đúng chủng loại, đường kính, số lượng, khoảng cách đan thép ($s$).<br>• Vị trí mối nối, chiều dài nối buộc ($\ge 30-45d$) hoặc chất lượng mối hàn.<br>• **Con kê bê tông/nhựa:** Bố trí đủ mật độ ($\ge 4-5$ cục $/m^2$), bảo đảm đúng chiều dày lớp bê tông bảo vệ (dầm, cột, sàn, móng).<br>• Thép sạch, không dính dầu mỡ, bùn đất, rỉ sét bong vảy. | TCVN 4453 Mục 4.7 & Bảng 5 | Đạt / Không đạt |
+| **1** | **Ván khuôn & Đà giáo** | • Đúng kích thước hình học, độ phẳng (≤ 3mm), độ thẳng đứng (sai số ≤ 5 - 10mm).<br>• Cốp pha ghép kín khít, không hở mép tránh mất nước xi măng.<br>• Hệ cột chống, giằng ngang, giằng chéo ổn định, đặt trên nền cứng, không lún sụt.<br>• Có độ vồng thi công đối với dầm/sàn nhịp ≥ 4m (độ vồng 3L/1000).<br>• Quét chất chống dính đều khắp bề mặt tiếp xúc. | TCVN 4453 Mục 3.5 & Bảng 1, 2 | Đạt / Không đạt |
+| **2** | **Cốt thép & Lớp bảo vệ** | • Đúng chủng loại, đường kính, số lượng, khoảng cách đan thép (s).<br>• Vị trí mối nối, chiều dài nối buộc (≥ 30 - 45d) hoặc chất lượng mối hàn.<br>• **Con kê bê tông/nhựa:** Bố trí đủ mật độ (≥ 4 - 5 cục/m²), bảo đảm đúng chiều dày lớp bê tông bảo vệ (dầm, cột, sàn, móng).<br>• Thép sạch, không dính dầu mỡ, bùn đất, rỉ sét bong vảy. | TCVN 4453 Mục 4.7 & Bảng 5 | Đạt / Không đạt |
 | **3** | **Chi tiết đặt sẵn & MEP** | • Toàn bộ ống luồn điện, ống chờ cấp thoát nước, bu-lông neo móng, bản mã thép âm sàn/cột đã lắp đặt đúng tọa độ, cao độ thiết kế.<br>• Đã bịt kín tất cả các đầu ống chờ, tránh vữa bê tông lọt vào làm tắc ống. | TCVN 4453 Bảng 1 | Đạt / Không đạt |
 | **4** | **Vệ sinh & Xử lý mạch ngừng** | • Cọ rửa, xịt khí nén/nước sạch mùn cưa, rác, phoi thép đáy cốp pha (bịt kín cửa sổ vệ sinh sau khi thổi bụi).<br>• Mạch ngừng cũ: Đục nhám loại bỏ lớp màng vữa yếu, tưới nước rửa sạch và quét hồ dầu kết nối ngay trước khi đổ.<br>• Tưới ẩm cốp pha gỗ (tránh hút nước bê tông) nhưng **tuyệt đối không đọng nước thành vũng**. | TCVN 4453 Mục 3.4.4 & 6.6 | Đạt / Không đạt |
 | **5** | **Hồ sơ cấp phối & Biện pháp đổ** | • Phiếu chấp thuận thiết kế thành phần cấp phối bê tông (Mix Design) đạt mác/cấp độ bền thiết kế.<br>• Kế hoạch xe bồn, công suất trạm trộn, máy bơm bê tông (có máy bơm/máy đầm dự phòng).<br>• Bố trí đủ nhân lực, thợ đầm, hệ thống chiếu sáng ban đêm và bạt che mưa dự phòng. | Điều 22 NĐ 207 & QCVN 18 Mục 2.11 | Đạt / Không đạt |
@@ -2404,10 +2483,10 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 | STT | Nội dung kiểm soát tại hiện trường | Quy chuẩn & Yêu cầu kỹ thuật bắt buộc | Căn cứ áp dụng |
 | :---: | :--- | :--- | :--- |
 | **1** | **Phiếu xuất xưởng từng xe bồn** | Kiểm tra mác bê tông, loại xi măng, phụ gia, giờ xuất xưởng tại trạm. Thời gian từ lúc trộn đến lúc đổ xong **không vượt quá 90 - 120 phút** (tùy thời tiết và phụ gia kéo dài ninh kết). | TCVN 4453 Mục 6.3.4 |
-| **2** | **Thử độ sụt (Slump test)** | Đo độ sụt tại hiện trường từng xe hoặc theo lô đổ, sai số độ sụt trong giới hạn thiết kế $\pm 2$ cm. Nếu bê tông bị đông kết hoặc phân tầng phải kiên quyết từ chối tiếp nhận. | TCVN 3106:1993 & TCVN 4453 Mục 7.1.5 |
-| **3** | **Lấy mẫu thí nghiệm nén** | Lấy mẫu đúc tại chỗ: Mỗi tổ gồm **03 viên mẫu** kích thước $150 \times 150 \times 150 mm$.<br>• Tần suất: Tối thiểu 1 tổ mẫu cho mỗi $20 - 50 m^3$ bê tông, hoặc tối thiểu 1 tổ mẫu cho mỗi ca đổ / kết cấu độc lập.<br>• Đúc thêm tổ mẫu lưu bảo dưỡng tại hiện trường để nén xác định cường độ tháo cốp pha (R3, R7). | TCVN 3105:1993 & TCVN 4453 Mục 7.1.7 |
-| **4** | **Chiều cao rơi tự do của bê tông** | Chiều cao rơi tự do khi trút bê tông từ vòi bơm hoặc thùng cẩu **không được vượt quá 1,5 mét** để tránh hiện tượng phân tầng, tách nước. Nếu chiều cao $> 1,5m$ phải dùng máng nghiêng hoặc ống vòi voi nối dài. | TCVN 4453 Mục 6.4.2 |
-| **5** | **Kỹ thuật đầm lèn** | • Chiều dày mỗi lớp bê tông rải đầm từ $20 - 30 cm$.<br>• Đầm dùi phải cắm ngập vào lớp bê tông dưới từ $10 - 15 cm$; thời gian đầm mỗi điểm từ $20 - 30$ giây đến khi bê tông không lún và nổi váng nước.<br>• Bước di chuyển đầu đầm không quá 1,5 lần bán kính tác dụng; không để đầu đầm chạm vào cốt thép hoặc cốp pha. | TCVN 4453 Mục 6.4.5 & 6.4.6 |
+| **2** | **Thử độ sụt (Slump test)** | Đo độ sụt tại hiện trường từng xe hoặc theo lô đổ, sai số độ sụt trong giới hạn thiết kế ± 2 cm. Nếu bê tông bị đông kết hoặc phân tầng phải kiên quyết từ chối tiếp nhận. | TCVN 3106:1993 & TCVN 4453 Mục 7.1.5 |
+| **3** | **Lấy mẫu thí nghiệm nén** | Lấy mẫu đúc tại chỗ: Mỗi tổ gồm **03 viên mẫu** kích thước 150 × 150 × 150 mm.<br>• Tần suất: Tối thiểu 1 tổ mẫu cho mỗi 20 - 50 m³ bê tông, hoặc tối thiểu 1 tổ mẫu cho mỗi ca đổ / kết cấu độc lập.<br>• Đúc thêm tổ mẫu lưu bảo dưỡng tại hiện trường để nén xác định cường độ tháo cốp pha (R3, R7). | TCVN 3105:1993 & TCVN 4453 Mục 7.1.7 |
+| **4** | **Chiều cao rơi tự do của bê tông** | Chiều cao rơi tự do khi trút bê tông từ vòi bơm hoặc thùng cẩu **không được vượt quá 1,5 mét** để tránh hiện tượng phân tầng, tách nước. Nếu chiều cao > 1,5m phải dùng máng nghiêng hoặc ống vòi voi nối dài. | TCVN 4453 Mục 6.4.2 |
+| **5** | **Kỹ thuật đầm lèn** | • Chiều dày mỗi lớp bê tông rải đầm từ 20 - 30 cm.<br>• Đầm dùi phải cắm ngập vào lớp bê tông dưới từ 10 - 15 cm; thời gian đầm mỗi điểm từ 20 - 30 giây đến khi bê tông không lún và nổi váng nước.<br>• Bước di chuyển đầu đầm không quá 1,5 lần bán kính tác dụng; không để đầu đầm chạm vào cốt thép hoặc cốp pha. | TCVN 4453 Mục 6.4.5 & 6.4.6 |
 
 ---
 
@@ -2416,8 +2495,8 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 | STT | Hạng mục kiểm tra & Nghiệm thu | Tiêu chuẩn đánh giá & Nghiệm thu | Căn cứ quy định |
 | :---: | :--- | :--- | :--- |
 | **1** | **Chế độ bảo dưỡng ẩm** | Phủ bao tải ẩm, bạt nylon hoặc phun chất bảo dưỡng ngay khi bề mặt se lại. Tưới ẩm liên tục ban ngày lẫn ban đêm trong **ít nhất 03 đến 07 ngày đầu** tùy loại xi măng và điều kiện khí hậu. | TCVN 5592:1991 & TCVN 4453 Mục 6.5 |
-| **2** | **Điều kiện tháo dỡ Cốp pha chịu lực** | Cốp pha thành bên (cột, vách, dầm) tháo sau 24-48h khi bê tông đạt cường độ giữ mép ($\ge 5 MPa$).<br>Cốp pha đáy dầm, sàn chỉ được tháo khi cường độ bê tông đạt Bảng 4 TCVN 4453:<br>• Bản, dầm nhịp $< 2m$: Đạt $\ge$ **50%** $R_{28}$.<br>• Bản, dầm nhịp $2 - 8m$: Đạt $\ge$ **70%** $R_{28}$.<br>• Bản, dầm nhịp $2 - 8m$: Đạt $\ge$ **70%** $R_{28}$.<br>• Bản, dầm nhịp $> 8m$: Đạt $\ge$ **90%** (hoặc 100%) $R_{28}$.<br>• Công-xôn, ô-văng: Bắt buộc đạt **100%** $R_{28}$. | TCVN 4453 Mục 3.6 & Bảng 4 |
-| **3** | **Kết quả nén mẫu lưu $R_{28}$** | Biên bản kết quả thí nghiệm nén mẫu tuổi 28 ngày do phòng thí nghiệm hợp chuẩn (LAS-XD) cấp phải đạt cường độ mác/cấp độ bền thiết kế theo TCVN 3118:1993. | TCVN 3118:1993 & TCVN 4453 Mục 7.1 |
+| **2** | **Điều kiện tháo dỡ Cốp pha chịu lực** | Cốp pha thành bên (cột, vách, dầm) tháo sau 24-48h khi bê tông đạt cường độ giữ mép (≥ 5 MPa).<br>Cốp pha đáy dầm, sàn chỉ được tháo khi cường độ bê tông đạt Bảng 4 TCVN 4453:<br>• Bản, dầm nhịp < 2m: Đạt ≥ **50%** R28.<br>• Bản, dầm nhịp 2 - 8m: Đạt ≥ **70%** R28.<br>• Bản, dầm nhịp > 8m: Đạt ≥ **90%** (hoặc 100%) R28.<br>• Công-xôn, ô-văng: Bắt buộc đạt **100%** R28. | TCVN 4453 Mục 3.6 & Bảng 4 |
+| **3** | **Kết quả nén mẫu lưu R28** | Biên bản kết quả thí nghiệm nén mẫu tuổi 28 ngày do phòng thí nghiệm hợp chuẩn (LAS-XD) cấp phải đạt cường độ mác/cấp độ bền thiết kế theo TCVN 3118:1993. | TCVN 3118:1993 & TCVN 4453 Mục 7.1 |
 | **4** | **Kiểm tra khuyết tật & Sai lệch hình học** | • Kiểm tra khuyết tật mặt ngoài: Không bị rỗ tổ ong sâu, không nứt nẻ, không bong tróc, không lộ cốt thép. Nếu có khuyết tật nhỏ phải lập biên bản và xử lý bằng vữa bù co ngót chuyên dụng (SikaGrout).<br>• Sai lệch trục tim, cao độ, kích thước tiết diện nằm trong phạm vi cho phép của Bảng 20 TCVN 4453. | TCVN 4453 Mục 8.1 & Bảng 20 |
 | **5** | **Biên bản nghiệm thu công việc xây dựng** | Lập Biên bản nghiệm thu hoàn thành công tác bê tông theo đúng quy định tại Điều 22 Nghị định 207/2026/NĐ-CP (Đầy đủ chữ ký của Kỹ sư giám sát CĐT/TVGS và Cán bộ kỹ thuật phụ trách thi công của Nhà thầu). | Điều 22 Nghị định 207/2026/NĐ-CP |
 
@@ -2470,24 +2549,24 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
   - Đối với gạch ceramic có độ hút nước cao: Phải ngâm nước đủ no nước và để ráo nước bề mặt trước khi lát. Đối với gạch granite, porcelain, đá tự nhiên hút nước thấp: Sử dụng keo dán chuyên dụng hoặc hồ dầu tăng cường độ bám.
 - **Vật liệu gắn kết (Vữa xi măng - cát hoặc Keo dán gạch):**
   - **Vữa xi măng - cát:** Thường dùng mác 50 đến 75 (theo thiết kế); cát phải qua sàng loại bỏ tạp chất và rác hữu cơ; tỷ lệ nước trộn vừa đủ dẻo, không quá khô hoặc quá nhão.
-  - **Keo dán gạch chuyên dụng:** Đạt tiêu chuẩn TCXDVN 336:2005 / ISO 13007, pha trộn đúng tỷ lệ của nhà sản xuất, sử dụng trong thời gian mở cho phép (thường $\le 20-30$ phút sau khi trộn).
+  - **Keo dán gạch chuyên dụng:** Đạt tiêu chuẩn TCXDVN 336:2005 / ISO 13007, pha trộn đúng tỷ lệ của nhà sản xuất, sử dụng trong thời gian mở cho phép (thường ≤ 20 - 30 phút sau khi trộn).
 
 ---
 
 ### ⚙️ II. QUY TRÌNH KỸ THUẬT THI CÔNG LÁT NỀN 05 BƯỚC CHUẨN:
 
 1. **Bước 1: Khảo sát, trắc đạc & Đánh mốc cao độ:**
-   - Sử dụng máy laser, thủy bình xác định cao độ hoàn thiện $+0.000$ của sàn.
+   - Sử dụng máy laser, thủy bình xác định cao độ hoàn thiện +0.000 của sàn.
    - Bật mực tim trục, định vị đường thẳng chia ô gạch, tính toán cắt gạch sao cho các viên cắt nằm ở góc khuất hoặc chân tường kín.
    - Đặt các viên gạch mốc chuẩn (viên tiêu chuẩn) tại các góc phòng và tim trục để căng dây chuẩn.
 2. **Bước 2: Chuẩn bị & Trải lớp vữa đệm / keo dán:**
    - Quét lớp hồ dầu kết nối (xi măng nguyên chất hòa nước) lên mặt nền ẩm.
-   - Rải đều lớp vữa lót xi măng - cát (chiều dày thiết kế $15 - 30\\text{ mm}$), dùng thước cán phẳng theo cao độ mốc và theo đúng độ dốc thoát nước.
-   - Trường hợp thi công bằng keo dán gạch: Dùng bay răng cưa kéo keo nghiêng góc $60^\\circ$ tạo các đường rãnh gân keo đều khắp mặt nền.
+   - Rải đều lớp vữa lót xi măng - cát (chiều dày thiết kế 15 - 30 mm), dùng thước cán phẳng theo cao độ mốc và theo đúng độ dốc thoát nước.
+   - Trường hợp thi công bằng keo dán gạch: Dùng bay răng cưa kéo keo nghiêng góc 60° tạo các đường rãnh gân keo đều khắp mặt nền.
 3. **Bước 3: Đặt gạch & Căn chỉnh gõ phẳng:**
    - Đặt viên gạch đúng hướng hoa văn (theo mũi tên ở đáy viên gạch nếu có).
    - Dùng búa cao su gõ nhẹ và đều từ tâm ra 4 mép gạch để ép vữa/keo điền đầy tuyệt đối đáy gạch, không tạo bọng rỗng (tránh bị ộp/bộp).
-   - Sử dụng ke dấu cộng (ke chữ thập) căn đều khe mạch gạch ($1,5\\text{ mm} - 3\\text{ mm}$ tùy loại gạch).
+   - Sử dụng ke dấu cộng (ke chữ thập) căn đều khe mạch gạch (1,5 mm - 3 mm tùy loại gạch).
    - Dùng thước nhôm 2m đặt chéo và áp sát mặt gạch để kiểm tra độ phẳng tức thì giữa các viên liền kề.
 4. **Bước 4: Chít mạch (Chà ron) làm đầy khe:**
    - Thời điểm chít mạch: Thực hiện sau khi lát tối thiểu từ **24 giờ đến 48 giờ** khi vữa/keo gắn kết đã đủ cường độ ninh kết cứng chắc.
@@ -2506,10 +2585,10 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 | Chỉ tiêu kỹ thuật kiểm tra | Gạch lát ceramic, granite, đá nhân tạo, granito | Gạch lát đất sét nung / gạch gốm | Đá tự nhiên không mài mặt | Phương pháp & Dụng cụ kiểm tra |
 | :--- | :---: | :---: | :---: | :--- |
-| **1. Độ phẳng bề mặt (Khe hở dưới thước 3m)** | $\\le$ **3 mm** *(thước 2m $\\le 2\\text{ mm}$)* | $\\le$ **4 mm** | $\\le$ **3 mm** | Đặt thước tầm 2m - 3m áp sát bề mặt ở mọi phương vị, dùng thước nêm đo khe hở |
-| **2. Chênh lệch cao độ giữa 2 mép gạch liền kề (Bảng 2)** | $\\le$ **0,5 mm** *(tuyệt đối không gờ sắc)* | $\\le$ **3,0 mm** | $\\le$ **3,0 mm** | Dùng thước đo dưỡng chuyên dụng hoặc thước cặp cơ khí |
-| **3. Dung sai cao độ tổng thể** | $\\le$ **1 cm** ($\\pm 10\\text{ mm}$) | $\\le$ **2 cm** | $\\le$ **2 cm** | Đo bằng máy thủy bình, laser hoặc ni-vô chuẩn |
-| **4. Dung sai độ dốc thoát nước** | $\\le$ **0,3 %** so với thiết kế | $\\le$ **0,5 %** | $\\le$ **0,5 %** | Dùng ni-vô góc nghiêng, thử dội nước thoát hết, không đọng vũng |
+| **1. Độ phẳng bề mặt (Khe hở dưới thước 3m)** | ≤ **3 mm** *(thước 2m ≤ 2 mm)* | ≤ **4 mm** | ≤ **3 mm** | Đặt thước tầm 2m - 3m áp sát bề mặt ở mọi phương vị, dùng thước nêm đo khe hở |
+| **2. Chênh lệch cao độ giữa 2 mép gạch liền kề (Bảng 2)** | ≤ **0,5 mm** *(tuyệt đối không gờ sắc)* | ≤ **3,0 mm** | ≤ **3,0 mm** | Dùng thước đo dưỡng chuyên dụng hoặc thước cặp cơ khí |
+| **3. Dung sai cao độ tổng thể** | ≤ **1 cm** (± 10 mm) | ≤ **2 cm** | ≤ **2 cm** | Đo bằng máy thủy bình, laser hoặc ni-vô chuẩn |
+| **4. Dung sai độ dốc thoát nước** | ≤ **0,3 %** so với thiết kế | ≤ **0,5 %** | ≤ **0,5 %** | Dùng ni-vô góc nghiêng, thử dội nước thoát hết, không đọng vũng |
 | **5. Độ bám dính & Độ đặc chắc (Hiện tượng bộp)** | **100% không bị bộp** | **100% không bị bộp** | **100% không bị bộp** | Gõ nhẹ bằng búa đầu cao su hoặc thanh kim loại khắp mặt viên gạch |
 | **6. Quy cách mạch lát (Đường ron)** | Thẳng hàng, sắc nét, đều đặn, đầy khít chất trám mạch | Thẳng hàng, đều đặn, đầy khít mạch | Thẳng hàng, đầy khít mạch | Kiểm tra trực quan bằng mắt thường và đo thước rút |
 
@@ -2555,11 +2634,11 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 
 ### ⚖️ I. NGUYÊN TẮC CỐT LÕI 03 CẤP ĐỘ ĐÁNH GIÁ "SAI SỐ CÓ ĐƯỢC CHẤP NHẬN HAY KHÔNG":
 
-#### CẤP ĐỘ 1: Sai số NẰM TRONG GIỚI HẠN Dung sai cho phép (Tolerances $\\le$ Tiêu chuẩn) $\\rightarrow$ ĐƯỢC TỰ ĐỘNG NGHIỆM THU
-- **Nguyên tắc:** Nếu sai số đo đạc thực tế tại hiện trường (bằng máy thủy bình, toàn đạc, thước laser, thước nêm) nằm trong phạm vi dung sai quy định tại TCVN hoặc Chỉ dẫn kỹ thuật dự án $\\rightarrow$ Hạng mục được đánh giá là **Đạt yêu cầu kỹ thuật** và Tư vấn giám sát (TVGS) ký biên bản nghiệm thu bình thường.
-- *Ví dụ:* Cột lệch tim $7\\text{ mm}$ (tiêu chuẩn cho phép $\\le 8 - 10\\text{ mm}$); độ phẳng sàn gạch hở $2\\text{ mm}$ dưới thước 3m (cho phép $\\le 3\\text{ mm}$).
+#### CẤP ĐỘ 1: Sai số NẰM TRONG GIỚI HẠN Dung sai cho phép (Tolerances ≤ Tiêu chuẩn) → ĐƯỢC TỰ ĐỘNG NGHIỆM THU
+- **Nguyên tắc:** Nếu sai số đo đạc thực tế tại hiện trường (bằng máy thủy bình, toàn đạc, thước laser, thước nêm) nằm trong phạm vi dung sai quy định tại TCVN hoặc Chỉ dẫn kỹ thuật dự án → Hạng mục được đánh giá là **Đạt yêu cầu kỹ thuật** và Tư vấn giám sát (TVGS) ký biên bản nghiệm thu bình thường.
+- *Ví dụ:* Cột lệch tim 7 mm (tiêu chuẩn cho phép ≤ 8 - 10 mm); độ phẳng sàn gạch hở 2 mm dưới thước 3m (cho phép ≤ 3 mm).
 
-#### CẤP ĐỘ 2: Sai số VƯỢT DUNG SAI nhưng KHÔNG ẢNH HƯỞNG AN TOÀN CHỊU LỰC $\\rightarrow$ XỬ LÝ THEO QUY TRÌNH GIÁM SÁT TÁC GIẢ & CHỦ ĐẦU TƯ CHẤP THUẬN
+#### CẤP ĐỘ 2: Sai số VƯỢT DUNG SAI nhưng KHÔNG ẢNH HƯỞNG AN TOÀN CHỊU LỰC → XỬ LÝ THEO QUY TRÌNH GIÁM SÁT TÁC GIẢ & CHỦ ĐẦU TƯ CHẤP THUẬN
 - **Nguyên tắc:** TVGS và Nhà thầu thi công **tuyệt đối không được tự ý bỏ qua hoặc tự ý ký nghiệm thu**.
 - **Quy trình xử lý bắt buộc (Điều 21 & Điều 22 NĐ 207/2026/NĐ-CP):**
   1. TVGS lập Biên bản ghi nhận hiện trường về vị trí và mức độ vượt dung sai.
@@ -2567,7 +2646,7 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
   3. Nếu Tư vấn thiết kế tính toán kết luận kết cấu vẫn bảo đảm tuyệt đối khả năng chịu lực, an toàn công trình và không ảnh hưởng công năng kiến trúc: Thiết kế lập Văn bản xử lý kỹ thuật / Bản vẽ điều chỉnh, đề xuất biện pháp xử lý hoàn thiện bù (ví dụ trát bù, điều chỉnh lớp ốp lát, bổ sung thanh neo...).
   4. **Chủ đầu tư / Ban QLDA xem xét phê duyệt phương án xử lý bằng văn bản**. Sau khi xử lý hoàn tất, TVGS mới tiến hành nghiệm thu theo hồ sơ xử lý.
 
-#### CẤP ĐỘ 3: Sai số BẤT KHẢ CHẤP NHẬN (NON-CONFORMANCE) $\\rightarrow$ KIÊN QUYẾT BÁC BỎ, ĐẬP BỎ LÀM LẠI
+#### CẤP ĐỘ 3: Sai số BẤT KHẢ CHẤP NHẬN (NON-CONFORMANCE) → KIÊN QUYẾT BÁC BỎ, ĐẬP BỎ LÀM LẠI
 Thuộc các trường hợp nghiêm trọng sau:
 1. **Vi phạm chỉ giới xây dựng:** Sai lệch tim trục làm công trình lấn ra ngoài ranh giới đất được cấp phép hoặc lấn chỉ giới đường đỏ (theo quy hoạch và Giấy phép xây dựng).
 2. **Ảnh hưởng trực tiếp đến an toàn chịu lực chính:** Độ lệch tâm cột/vách quá lớn gây mô-men uốn nguy hiểm mà tính toán kết cấu không bảo đảm an toàn; bê tông bị suy giảm cường độ mác quá mức cho phép; võng dầm/sàn vượt quá giới hạn nứt gãy.
@@ -2579,14 +2658,14 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 #### 1. KẾT CẤU BÊ TÔNG & BÊ TÔNG CỐT THÉP TOÀN KHỐI (THEO TCVN 4453:1995 BẢNG 20):
 
-| STT | Chỉ tiêu sai lệch hình học | Mức sai số cho phép ($\\le\\text{mm}$) | Phương pháp & Dụng cụ kiểm tra |
+| STT | Chỉ tiêu sai lệch hình học | Mức sai số cho phép (≤ mm) | Phương pháp & Dụng cụ kiểm tra |
 | :---: | :--- | :---: | :--- |
-| **1** | **Độ nghiêng lệch phương thẳng đứng:**<br>• Trên 1m chiều cao kết cấu<br>• Trên toàn bộ chiều cao móng<br>• Trên toàn bộ chiều cao cột, tường 1 tầng ($< 5\\text{m}$)<br>• Cột khung liên kết bằng dầm | <br>**5 mm**<br>**20 mm**<br>**15 mm**<br>**10 mm** | Đo bằng quả dọi, máy kinh vĩ hoặc máy chiếu đứng laser |
+| **1** | **Độ nghiêng lệch phương thẳng đứng:**<br>• Trên 1m chiều cao kết cấu<br>• Trên toàn bộ chiều cao móng<br>• Trên toàn bộ chiều cao cột, tường 1 tầng (< 5m)<br>• Cột khung liên kết bằng dầm | <br>**5 mm**<br>**20 mm**<br>**15 mm**<br>**10 mm** | Đo bằng quả dọi, máy kinh vĩ hoặc máy chiếu đứng laser |
 | **2** | **Sai lệch kích thước tiết diện ngang** (cột, dầm, bản sàn) | **+ 8 mm / - 5 mm** | Đo bằng thước thép lá, thước cặp cơ khí |
-| **3** | **Sai lệch cao độ mặt trên của móng, dầm, sàn** | $\\pm$ **10 mm** | Đo bằng máy thủy bình |
-| **4** | **Độ phẳng mặt bê tông** (đo bằng thước 2m áp sát) | $\\le$ **8 mm** | Dùng thước nêm đo khe hở dưới thước nhôm 2m |
+| **3** | **Sai lệch cao độ mặt trên của móng, dầm, sàn** | ± **10 mm** | Đo bằng máy thủy bình |
+| **4** | **Độ phẳng mặt bê tông** (đo bằng thước 2m áp sát) | ≤ **8 mm** | Dùng thước nêm đo khe hở dưới thước nhôm 2m |
 | **5** | **Sai lệch trục tim kết cấu so với thiết kế:**<br>• Móng<br>• Cột, tường<br>• Dầm, xà, vòm | <br>**15 mm**<br>**8 mm**<br>**10 mm** | Bật mực tim trục, đo bằng thước thép và máy toàn đạc |
-| **6** | **Sai lệch vị trí bu-lông neo, chi tiết đặt sẵn** | $\\le$ **5 mm** | Thước cơ khí chính xác |
+| **6** | **Sai lệch vị trí bu-lông neo, chi tiết đặt sẵn** | ≤ **5 mm** | Thước cơ khí chính xác |
 
 ---
 
@@ -2594,10 +2673,10 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 | Hạng mục kiểm tra | Chỉ tiêu dung sai cho phép | Căn cứ kỹ thuật |
 | :--- | :--- | :--- |
-| **Khoảng cách cột chống cốp pha** | Sai lệch $\\le 25\\text{ mm}$ trên mỗi mét dài; $\\le 75\\text{ mm}$ trên toàn bộ khẩu độ dầm/sàn | TCVN 4453 Bảng 2 |
-| **Sai lệch chiều dày lớp bê tông bảo vệ** | • Bản sàn, vách mỏng ($\\le 100\\text{ mm}$): $\\pm 3\\text{ mm}$<br>• Dầm, cột, móng: $\\pm 5\\text{ mm}$ | TCVN 4453 Mục 4.7 |
-| **Khoảng cách giữa các thanh cốt thép** | • Cốt thép chịu lực dầm, cột: $\\pm 5\\text{ mm}$<br>• Cốt thép sàn, móng: $\\pm 10\\text{ mm}$ | TCVN 4453 Bảng 5 |
-| **Độ võng khung cốt thép so với thiết kế** | $\\le 10\\text{ mm}$ đối với dầm khẩu độ lớn | TCVN 4453 Mục 4.7 |
+| **Khoảng cách cột chống cốp pha** | Sai lệch ≤ 25 mm trên mỗi mét dài; ≤ 75 mm trên toàn bộ khẩu độ dầm/sàn | TCVN 4453 Bảng 2 |
+| **Sai lệch chiều dày lớp bê tông bảo vệ** | • Bản sàn, vách mỏng (≤ 100 mm): ± 3 mm<br>• Dầm, cột, móng: ± 5 mm | TCVN 4453 Mục 4.7 |
+| **Khoảng cách giữa các thanh cốt thép** | • Cốt thép chịu lực dầm, cột: ± 5 mm<br>• Cốt thép sàn, móng: ± 10 mm | TCVN 4453 Bảng 5 |
+| **Độ võng khung cốt thép so với thiết kế** | ≤ 10 mm đối với dầm khẩu độ lớn | TCVN 4453 Mục 4.7 |
 
 ---
 
@@ -2605,16 +2684,16 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 | Công tác hoàn thiện | Chỉ tiêu dung sai cho phép chấp nhận khi nghiệm thu | Căn cứ tiêu chuẩn |
 | :--- | :--- | :--- |
-| **Lát nền gạch ceramic, đá granite** | • Khe hở dưới thước tầm 3m: $\\le 3\\text{ mm}$ (thước 2m $\\le 2\\text{ mm}$)<br>• Chênh lệch cao độ giữa 2 mép gạch liền kề: $\\le 0,5\\text{ mm}$ (không có gờ sắc)<br>• Sai lệch độ dốc thoát nước: $\\le 0,3\\%$ (thử nước thoát 100%, không đọng vũng) | TCVN 9377-1:2012 Bảng 1 & 2 |
-| **Trát tường phẳng** | • Trát thông thường: Khe hở thước 2m $\\le 3\\text{ mm}$<br>• Trát chất lượng cao: Khe hở thước 2m $\\le 2\\text{ mm}$<br>• Trát cao cấp: Khe hở thước 2m $\\le 1\\text{ mm}$ | TCVN 9377-2:2012 |
-| **Xây gạch tường** | • Chiều dày mạch vữa ngang: Chuẩn $12\\text{ mm}$ (dao động cho phép $8 - 15\\text{ mm}$)<br>• Độ nghiêng lệch thẳng đứng của góc tường (1 tầng): $\\le 10\\text{ mm}$ | TCVN 9340:2012 |
+| **Lát nền gạch ceramic, đá granite** | • Khe hở dưới thước tầm 3m: ≤ 3 mm (thước 2m ≤ 2 mm)<br>• Chênh lệch cao độ giữa 2 mép gạch liền kề: ≤ 0,5 mm (không có gờ sắc)<br>• Sai lệch độ dốc thoát nước: ≤ 0,3% (thử nước thoát 100%, không đọng vũng) | TCVN 9377-1:2012 Bảng 1 & 2 |
+| **Trát tường phẳng** | • Trát thông thường: Khe hở thước 2m ≤ 3 mm<br>• Trát chất lượng cao: Khe hở thước 2m ≤ 2 mm<br>• Trát cao cấp: Khe hở thước 2m ≤ 1 mm | TCVN 9377-2:2012 |
+| **Xây gạch tường** | • Chiều dày mạch vữa ngang: Chuẩn 12 mm (dao động cho phép 8 - 15 mm)<br>• Độ nghiêng lệch thẳng đứng của góc tường (1 tầng): ≤ 10 mm | TCVN 9340:2012 |
 
 ---
 
 ### 💡 III. LƯU Ý NGHIỆP VỤ QUẢN TRỊ RỦI RO CHO BAN QLDA (PMU) & TƯ VẤN GIÁM SÁT:
 
 1. **Chỉ dẫn kỹ thuật của Dự án là căn cứ pháp lý cao nhất:**
-   - Trong hồ sơ mời thầu và hợp đồng xây dựng, **Chỉ dẫn kỹ thuật (Technical Specifications)** được Chủ đầu tư phê duyệt sẽ quy định cụ thể mức dung sai cho từng hạng mục. Nếu Chỉ dẫn kỹ thuật dự án quy định dung sai chặt chẽ hơn TCVN (ví dụ sàn phẳng hở $\\le 2\\text{ mm}$ thay vì $3\\text{ mm}$) thì bắt buộc phải áp dụng theo Chỉ dẫn kỹ thuật dự án.
+   - Trong hồ sơ mời thầu và hợp đồng xây dựng, **Chỉ dẫn kỹ thuật (Technical Specifications)** được Chủ đầu tư phê duyệt sẽ quy định cụ thể mức dung sai cho từng hạng mục. Nếu Chỉ dẫn kỹ thuật dự án quy định dung sai chặt chẽ hơn TCVN (ví dụ sàn phẳng hở ≤ 2 mm thay vì 3 mm) thì bắt buộc phải áp dụng theo Chỉ dẫn kỹ thuật dự án.
 2. **Quy tắc đo đạc trắc đạc độc lập:**
    - TVGS không được chỉ dựa vào số liệu hoàn công do Nhà thầu lập. Đối với các cấu kiện chịu lực chính (tim móng, tim cột tầng trệt, cao độ dầm sàn), TVGS phải bố trí trắc đạc kiểm tra độc lập trước khi cho phép đổ bê tông hoặc hoàn thiện.
 3. **Hồ sơ hóa các sai lệch vượt chuẩn:**
@@ -2642,32 +2721,32 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 #### 1. Yêu cầu đối với Nền móng & Hệ chân đế giàn giáo (Mục 2.2.3.6 QCVN 18):
 - **Độ ổn định của nền:** Nền đất phải được đầm chặt, có rãnh thoát nước, không để đọng nước làm lún sụt chân giáo. Tuyệt đối không đặt chân giáo trên nền đất yếu, gạch kê tạm, ván mục hoặc mép hố móng chưa gia cố.
-- **Tấm lót đệm phân bổ tải (Sole plates):** Bắt buộc phải đặt **ván lót đệm chân đế** bằng gỗ dày tối thiểu $\ge 50\\text{ mm}$ (hoặc thép định hình), diện tích đủ rộng để phân bổ áp lực lên nền đất.
-- **Đế kim loại & Chân kích (Base plates & Screw jacks):** Cột giáo phải đặt trên đế kim loại cố định. Chiều cao tăng đơ của chân kích ren **không được vượt quá 2/3 chiều dài trục ren** (tối đa không quá $200 - 300\\text{ mm}$) để bảo đảm độ cứng ổn định chống uốn.
+- **Tấm lót đệm phân bổ tải (Sole plates):** Bắt buộc phải đặt **ván lót đệm chân đế** bằng gỗ dày tối thiểu ≥ 50 mm (hoặc thép định hình), diện tích đủ rộng để phân bổ áp lực lên nền đất.
+- **Đế kim loại & Chân kích (Base plates & Screw jacks):** Cột giáo phải đặt trên đế kim loại cố định. Chiều cao tăng đơ của chân kích ren **không được vượt quá 2/3 chiều dài trục ren** (tối đa không quá 200 - 300 mm) để bảo đảm độ cứng ổn định chống uốn.
 
 #### 2. Yêu cầu đối với Cột đứng, Khung giáo & Hệ giằng liên kết (Mục 2.2.2 & 2.2.3):
 - **Chất lượng thanh ống giáo:** Ống thép phải thẳng, không bị rạn nứt, cong vênh, móp méo, thủng rỗ hoặc rỉ sét ăn mòn quá mức quy định. Không dùng lẫn lộn ống thép và ống hợp kim nhôm trong cùng một hệ giáo.
-- **Độ thẳng đứng:** Sai lệch độ nghiêng cột giáo không vượt quá **1/200 đến 1/500 chiều cao** của hệ giáo; sai lệch tim trục $\\le 10\\text{ mm}$.
+- **Độ thẳng đứng:** Sai lệch độ nghiêng cột giáo không vượt quá **1/200 đến 1/500 chiều cao** của hệ giáo; sai lệch tim trục ≤ 10 mm.
 - **Hệ giằng chéo và giằng ngang (Bracing):** Bắt buộc phải lắp đầy đủ hệ thanh giằng chéo ở tất cả các đốt giáo cả hai phương dọc và ngang để chống vặn xoắn và ngăn ngừa biến dạng hình học.
-- **Cùm khóa và chốt nối (Clamps & Couplers):** Các cùm khóa (khóa tĩnh, khóa xoay) phải đạt chuẩn, bu-lông siết chặt với mô-men lực quy định từ **$40 - 60\\text{ N.m}$**, các chốt liên kết khóa nêm/khóa ringlock phải được gõ chặt kịch đáy.
+- **Cùm khóa và chốt nối (Clamps & Couplers):** Các cùm khóa (khóa tĩnh, khóa xoay) phải đạt chuẩn, bu-lông siết chặt với mô-men lực quy định từ **40 - 60 N.m**, các chốt liên kết khóa nêm/khóa ringlock phải được gõ chặt kịch đáy.
 
 #### 3. Yêu cầu đối với Hệ thống Neo giữ vào công trình (Mục 2.2.3.2 & 2.2.3.3):
 - **Liên kết neo cứng (Ties & Anchors):** Đối với giàn giáo công trình cao ngoài nhà, **bắt buộc phải neo giữ giàn giáo vào các bộ phận kết cấu chịu lực kiên cố của công trình** (dầm bê tông, cột bê tông hoặc tường đặc) theo cả phương đứng và ngang.
-- **Khoảng cách neo:** Khoảng cách giữa các điểm neo không vượt quá **$4 - 6\\text{ m}$** (hoặc cách tầng theo đúng bản vẽ thiết kế biện pháp thi công).
-- **Phần giáo nhô tự do:** Chiều cao phần giàn giáo phía trên điểm neo cao nhất vào công trình không được vượt quá **$2,0\\text{ m}$** (hoặc 1 tầng giáo).
+- **Khoảng cách neo:** Khoảng cách giữa các điểm neo không vượt quá **4 - 6 m** (hoặc cách tầng theo đúng bản vẽ thiết kế biện pháp thi công).
+- **Phần giáo nhô tự do:** Chiều cao phần giàn giáo phía trên điểm neo cao nhất vào công trình không được vượt quá **2,0 m** (hoặc 1 tầng giáo).
 - **Nghiêm cấm:** Tuyệt đối không neo giàn giáo vào lan can tạm, ống dẫn nước, ống thông gió hoặc khung cửa sổ.
 
 #### 4. Yêu cầu đối với Sàn thao tác (Sàn công tác - Mục 2.2.3.13):
-- **Kích thước sàn:** Bề rộng thông thủy của sàn công tác **không được nhỏ hơn 50 cm** (đối với giáo hoàn thiện, sơn trát) và từ **$1,0 - 1,5\\text{ m}$** đối với giáo xây tải nặng.
+- **Kích thước sàn:** Bề rộng thông thủy của sàn công tác **không được nhỏ hơn 50 cm** (đối với giáo hoàn thiện, sơn trát) và từ **1,0 - 1,5 m** đối với giáo xây tải nặng.
 - **Độ kín khít:** Mặt sàn phải được lát kín khít, khe hở giữa các tấm mâm giáo/ván sàn **không được vượt quá 20 mm** để chống lọt rơi dụng cụ và vấp ngã.
-- **Cố định mâm giáo:** Các tấm mâm giáo kim loại phải có móc khóa an toàn gài chặt vào thanh giằng ngang để chống lật, chống trượt. Nếu dùng ván gỗ: Ván phải dày $\ge 30\\text{ mm}$, được néo chặt bằng dây thép ly hoặc đai kẹp.
+- **Cố định mâm giáo:** Các tấm mâm giáo kim loại phải có móc khóa an toàn gài chặt vào thanh giằng ngang để chống lật, chống trượt. Nếu dùng ván gỗ: Ván phải dày ≥ 30 mm, được néo chặt bằng dây thép ly hoặc đai kẹp.
 - **Khoảng hở giàn giáo - tường công trình:** Khoảng cách hở giữa mép trong sàn công tác và mặt ngoài kết cấu công trình **không được vượt quá 20 cm** (Mục 2.7.3.4 QCVN 18).
 
 #### 5. Yêu cầu Lan can an toàn & Tấm chặn chân (Mục 2.2.3.12):
-Đối với mọi sàn thao tác ở độ cao từ **$2,0\\text{ m}$ trở lên** so với mặt sàn/mặt đất, **bắt buộc 100%** phải có hệ lan can bảo vệ 3 thành phần:
-- **Tay vịn trên (Top rail):** Cao từ **$0,9\\text{ m}$ đến $1,15\\text{ m}$** so với mặt sàn công tác.
-- **Thanh ngang giữa (Mid rail):** Lắp đặt ở khoảng giữa (cao khoảng $0,45 - 0,6\\text{ m}$) để ngăn người lọt qua khe.
-- **Tấm chặn chân (Toeboard):** Lắp đặt áp sát mặt sàn, chiều cao tối thiểu $\ge$ **$150\\text{ mm}$** nhằm ngăn ngừa vật liệu, dụng cụ rơi xuống phía dưới.
+Đối với mọi sàn thao tác ở độ cao từ **2,0 m trở lên** so với mặt sàn/mặt đất, **bắt buộc 100%** phải có hệ lan can bảo vệ 3 thành phần:
+- **Tay vịn trên (Top rail):** Cao từ **0,9 m đến 1,15 m** so với mặt sàn công tác.
+- **Thanh ngang giữa (Mid rail):** Lắp đặt ở khoảng giữa (cao khoảng 0,45 - 0,6 m) để ngăn người lọt qua khe.
+- **Tấm chặn chân (Toeboard):** Lắp đặt áp sát mặt sàn, chiều cao tối thiểu ≥ **150 mm** nhằm ngăn ngừa vật liệu, dụng cụ rơi xuống phía dưới.
 
 #### 6. Lối tiếp cận & Lưới an toàn bao che (Mục 2.2.1.2 & 2.2.3.8):
 - **Lối lên xuống an toàn:** Bắt buộc bố trí thang leo có lồng bảo vệ hoặc thang bộ chuyên dụng bên trong khoang giáo, có tay vịn và bậc chống trơn trượt. **Tuyệt đối cấm công nhân leo trèo trực tiếp trên khung giáo**.
@@ -2679,13 +2758,13 @@ Thuộc các trường hợp nghiêm trọng sau:
 
 | STT | Hạng mục kiểm tra bắt buộc | Tiêu chuẩn & Chỉ tiêu kỹ thuật đối chiếu | Căn cứ quy chuẩn | Đánh giá |
 | :---: | :--- | :--- | :--- | :---: |
-| **1** | **Bản vẽ & Biện pháp thi công** | Có bản vẽ thiết kế lắp dựng được phê duyệt; tính toán chịu lực cho giáo cao $\ge 28\\text{m}$ | QCVN 18 Mục 2.2.1.4 | Đạt / Không đạt |
-| **2** | **Nền đỡ & Ván lót đệm** | Đất đầm chặt, phẳng; có ván lót dày $\ge 50\\text{mm}$, chân kích ren $\le 2/3$ bước ren | QCVN 18 Mục 2.2.3.6 | Đạt / Không đạt |
-| **3** | **Độ thẳng đứng & Khung giáo** | Độ nghiêng $\le 1/200 - 1/500$ chiều cao; ống thép không rỉ sét móp méo | TCXDVN 296 Mục 4.1 | Đạt / Không đạt |
-| **4** | **Hệ giằng chéo & Cùm khóa** | Đầy đủ giằng chéo 2 phương; cùm khóa siết lực $40 - 60\\text{ N.m}$, không nứt vỡ | QCVN 18 Mục 2.2.3.2 | Đạt / Không đạt |
-| **5** | **Neo giữ vào công trình** | Neo cứng vào kết cấu bê tông/tường kiên cố cách khoảng $\le 4-6\\text{m}$; không neo tạm bợ | QCVN 18 Mục 2.2.3.3 | Đạt / Không đạt |
-| **6** | **Sàn thao tác (Mâm giáo)** | Rộng $\ge 50\\text{cm}$; lát kín khít hở $\le 20\\text{mm}$; có chốt khóa chống lật; cách tường $\le 20\\text{cm}$ | QCVN 18 Mục 2.2.3.13 | Đạt / Không đạt |
-| **7** | **Lan can an toàn & Chặn chân** | Tay vịn cao $0,9 - 1,15\\text{m}$; thanh giữa; tấm chặn chân cao $\ge 150\\text{mm}$ (sàn cao $\ge 2\\text{m}$) | QCVN 18 Mục 2.2.3.12 | Đạt / Không đạt |
+| **1** | **Bản vẽ & Biện pháp thi công** | Có bản vẽ thiết kế lắp dựng được phê duyệt; tính toán chịu lực cho giáo cao ≥ 28m | QCVN 18 Mục 2.2.1.4 | Đạt / Không đạt |
+| **2** | **Nền đỡ & Ván lót đệm** | Đất đầm chặt, phẳng; có ván lót dày ≥ 50mm, chân kích ren ≤ 2/3 bước ren | QCVN 18 Mục 2.2.3.6 | Đạt / Không đạt |
+| **3** | **Độ thẳng đứng & Khung giáo** | Độ nghiêng ≤ 1/200 - 1/500 chiều cao; ống thép không rỉ sét móp méo | TCXDVN 296 Mục 4.1 | Đạt / Không đạt |
+| **4** | **Hệ giằng chéo & Cùm khóa** | Đầy đủ giằng chéo 2 phương; cùm khóa siết lực 40 - 60 N.m, không nứt vỡ | QCVN 18 Mục 2.2.3.2 | Đạt / Không đạt |
+| **5** | **Neo giữ vào công trình** | Neo cứng vào kết cấu bê tông/tường kiên cố cách khoảng ≤ 4 - 6m; không neo tạm bợ | QCVN 18 Mục 2.2.3.3 | Đạt / Không đạt |
+| **6** | **Sàn thao tác (Mâm giáo)** | Rộng ≥ 50cm; lát kín khít hở ≤ 20mm; có chốt khóa chống lật; cách tường ≤ 20cm | QCVN 18 Mục 2.2.3.13 | Đạt / Không đạt |
+| **7** | **Lan can an toàn & Chặn chân** | Tay vịn cao 0,9 - 1,15m; thanh giữa; tấm chặn chân cao ≥ 150mm (sàn cao ≥ 2m) | QCVN 18 Mục 2.2.3.12 | Đạt / Không đạt |
 | **8** | **Thang tiếp cận & Lưới che** | Có thang bộ/thang leo độc lập; bọc kín lưới bao che; có mái che lối đi bên dưới | QCVN 18 Mục 2.2.1.2 & 2.2.3.8 | Đạt / Không đạt |
 | **9** | **Thẻ kiểm định Scafftag** | Ký biên bản nghiệm thu; treo **Thẻ XANH** (cho phép sử dụng) tại cửa thang | QCVN 18 Mục 2.2.4.1 | Đạt / Không đạt |
 
@@ -2836,7 +2915,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 | :--- | :--- | :--- | :--- |
 | **Khu xây dựng nhà máy & Phụ trợ** | Nhà máy tuyển khoáng, khu nghiền sàng, trạm biến áp, kho bãi quặng, nhà điều hành, xưởng sửa chữa, đường giao thông nội bộ | **Tỷ lệ 1/500** | Khoản 2 Điều 30 Luật 47/2024/QH15. Xác định chỉ giới xây dựng, cốt nền, khoảng lùi, mạng lưới cấp điện, cấp thoát nước chi tiết. |
 | **Khu Cụm công trình đầu mối hồ đập** | Tuyến thân đập chính, đập phụ, đập chắn bùn quặng, tràn xả lũ, cống tháo sâu/lấy nước, trạm bơm hoàn lưu, đường quản lý vận hành đập | **Tỷ lệ 1/500** | Khoản 4 Điều 19 TT 16/2025/TT-BXD & TCVN 8477:2018. Đảm bảo độ chính xác tính toán kết cấu thân đập, chỉ giới an toàn đập và cắm mốc tim tuyến. |
-| **Khu Vùng ngập lòng hồ chứa nước / Hồ lắng bùn thải** | Diện tích mặt nước ngập lòng hồ, đường viền mực nước dâng bình thường (MNDBT), mực nước lũ kiểm tra (MNLKT), vùng bán ngập sườn núi | **Tỷ lệ 1/1.000** hoặc **1/2.000** | TCVN 8477:2018 (Bình đồ khảo sát lòng hồ chứa). Phục vụ tính toán đường đặc tính dung tích hồ $V = f(H)$, diện tích ngập $F = f(H)$, cắm mốc ranh giới ngập và đền bù GPMB. |
+| **Khu Vùng ngập lòng hồ chứa nước / Hồ lắng bùn thải** | Diện tích mặt nước ngập lòng hồ, đường viền mực nước dâng bình thường (MNDBT), mực nước lũ kiểm tra (MNLKT), vùng bán ngập sườn núi | **Tỷ lệ 1/1.000** hoặc **1/2.000** | TCVN 8477:2018 (Bình đồ khảo sát lòng hồ chứa). Phục vụ tính toán đường đặc tính dung tích hồ V = f(H), diện tích ngập F = f(H), cắm mốc ranh giới ngập và đền bù GPMB. |
 | **Sơ đồ liên kết vùng & Khai trường mỏ (> 6.000 ha)** | Toàn bộ ranh giới cấp phép mỏ 6.000 ha, mối liên hệ hạ tầng giao thông vùng, nguồn cấp điện nước ngoài hàng rào | **Tỷ lệ 1/5.000** hoặc **1/10.000** *(Tỷ lệ thích hợp)* | Điểm a Khoản 4 Điều 19 Thông tư 16/2025/TT-BXD. Thể hiện ranh giới nghiên cứu và kết nối ngoài hàng rào dự án. |
 
 ---
@@ -3317,7 +3396,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
       : `<span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.72rem;"><i class="bi bi-box me-1"></i>Thư Viện Pháp Lý PMU</span>`;
 
     let htmlAnswer = "";
-    const rawAnswer = data.answer || "";
+    const rawAnswer = cleanMathSymbols(data.answer || "");
     if (typeof marked !== "undefined" && marked.parse) {
       try {
         htmlAnswer = marked.parse(rawAnswer);
