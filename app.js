@@ -1643,6 +1643,19 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
             }
           }
 
+          // Booster for Mineral Recovery / Tận thu đá / khoáng sản khi thi công mặt bằng (Luật Địa chất & Khoáng sản 54/2024/QH15)
+          if (/tận thu|thu hồi khoáng sản|đá bazan|bazan|khoáng sản.*mặt bằng|mặt bằng.*khoáng sản|tận thu đá/i.test(clean)) {
+            if (lowerDocCode.includes("54/2024") || lowerDocCode.includes("147/2025") || lowerDocTitle.includes("khoáng sản")) {
+              artScore += 4500;
+              if (art.number == 75 || art.number == 76 || art.number == 98 || art.number == 2 || art.number == 108) {
+                artScore += 4000;
+              }
+            }
+            if (isDocTCVN && (lowerDocTitle.includes("cốp pha") || lowerDocTitle.includes("mặt sân") || lowerDocTitle.includes("gạch đá") || lowerDocTitle.includes("trụ đất") || lowerDocTitle.includes("bê tông"))) {
+              artScore -= 7000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number && art.number.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -2632,6 +2645,80 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
    - Vùng lòng hồ chứa ngập nước: Bản đồ 1/1.000 hoặc 1/2.000.
 3. **Dự toán chi phí khảo sát và lập quy hoạch:** 
    - Áp dụng định mức theo Thông tư 17/2025/TT-BXD: Phần diện tích đo 1/500 tính theo đơn giá 1/500; phần diện tích lòng hồ đo 1/1.000 hoặc 1/2.000 tính theo đơn giá tương ứng, giúp tiết kiệm ngân sách dự án và giải trình kiểm toán nhà nước minh bạch, an toàn tuyệt đối.`;
+    }
+
+    // Specialized Handler for Mineral Recovery / Tận thu đá Bazan khi thi công mặt bằng
+    if (/tận thu|thu hồi khoáng sản|đá bazan|bazan|khoáng sản.*mặt bằng|mặt bằng.*khoáng sản|tận thu đá/i.test(qLower)) {
+      return `### 📋 BÁO CÁO PHÂN TÍCH PHÁP LÝ: QUY TRÌNH THU HỒI (TẬN THU) ĐÁ BAZAN KHI THI CÔNG MẶT BẰNG DỰ ÁN
+
+📌 **1. Vấn đề pháp lý:**
+- Quy trình, thẩm quyền và nghĩa vụ tài chính khi thu hồi (tận thu) đá Bazan (khoáng sản làm vật liệu xây dựng thông thường) dôi dư phát sinh trong quá trình san gạt, hạ cốt nền, thi công mặt bằng công trình xây dựng.
+
+🏛️ **2. Căn cứ pháp lý đa tầng:**
+- **Luật Địa chất và Khoáng sản số 54/2024/QH15** (được sửa đổi, bổ sung bởi Luật số 147/2025/QH15):
+  - **Khoản 26 Điều 2**: Định nghĩa pháp lý: *"Thu hồi khoáng sản là hoạt động kết hợp nhằm lấy được khoáng sản trong quá trình thực hiện dự án đầu tư xây dựng công trình hoặc các hoạt động khác theo kế hoạch được cơ quan quản lý nhà nước có thẩm quyền phê duyệt hoặc chấp thuận."*
+  - **Điều 75**: *Quy định chung về thu hồi khoáng sản*:
+    - **Điểm b Khoản 1**: Chủ đầu tư hoặc nhà đầu tư kết hợp thu hồi khoáng sản ở khu vực thi công các hạng mục công trình của dự án đầu tư được cơ quan nhà nước có thẩm quyền phê duyệt hoặc cho phép thực hiện.
+    - **Khoản 2 Điểm a**: Chỉ được phép thu hồi khoáng sản khi **bắt buộc phải san gạt, đào đắp bề mặt địa hình tạo mặt bằng xây dựng**, nạo vét để thực hiện theo đúng thiết kế của dự án đã được phê duyệt.
+    - **Khoản 4**: Được sử dụng khoáng sản để phục vụ xây dựng công trình hoặc cung cấp cho công trình, dự án khác.
+    - **Khoản 5**: Tổ chức, cá nhân thu hồi khoáng sản **bắt buộc phải đăng ký hoạt động thu hồi khoáng sản** với cơ quan quản lý nhà nước có thẩm quyền.
+  - **Điều 76**: *Quyền và nghĩa vụ của tổ chức, cá nhân thu hồi khoáng sản*: Quyền vận chuyển, tiêu thụ; nghĩa vụ nộp tiền cấp quyền, thuế tài nguyên, phí BVMT và bồi thường thiệt hại nếu có.
+  - **Khoản 3 Điều 98**: *Các trường hợp miễn nộp tiền cấp quyền khai thác khoáng sản*: Điểm a quy định: **Miễn tiền cấp quyền** nếu khoáng sản thu hồi chỉ sử dụng cho chính công trình xây dựng đó. Nếu đưa ra khỏi công trình (bán hoặc cung cấp cho công trình khác) thì **bắt buộc phải nộp tiền cấp quyền, thuế tài nguyên và phí bảo vệ môi trường**.
+  - **Điều 108**: Thẩm quyền của Ủy ban nhân dân cấp tỉnh (UBND tỉnh) trong việc cấp giấy xác nhận đăng ký thu hồi khoáng sản trên địa bàn.
+- **Luật Xây dựng số 135/2025/QH15 & Nghị định số 207/2026/NĐ-CP**:
+  - Tuân thủ thiết kế san nền, quy chuẩn an toàn thi công đào đắp và biện pháp bảo vệ môi trường công trình.
+- **Nghị định số 08/2022/NĐ-CP & Luật Bảo vệ môi trường 2020**:
+  - Yêu cầu về Giấy phép môi trường / ĐTM đối với hoạt động đào đắp đất đá và vận chuyển khoáng sản.
+
+---
+
+### 📊 BẢNG ĐỐI CHIẾU: 2 TRƯỜNG HỢP XỬ LÝ ĐÁ BAZAN THU HỒI
+
+| Tiêu chí | Trường hợp 1: Sử dụng lại cho chính công trình | Trường hợp 2: Vận chuyển ra ngoài / Tiêu thụ / Cấp cho dự án khác |
+| :--- | :--- | :--- |
+| **Bản chất pháp lý** | Điều phối đất đá nội bộ theo hồ sơ thiết kế | Thu hồi thương mại / Tiêu thụ khoáng sản ngoài phạm vi dự án |
+| **Tiền cấp quyền (Điều 98)** | **Được MIỄN** (Điểm a Khoản 3 Điều 98 Luật 54/2024/QH15) | **BẮT BUỘC PHẢI NỘP** theo khối lượng thực tế xuất bán/vận chuyển |
+| **Thuế tài nguyên & Phí BVMT** | Không phải nộp thuế tài nguyên thương mại | **BẮT BUỘC nộp** Thuế tài nguyên và Phí bảo vệ môi trường |
+| **Thủ tục đăng ký** | Báo cáo trong Phương án thi công & Hồ sơ dự án | **BẮT BUỘC lập Hồ sơ và được UBND tỉnh cấp Giấy xác nhận đăng ký thu hồi** |
+| **Kiểm soát vận chuyển** | Giám sát nội bộ của Ban QLDA & Tư vấn giám sát | Phải lập sổ sách, phiếu xuất kho, trạm cân, xe che bạt đúng quy định |
+
+---
+
+### 🚀 QUY TRÌNH 5 BƯỚC THU HỒI ĐÁ BAZAN CHO BAN QLDA / CHỦ ĐẦU TƯ:
+
+1. **Bước 1: Rà soát Hồ sơ thiết kế & Bóc tách khối lượng đá dôi dư:**
+   - Căn cứ Hồ sơ thiết kế bản vẽ thi công san nền, hồ sơ khảo sát địa chất và phương án đào đắp đã được cấp có thẩm quyền phê duyệt.
+   - Xác định rõ cao trình hạ cốt, vị trí xuất hiện vỉa đá bazan, khối lượng đá đào đắp cần dùng tại chỗ và khối lượng dôi dư bắt buộc phải đưa ra khỏi mặt bằng.
+
+2. **Bước 2: Lập Phương án thu hồi khoáng sản:**
+   - Chủ đầu tư chỉ đạo đơn vị tư vấn hoặc nhà thầu lập **Phương án thu hồi khoáng sản**, thể hiện:
+     + Tọa độ ranh giới khu vực san gạt hạ cốt;
+     + Khối lượng đá bazan dự kiến thu hồi;
+     + Biện pháp thi công bốc xúc, thời gian và tiến độ thực hiện;
+     + Tuyến đường vận chuyển và địa điểm tiếp nhận / bãi tập kết;
+     + Biện pháp bảo đảm an toàn lao động, chống sạt lở và bảo vệ môi trường (tưới nước chống bụi, rửa xe).
+
+3. **Bước 3: Nộp Hồ sơ đăng ký thu hồi tại Sở Tài nguyên và Môi trường:**
+   - Hồ sơ gửi về Sở TN&MT gồm:
+     1. Đơn đề nghị đăng ký thu hồi khoáng sản (theo mẫu quy định);
+     2. Bản sao Quyết định phê duyệt dự án đầu tư và thiết kế bản vẽ thi công;
+     3. Phương án thu hồi khoáng sản đã lập ở Bước 2;
+     4. Quyết định phê duyệt ĐTM hoặc Giấy phép môi trường của dự án.
+
+4. **Bước 4: Thẩm định thực địa và Ban hành Quyết định của UBND tỉnh:**
+   - Sở TN&MT phối hợp với chính quyền địa phương (UBND cấp huyện, xã) kiểm tra thực tế hiện trường thi công để xác thực nhu cầu hạ cốt mặt bằng.
+   - Sở TN&MT thẩm định hồ sơ, dự thảo văn bản trình UBND cấp tỉnh ban hành **Giấy xác nhận đăng ký thu hồi khoáng sản** (quy định rõ vị trí, thời hạn, khối lượng đá bazan tối đa được thu hồi).
+
+5. **Bước 5: Thực hiện nghĩa vụ tài chính và Tổ chức thu hồi:**
+   - Kê khai và nộp tiền cấp quyền khai thác khoáng sản, thuế tài nguyên, phí BVMT tại cơ quan thuế trước khi vận chuyển đá ra khỏi công trường (nếu thuộc Trường hợp 2).
+   - Tổ chức nghiệm thu khối lượng thực tế, lập nhật ký theo dõi phương tiện vận chuyển và định kỳ báo cáo Sở TN&MT đến khi hoàn thành san gạt mặt bằng.
+
+---
+
+### ⚠️ CẢNH BÁO RỦI RO PHÁP LÝ QUAN TRỌNG CHO BAN QLDA (PMU):
+
+> **TUYỆT ĐỐI KHÔNG TỰ Ý BÁN HOẶC CHỞ ĐÁ BAZAN RA KHỎI DỰ ÁN KHI CHƯA CÓ VĂN BẢN CHẤP THUẬN CỦA UBND TỈNH**:
+> Rất nhiều Ban QLDA và Nhà thầu thi công nhầm tưởng đá bazan đào ra khi hạ cốt mặt bằng là "vật liệu thải" nên tự ý hợp đồng bán cho các bãi đá nghiền hoặc vận chuyển đi san lấp nơi khác. Hành vi này bị cơ quan Cảnh sát Môi trường và Thanh tra coi là **"Khai thác, tiêu thụ khoáng sản trái phép"**, có thể bị xử lý hình sự theo **Điều 227 Bộ luật Hình sự** hoặc xử phạt vi phạm hành chính, truy thu toàn bộ số tiền bất hợp pháp và tịch thu phương tiện!`;
     }
 
     // Default dynamic synthesis report
