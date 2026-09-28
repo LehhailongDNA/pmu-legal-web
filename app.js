@@ -1020,7 +1020,14 @@ document.addEventListener("DOMContentLoaded", () => {
                  .replace(/\b1gđ\b/g, "một giai đoạn")
                  .replace(/\b2gđ\b/g, "hai giai đoạn")
                  .replace(/\b1ths\b/g, "một túi hồ sơ")
-                 .replace(/\b2ths\b/g, "hai túi hồ sơ");
+                 .replace(/\b2ths\b/g, "hai túi hồ sơ")
+                 .replace(/\blắpđặt\b/g, "lắp đặt")
+                 .replace(/\bnghiệmthu\b/g, "nghiệm thu")
+                 .replace(/\bđiềuhòa\b/g, "điều hòa")
+                 .replace(/\bthônggió\b/g, "thông gió")
+                 .replace(/\bkhởicông\b/g, "khởi công")
+                 .replace(/\bthiếtkế\b/g, "thiết kế")
+                 .replace(/\bchạythử\b/g, "chạy thử");
 
     const rawWords = clean.split(" ").filter(w => w.length > 0);
     
@@ -1533,6 +1540,9 @@ NGUYÊN TẮC:
       } else if (/môi trường|đtm|giấy phép môi trường|pccc|nghiệm thu pccc|phòng cháy/i.test(qLower)) {
         domain = "ENVIRONMENT_FIRE_SAFETY";
         domainName = "Môi Trường & PCCC";
+      } else if (/điều hòa|thông gió|hvac|chiller|vrv|vrf|lắp đặt thiết bị|nghiệm thu.*thiết bị|chạy thử/i.test(qLower)) {
+        domain = "HVAC_MEP_ACCEPTANCE";
+        domainName = "Nghiệm Thu Điều Hòa & Cơ Điện";
       }
 
       // Phân loại Ý định (Intent Classification)
@@ -1604,6 +1614,15 @@ NGUYÊN TẮC:
           requiredArticles: [23, 78]
         };
       }
+      if (domain === "HVAC_MEP_ACCEPTANCE" || /điều hòa|thông gió|hvac|chiller|vrv|vrf/i.test(qLower)) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "HVAC_CENTRAL_ACCEPTANCE",
+          domain: "HVAC_MEP_ACCEPTANCE",
+          targetDocs: ["207/2026", "5639", "5687", "06:2022"],
+          requiredArticles: [22, 23, 25]
+        };
+      }
 
       // Điều hướng tìm kiếm & tổng hợp thông thường theo Domain
       return {
@@ -1654,6 +1673,9 @@ NGUYÊN TẮC:
       } else if (domain === "ACCEPTANCE_QUALITY") {
         const hasAcceptance = candidates.some(c => (c.docCode || "").includes("4453") || (c.docCode || "").includes("9377") || (c.docTitle || "").toLowerCase().includes("nghiệm thu"));
         domainScore = hasAcceptance ? 0.45 : 0.1;
+      } else if (domain === "HVAC_MEP_ACCEPTANCE") {
+        const hasHvac = candidates.some(c => (c.docCode || "").includes("207/2026") || (c.docCode || "").includes("5639") || (c.docCode || "").includes("5687") || (c.docCode || "").includes("06:2022"));
+        domainScore = hasHvac ? 0.48 : 0.1;
       } else {
         domainScore = 0.35;
       }
@@ -1678,6 +1700,7 @@ NGUYÊN TẮC:
       if (state.domain === "URBAN_PLANNING" && !/quy hoạch|tỷ lệ|47\/2024|đồ án/i.test(text)) return false;
       if (state.domain === "CONSTRUCTION_CONTRACT" && !/hợp đồng|thiết kế|giám sát tác giả|135\/2025|207\/2026/i.test(text)) return false;
       if (state.domain === "OCCUPATIONAL_SAFETY" && !/an toàn|ngã cao|giàn giáo|qcvn 18/i.test(text)) return false;
+      if (state.domain === "HVAC_MEP_ACCEPTANCE" && !/điều hòa|thông gió|chạy thử|5639|207\/2026|áp lực|chân không|chiller/i.test(text)) return false;
 
       // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu, danh sách hành động hoặc đối thoại nghiệp vụ rõ ràng
       const hasStructure = text.includes("|") || /quy trình|các bước|bước \d+|lưu ý|trách nhiệm|khuyến nghị|theo quy định|căn cứ|thực tế|cần|phải|trường hợp|nguyên tắc/i.test(text);
@@ -1779,6 +1802,14 @@ NGUYÊN TẮC:
                 artScore -= 8000;
               }
               if (isDocTCVN) artScore -= 8000;
+            } else if (targetDomain === "HVAC_MEP_ACCEPTANCE") {
+              if (lowerDocCode.includes("207/2026") && [22, 23, 25, 24].includes(Number(art.number))) artScore += 7000;
+              if (lowerDocCode.includes("5639")) artScore += 6500;
+              if (lowerDocCode.includes("5687")) artScore += 5000;
+              if (lowerDocCode.includes("06:2022") && (art.number == "D.1.4" || art.number == "1.4.68" || art.number == "A.2.29")) artScore += 4500;
+              if (lowerDocCode.includes("13333") || lowerDocCode.includes("13581") || lowerDocCode.includes("371") || lowerDocCode.includes("4453") || lowerDocCode.includes("9342")) {
+                artScore -= 9000;
+              }
             }
           }
 
@@ -1933,6 +1964,25 @@ NGUYÊN TẮC:
               artScore -= 8000;
             }
             if (isDocTCVN) artScore -= 8000;
+          }
+
+          // Booster for Central Air Conditioning & HVAC Acceptance (NĐ 207/2026 Điều 22, 23, 25; TCVN 5639:1991; TCVN 5687:2024; QCVN 06:2022)
+          if (/điều hòa|thông gió|hvac|chiller|vrv|vrf/i.test(clean)) {
+            if (lowerDocCode.includes("207/2026") && (art.number == 25 || art.number == 22 || art.number == 23 || artTitleLower.includes("chạy thử") || artTitleLower.includes("nghiệm thu"))) {
+              artScore += 7500;
+            }
+            if (lowerDocCode.includes("5639")) {
+              artScore += 7000;
+            }
+            if (lowerDocCode.includes("5687")) {
+              artScore += 5000;
+            }
+            if (lowerDocCode.includes("06:2022") && (art.number == "D.1.4" || (artSnippetLower.includes("điều hòa") && artSnippetLower.includes("cháy")))) {
+              artScore += 4500;
+            }
+            if (lowerDocCode.includes("13333") || lowerDocCode.includes("13581") || lowerDocCode.includes("371") || lowerDocTitle.includes("bê tông") || lowerDocTitle.includes("khí aerosol")) {
+              artScore -= 9500;
+            }
           }
 
           keywords.forEach(kw => {
@@ -3136,6 +3186,44 @@ Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi 
 
 1. **Biên bản bàn giao mặt bằng là chốt chặn số 1:** Tuyệt đối không ký Lệnh khởi công cho nhà thầu khi chưa có Biên bản bàn giao tim mốc, ranh giới và mặt bằng thi công có xác nhận của địa phương/Hội đồng GPMB.
 2. **Lưu trữ Giấy biên nhận thông báo khởi công:** Luôn lưu giữ Giấy biên nhận hoặc mã số hồ sơ nộp thành công trên Cổng dịch vụ công trực tuyến để xuất trình cho Thanh tra Xây dựng khi kiểm tra đột xuất tại công trường.`;
+    }
+
+    // Specialized Handler for Central Air Conditioning / HVAC System Acceptance (Điều 22, 23, 25 NĐ 207/2026; TCVN 5639:1991; TCVN 5687:2024; QCVN 06:2022)
+    if (/điều hòa|thông gió|hvac|chiller|vrv|vrf/i.test(qLower) && (/nghiệm thu|lắp đặt|chạy thử|nội dung|quy trình|tiêu chuẩn|kiểm tra/i.test(qLower))) {
+      return `### Nghiệm thu lắp đặt hệ thống điều hòa không khí trung tâm (Chiller / VRV / VRF)
+
+Về công tác nghiệm thu hệ thống điều hòa không khí trung tâm trên công trường, anh em mình không thể chỉ nhìn vào mỗi việc máy chạy phà phà ra gió lạnh là ký biên bản được. Bản chất điều hòa trung tâm là hệ thống cơ điện (MEP) phức tạp, liên quan mật thiết từ phần kết cấu tĩnh, hệ thống đường ống áp lực cho đến an toàn PCCC tòa nhà.
+
+Hệ thống căn cứ kỹ thuật và pháp lý cốt lõi cần bám sát:
+- Nghị định số 207/2026/NĐ-CP: Điều 22 (nghiệm thu công việc xây dựng lắp đặt tĩnh), Điều 23 (nghiệm thu giai đoạn/bộ phận trước khi che khuất) và đặc biệt là Điều 25 về quy trình nghiệm thu chạy thử thiết bị.
+- TCVN 5639:1991: Tiêu chuẩn gốc quy định nguyên tắc nghiệm thu thiết bị đã lắp đặt xong (nghiệm thu tĩnh, chạy thử không tải và chạy thử có tải).
+- TCVN 5687:2024: Tiêu chuẩn thiết kế thông gió và điều hòa không khí (kiểm soát nhiệt độ, độ ẩm, độ ồn và lưu lượng gió tươi).
+- QCVN 06:2022/BXD (Mục D.1.4 & A.2.29): Bắt buộc hệ thống điều hòa phải tự động ngắt khi có tín hiệu báo cháy và van chặn lửa (FD) trên đường ống gió phải đóng kín ngăn khói.
+
+Nội dung nghiệm thu thực tế chia làm 4 giai đoạn chuẩn chỉ sau:
+
+#### 1. Kiểm tra nghiệm thu vật tư, thiết bị đầu vào (Incoming Inspection)
+Trước khi cho kéo máy hay đưa ống lên sàn, PMU và Tư vấn giám sát bắt buộc kiểm tra hồ sơ xuất xứ CO, CQ, Packing List của cụm máy chính: máy sản xuất nước lạnh Chiller, dàn nóng VRV/VRF, dàn lạnh AHU/FCU, bơm nước tuần hoàn và tháp giải nhiệt. Toàn bộ vật tư phụ trợ như ống thép chịu áp lực, ống đồng dẫn gas lạnh, tôn mạ kẽm gia công ống gió, van cơ, van điện từ và vật liệu bảo ôn cách nhiệt (Armaflex, cao su lưu hóa) phải đúng chủng loại, độ dày thiết kế và đạt chứng chỉ chống cháy lan theo hồ sơ mời thầu.
+
+#### 2. Nghiệm thu lắp đặt tĩnh và thử nghiệm áp lực (Static & Pressure Testing)
+Giai đoạn này tập trung vào các công việc che khuất, tuyệt đối phải nghiệm thu xong 100% mới cho phép đóng trần thạch cao:
+- Phần bệ máy và giá đỡ: Kiểm tra tim mốc, cao độ bệ bê tông, hệ thống đệm cao su hoặc lò xo giảm chấn chống rung truyền lực vào kết cấu sàn.
+- Tuyến ống gió và van gió: Kiểm tra độ kín khít mối ghép bích, mật độ ty treo giá đỡ và bọc bảo ôn kín khít, không để cầu nhiệt gây đọng sương nhỏ nước xuống trần. Tiến hành thử độ rò rỉ ống gió (Duct Leakage Test) theo áp suất thiết kế.
+- Thử nghiệm áp lực đường ống (Hydrostatic / Pneumatic Test): Thử áp lực nước đường ống Chiller (thường 1,5 lần áp suất làm việc giữ trong tối thiểu 2 đến 24 giờ) hoặc thử áp nitơ đường ống gas VRV (duy trì 24 giờ ở mức 3,8 - 4,15 MPa). Sau khi thử áp đạt, phải súc rửa sạch cặn bẩn đường ống (flushing) và hút chân không sâu (dưới 500 microns) trước khi nạp môi chất lạnh.
+- Hệ thống thoát nước ngưng: Rất nhiều dự án bị thấm dột trần vì khâu này. Phải kiểm tra độ dốc tối thiểu 1%, có bẫy nước P-trap chống tràn và xả nước thử nghiệm thực tế (Drainage test) bảo đảm thoát nước liên tục, không ứ đọng.
+- Hệ thống điện & BMS: Kiểm tra đo điện trở cách điện cáp động lực, tiếp địa an toàn vỏ máy và đấu nối tủ điều khiển DDC/BMS.
+
+#### 3. Nghiệm thu chạy thử đơn động, cân chỉnh TAB và chạy có tải liên tục (Commissioning)
+Theo Điều 25 Nghị định 207/2026/NĐ-CP, việc chạy thử phải tiến hành tuần tự 3 bước:
+- Chạy thử đơn động không tải: Kích hoạt riêng từng thiết bị để kiểm tra chiều quay cánh quạt AHU/FCU, chiều quay động cơ bơm, quạt tháp giải nhiệt; đo dòng điện khởi động, độ ồn và độ rung.
+- Cân bằng hệ thống (TAB - Testing, Adjusting and Balancing): Dùng thiết bị đo chuyên dụng cân chỉnh lưu lượng gió tại từng miệng gió (diffuser), áp suất các nhánh van VAV và cân bằng lưu lượng nước lạnh qua các van cân bằng đúng thông số bản vẽ.
+- Chạy thử liên động có tải (thường từ 24 đến 72 giờ liên tục): Vận hành toàn bộ tổ hợp máy theo chuỗi liên động (Tháp giải nhiệt -> Bơm giải nhiệt -> Bơm nước lạnh -> Chiller -> AHU/FCU). Tiến hành đo đạc thông số thực tế trong các phòng: nhiệt độ duy trì 24 - 26°C, độ ẩm 55 - 65% và độ ồn trong giới hạn tiêu chuẩn TCVN 5687:2024.
+
+#### 4. Thử nghiệm liên động an toàn PCCC và hoàn thiện hồ sơ bàn giao
+Một điểm chốt chặn sống còn mà cảnh sát PCCC khi kiểm tra nghiệm thu công trình luôn soi rất kỹ: thử nghiệm ngắt khẩn cấp (Fire Alarm Interlock).
+Khi giả lập kích hoạt đầu báo cháy hoặc tủ trung tâm PCCC báo động, toàn bộ hệ thống điều hòa trung tâm phải lập tức ngắt điện dừng hoạt động; các van chặn lửa (Fire Damper - FD) trên đường ống gió xuyên khoang cháy phải đóng kín để ngăn truyền khói độc.
+
+Hồ sơ nghiệm thu cuối cùng cần đầy đủ: Biên bản nghiệm thu công việc lắp đặt, Biên bản thử áp lực/thử kín đường ống, Báo cáo cân chỉnh TAB, Nhật ký chạy thử liên động có tải 72 giờ và Bản vẽ hoàn công kèm quy trình vận hành bảo trì (O&M).`;
     }
 
     // Default dynamic synthesis report
