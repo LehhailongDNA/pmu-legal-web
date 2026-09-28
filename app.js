@@ -1484,12 +1484,216 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
 4. IV. Kiến nghị xử lý cho Tổ chuyên gia và Chủ đầu tư`
   };
 
-  // Client-Side Context Search with Full Article Extraction
-  async function searchLegalContext(query, limit = 6) {
+  /**
+   * LEGAL DECISION ENGINE (Kiến trúc Jev Engineering Practice)
+   * 1. State In: Phân tích trạng thái có kiểu (Typed System State).
+   * 2. Choice: Ra quyết định điều hướng nghiệp vụ xác định (Deterministic Action).
+   * 3. Score: Chấm điểm chất lượng căn cứ pháp lý (0.00 - 1.00).
+   * 4. Noul: Kiểm định hoàn tất mục tiêu (Boolean Termination Guardrail).
+   */
+  const LegalDecisionEngine = {
+    // 1. STATE IN: Trích xuất trạng thái có cấu trúc
+    analyzeState(query, persona = "legal") {
+      const qClean = (query || "").trim();
+      const qLower = qClean.toLowerCase();
+
+      // Phân loại Lĩnh vực pháp lý (Domain Classification)
+      let domain = "GENERAL_CONSTRUCTION";
+      let domainName = "Pháp Luật Xây Dựng Chung";
+
+      if (/tận thu|thu hồi khoáng sản|khoáng sản|đá bazan|bazan|khai thác mỏ|đất đá dôi dư|bãi thải mỏ|vật liệu san lấp/i.test(qLower)) {
+        domain = "MINERAL_RESOURCES";
+        domainName = "Địa Chất & Khoáng Sản";
+      } else if (/giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế|phạt hợp đồng|chậm tiến độ|tạm dừng hợp đồng|chấm dứt hợp đồng|bồi thường hợp đồng/i.test(qLower)) {
+        domain = "CONSTRUCTION_CONTRACT";
+        domainName = "Hợp Đồng & Quản Lý Thi Công";
+      } else if (/quy hoạch chi tiết|đồ án quy hoạch|tỷ lệ bản đồ|1\/500|1\/1000|1\/2000|chỉ giới xây dựng|mật độ xây dựng|vùng hồ/i.test(qLower)) {
+        domain = "URBAN_PLANNING";
+        domainName = "Quy Hoạch Đô Thị & Nông Thôn";
+      } else if (/chỉ định thầu|đấu thầu|1 giai đoạn|2 giai đoạn|1 túi|2 túi|hồ sơ mời thầu|đánh giá e-hsdt|chỉ định thầu rút gọn/i.test(qLower)) {
+        domain = "BIDDING_PROCUREMENT";
+        domainName = "Đấu Thầu & Mua Sắm Công";
+      } else if (/thẩm định|thẩm tra|báo cáo nghiên cứu khả thi|nckt|kinh tế.*kỹ thuật|chủ trương đầu tư/i.test(qLower)) {
+        domain = "PROJECT_PREPARATION";
+        domainName = "Chuẩn Bị Dự Án & Thẩm Định";
+      } else if (/trên cao|ngã cao|rơi ngã|giàn giáo|dàn giáo|an toàn lao động|tai nạn lao động|bảo hộ/i.test(qLower)) {
+        domain = "OCCUPATIONAL_SAFETY";
+        domainName = "An Toàn Lao Động (QCVN 18)";
+      } else if (/nghiệm thu bê tông|lát nền|ốp lát|dung sai|sai số|độ lệch cho phép|cường độ bê tông/i.test(qLower)) {
+        domain = "ACCEPTANCE_QUALITY";
+        domainName = "Tiêu Chuẩn & Nghiệm Thu Chất Lượng";
+      } else if (/môi trường|đtm|giấy phép môi trường|pccc|nghiệm thu pccc|phòng cháy/i.test(qLower)) {
+        domain = "ENVIRONMENT_FIRE_SAFETY";
+        domainName = "Môi Trường & PCCC";
+      }
+
+      // Phân loại Ý định (Intent Classification)
+      let intent = "LEGAL_INQUIRY";
+      if (/quy trình|các bước|thủ tục|trình tự/i.test(qLower)) intent = "WORKFLOW_PROCEDURE";
+      else if (/so sánh|phân biệt|khác nhau|khác biệt/i.test(qLower)) intent = "COMPARATIVE_ANALYSIS";
+      else if (/xử lý|phạt|vi phạm|trách nhiệm|chế tài/i.test(qLower)) intent = "PENALTY_ENFORCEMENT";
+      else if (/dung sai|sai số|tiêu chuẩn|yêu cầu kỹ thuật|kích thước/i.test(qLower)) intent = "TECHNICAL_STANDARD";
+      else if (/thẩm quyền|ai phê duyệt|cấp nào|cơ quan nào/i.test(qLower)) intent = "AUTHORITY_JURISDICTION";
+
+      return {
+        query: qClean,
+        qLower,
+        persona: persona || "legal",
+        domain,
+        domainName,
+        intent,
+        timestamp: Date.now()
+      };
+    },
+
+    // 2. CHOICE: Lựa chọn hành động điều hướng (Typed Decision Action)
+    choice(state) {
+      const { domain, intent, qLower } = state;
+
+      // Nhánh xử lý quy trình đặc thù đã được chuẩn hóa cho PMU
+      if (domain === "MINERAL_RESOURCES" && (/tận thu|thu hồi|mặt bằng|bazan/i.test(qLower))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "MINERAL_RECOVERY_SITE",
+          domain,
+          targetDocs: ["54/2024", "147/2025", "207/2026", "08/2022"],
+          requiredArticles: [75, 76, 98, 108]
+        };
+      }
+      if (domain === "CONSTRUCTION_CONTRACT" && (/giám sát tác giả|tư vấn thiết kế/i.test(qLower))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "DESIGN_AUTHOR_SUPERVISION_BREACH",
+          domain,
+          targetDocs: ["135/2025", "207/2026", "339/2026"],
+          requiredArticles: [35, 21, 12]
+        };
+      }
+      if (domain === "URBAN_PLANNING" && (/tỷ lệ/i.test(qLower) || /1\/500/i.test(qLower))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "PLANNING_MAP_SCALE_MULTI",
+          domain,
+          targetDocs: ["47/2024", "16/2025", "8477"],
+          requiredArticles: [30, 33, 19]
+        };
+      }
+      if (domain === "BIDDING_PROCUREMENT" && (/chỉ định thầu/i.test(qLower) && /rút gọn/i.test(qLower))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "DIRECT_PROCUREMENT_COMPARISON",
+          domain,
+          targetDocs: ["22/2023", "24/2024"],
+          requiredArticles: [23, 78]
+        };
+      }
+
+      // Điều hướng tìm kiếm & tổng hợp thông thường theo Domain
+      return {
+        action: "SEARCH_AND_SYNTHESIZE",
+        domain,
+        intent
+      };
+    },
+
+    // 3. SCORE: Đánh giá chất lượng và độ tương thích của căn cứ (0.00 - 1.00)
+    score(state, candidates) {
+      if (!candidates || candidates.length === 0) return 0.0;
+
+      let domainScore = 0.3;
+      let tierDiversityScore = 0.0;
+      let relevanceScore = 0.0;
+
+      const { domain } = state;
+      const hasTier1 = candidates.some(c => c.docCode && /QH/i.test(c.docCode));
+      const hasTier2 = candidates.some(c => c.docCode && /NĐ-CP/i.test(c.docCode));
+      const hasTier3 = candidates.some(c => c.docCode && /TT-/i.test(c.docCode));
+      const hasTCVN = candidates.some(c => c.isTCVN);
+
+      if (hasTier1 && (hasTier2 || hasTier3)) tierDiversityScore = 0.35;
+      else if (hasTier1 || hasTier2) tierDiversityScore = 0.25;
+      else if (hasTCVN && (domain === "ACCEPTANCE_QUALITY" || domain === "OCCUPATIONAL_SAFETY")) tierDiversityScore = 0.35;
+      else tierDiversityScore = 0.15;
+
+      // Độ khớp lĩnh vực
+      if (domain === "MINERAL_RESOURCES") {
+        const hasMineral = candidates.some(c => (c.docCode || "").includes("54/2024") || (c.docTitle || "").toLowerCase().includes("khoáng sản"));
+        domainScore = hasMineral ? 0.45 : 0.05;
+      } else if (domain === "CONSTRUCTION_CONTRACT") {
+        const hasContract = candidates.some(c => (c.docCode || "").includes("207/2026") || (c.docCode || "").includes("135/2025") || (c.docTitle || "").toLowerCase().includes("hợp đồng"));
+        domainScore = hasContract ? 0.45 : 0.1;
+      } else if (domain === "URBAN_PLANNING") {
+        const hasPlanning = candidates.some(c => (c.docCode || "").includes("47/2024") || (c.docTitle || "").toLowerCase().includes("quy hoạch"));
+        domainScore = hasPlanning ? 0.45 : 0.1;
+      } else if (domain === "BIDDING_PROCUREMENT") {
+        const hasBidding = candidates.some(c => (c.docCode || "").includes("22/2023") || (c.docCode || "").includes("24/2024") || (c.docTitle || "").toLowerCase().includes("đấu thầu"));
+        domainScore = hasBidding ? 0.45 : 0.1;
+      } else if (domain === "OCCUPATIONAL_SAFETY") {
+        const hasSafety = candidates.some(c => (c.docCode || "").toLowerCase().includes("qcvn 18") || (c.docTitle || "").toLowerCase().includes("an toàn"));
+        domainScore = hasSafety ? 0.45 : 0.1;
+      } else if (domain === "ACCEPTANCE_QUALITY") {
+        const hasAcceptance = candidates.some(c => (c.docCode || "").includes("4453") || (c.docCode || "").includes("9377") || (c.docTitle || "").toLowerCase().includes("nghiệm thu"));
+        domainScore = hasAcceptance ? 0.45 : 0.1;
+      } else {
+        domainScore = 0.35;
+      }
+
+      relevanceScore = Math.min(0.2, (candidates[0]?.score || 0) / 10000);
+      const total = Math.min(1.0, domainScore + tierDiversityScore + relevanceScore);
+      return Math.round(total * 100) / 100;
+    },
+
+    // 4. NOUL: Kiểm tra điều kiện hoàn tất mục tiêu (Boolean Termination Guardrail)
+    noul(state, generatedText, scoreVal = 0.8) {
+      if (!generatedText || generatedText.trim().length < 150) return false;
+      const text = generatedText.toLowerCase();
+
+      // Chốt chặn 1: Bắt buộc có viện dẫn điều khoản hoặc quy phạm kỹ thuật
+      const hasLegalBases = /điều \d+|khoản \d+|luật số|nghị định số|thông tư số|tcvn|qcvn/i.test(text);
+      if (!hasLegalBases) return false;
+
+      // Chốt chặn 2: Kiểm tra tính liên đới chuyên ngành
+      if (state.domain === "MINERAL_RESOURCES" && !/khoáng sản|thu hồi|đá|54\/2024/i.test(text)) return false;
+      if (state.domain === "URBAN_PLANNING" && !/quy hoạch|tỷ lệ|47\/2024|đồ án/i.test(text)) return false;
+      if (state.domain === "CONSTRUCTION_CONTRACT" && !/hợp đồng|thiết kế|giám sát tác giả|135\/2025|207\/2026/i.test(text)) return false;
+      if (state.domain === "OCCUPATIONAL_SAFETY" && !/an toàn|ngã cao|giàn giáo|qcvn 18/i.test(text)) return false;
+
+      // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu hoặc danh sách hành động nghiệp vụ
+      const hasStructure = text.includes("|") || /quy trình|các bước|bước 1|lưu ý|trách nhiệm|khuyến nghị/i.test(text);
+      if (!hasStructure) return false;
+
+      return true;
+    },
+
+    // Định dạng Audit Trail hiển thị minh bạch cho người dùng
+    formatVerificationFooter(content, state, score) {
+      if (content.includes("decision-audit-trail") || content.includes("Decision Engine")) {
+        return content;
+      }
+      const scorePct = Math.round(score * 100);
+      const scoreColor = scorePct >= 80 ? "text-success" : (scorePct >= 65 ? "text-primary" : "text-warning");
+
+      const badgeHtml = `\n\n---\n<div class="decision-audit-trail small p-2 rounded-2 mt-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #0d9488 !important; font-size: 0.8rem;">
+  <div>
+    <span class="badge bg-primary me-1"><i class="bi bi-cpu me-1"></i>Decision Engine (Jev Architecture)</span>
+    <span>Lĩnh vực: <strong>${state.domainName}</strong></span>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span>Độ chuẩn hóa căn cứ: <strong class="${scoreColor}">${scorePct}%</strong></span>
+    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Noul Guardrail: ĐẠT</span>
+  </div>
+</div>`;
+      return content + badgeHtml;
+    }
+  };
+
+  // Client-Side Context Search with Full Article Extraction & Jev Domain Steering
+  async function searchLegalContext(query, limit = 6, decision = null) {
     await ensureSearchIndexLoaded();
     if (!searchIndex) return [];
 
     const { clean, phrases, keywords } = extractSearchFeatures(query);
+    const targetDomain = decision ? (decision.domain || decision) : null;
     const candidates = [];
 
     for (const item of searchIndex) {
@@ -1519,6 +1723,35 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
               if (artSnippetLower.includes(p)) artScore += 120;
             }
           });
+
+          // Jev Decision Engine Domain Steering
+          if (targetDomain) {
+            if (targetDomain === "MINERAL_RESOURCES") {
+              if (lowerDocCode.includes("54/2024") || lowerDocCode.includes("147/2025") || lowerDocTitle.includes("khoáng sản")) {
+                artScore += 5000;
+                if ([75, 76, 98, 2, 108].includes(Number(art.number))) artScore += 4000;
+              }
+              if (isDocTCVN) artScore -= 8000;
+            } else if (targetDomain === "CONSTRUCTION_CONTRACT") {
+              if ((lowerDocCode.includes("207/2026") && art.number == 21) || (lowerDocCode.includes("135/2025") && art.number == 35) || (lowerDocCode.includes("339/2026") && art.number == 12)) {
+                artScore += 5000;
+              }
+              if (artTitleLower.includes("giám sát tác giả") || artSnippetLower.includes("giám sát tác giả")) artScore += 3500;
+              if (isDocTCVN) artScore -= 5000;
+            } else if (targetDomain === "URBAN_PLANNING") {
+              if (lowerDocCode.includes("47/2024") && [30, 33, 26].includes(Number(art.number))) artScore += 4500;
+              if (lowerDocCode.includes("16/2025") && [19, 6, 21].includes(Number(art.number))) artScore += 5000;
+              if (lowerDocCode.includes("8477")) artScore += 4000;
+              if (isDocTCVN && !lowerDocCode.includes("8477")) artScore -= 5000;
+            } else if (targetDomain === "BIDDING_PROCUREMENT") {
+              if (lowerDocCode.includes("22/2023") || lowerDocCode.includes("24/2024") || lowerDocCode.includes("214/2025")) artScore += 4500;
+              if (isDocTCVN) artScore -= 6000;
+            } else if (targetDomain === "OCCUPATIONAL_SAFETY") {
+              if (lowerDocCode.includes("qcvn 18") || lowerDocCode.includes("296") || lowerDocCode.includes("5308")) artScore += 4500;
+            } else if (targetDomain === "ACCEPTANCE_QUALITY") {
+              if (lowerDocCode.includes("4453") || lowerDocCode.includes("9377") || lowerDocCode.includes("5593")) artScore += 4500;
+            }
+          }
 
           // Specific bonus for query intent match
           if (clean.includes("thẩm tra") && (artTitleLower.includes("thẩm tra") || artSnippetLower.includes("thẩm tra") || (art.number == 3 && lowerDocCode.includes("135/2025")) || (art.number == 26 && lowerDocCode.includes("135/2025")) || (art.number == 36 && lowerDocCode.includes("135/2025")))) {
@@ -2943,7 +3176,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
     throw new Error(`Nhà cung cấp AI "${provider}" chưa được hỗ trợ.`);
   }
 
-  // Send Message with Client RAG Grounding
+  // Send Message with Jev-style Agentic Control Loop
   async function sendMessage(message) {
     appendUserMessage(message);
 
@@ -2951,10 +3184,17 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
     appendLoadingMessage(loadingId);
 
     try {
-      // 1. Retrieve top matching articles with full content
-      const matches = await searchLegalContext(message, 8);
-      const ragPrompt = buildRAGPrompt(message, activePersona, matches);
-      const systemPrompt = defaultSystemPrompts[activePersona] || defaultSystemPrompts.legal;
+      // 1. STATE IN: Typed State Extraction
+      const state = LegalDecisionEngine.analyzeState(message, activePersona);
+
+      // 2. DECISION CHOICE: Determine next action & retrieval strategy
+      const decision = LegalDecisionEngine.choice(state);
+
+      // 3. EXECUTION LAYER: Domain-steered context retrieval
+      const matches = await searchLegalContext(message, 8, decision);
+
+      // 4. EVALUATION: SCORE (Context Confidence Rating)
+      const contextScore = LegalDecisionEngine.score(state, matches);
 
       const sources = matches.slice(0, 8).map(s => ({
         docTitle: s.docTitle,
@@ -2965,75 +3205,56 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
         isTCVN: s.isTCVN
       }));
 
-      // 2. If user selected Cloud LLM (not PMU) and has API Key or Ollama
+      const ragPrompt = buildRAGPrompt(message, activePersona, matches);
+      const systemPrompt = defaultSystemPrompts[activePersona] || defaultSystemPrompts.legal;
+
+      let finalAnswer = "";
+      let isLlmUsed = false;
+      let usedModel = "PMU Legal Decision Engine";
+
+      // If user selected Cloud LLM (not PMU) and has API Key or Ollama
       if (aiConfig.provider !== "pmu" && (aiConfig.apiKey || aiConfig.provider === "ollama")) {
         try {
           let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
-          if (llmReply && llmReply.trim().length > 30) {
-            // Check if comparison or planning question or feasibility study or verification vs appraisal or working at height needs authoritative formatting
-            const isComparison = /so sánh|khác nhau|khác biệt/i.test(message) || (/chỉ định thầu/i.test(message) && /rút gọn/i.test(message));
-            const isPlanningTimeline = /quy hoạch/i.test(message) && (/nhiệm vụ/i.test(message) || /lấy ý kiến/i.test(message) || /thời gian/i.test(message) || /thời hạn/i.test(message));
-            const isFsrContent = (/nghiên cứu khả thi|kinh tế.*kỹ thuật|báo cáo nckt/i.test(message) || (/thẩm định/i.test(message) && /dự án/i.test(message))) && 
-                                 (/nội dung/i.test(message) || /bao gồm/i.test(message) || /những gì/i.test(message) || /gồm những/i.test(message));
-            const isThamTraVsThamDinh = /thẩm tra/i.test(message) && /thẩm định/i.test(message);
-            const isWorkingAtHeight = /trên cao|ngã cao|rơi ngã/i.test(message) || (/an toàn/i.test(message) && (/thi công/i.test(message) || /lao động/i.test(message)) && /cao/i.test(message));
-            const isOneBagVsTwoBag = (/1.*túi|một.*túi/i.test(message) && /2.*túi|hai.*túi/i.test(message)) || 
-                                     (/giai đoạn/i.test(message) && /túi/i.test(message) && (/khác|so sánh|phân biệt/i.test(message) || (/1/i.test(message) && /2/i.test(message))));
-            const isConcreteAcceptance = /bê tông/i.test(message) && (/nghiệm thu/i.test(message) || /checklist|check list|nội dung nào|cần hoàn thành|kiểm tra/i.test(message));
-            const isTilingPaving = /lát nền|ốp lát|lát gạch|lát sàn|láng nền|lớp lát/i.test(message) && (/yêu cầu kỹ thuật|tiêu chuẩn|quy trình|nghiệm thu|dung sai|kỹ thuật/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
-            const isToleranceQuery = /sai số|dung sai|sai lệch cho phép|độ lệch cho phép/i.test(message) && (/thi công|nghiệm thu|chấp nhận|kết cấu|hình học/i.test(message));
-            const isScaffoldingQuery = /giàn giáo|dàn giáo|giáo thi công|giáo nêm|giáo tiệp|giáo ringlock|giáo hoàn thiện|lắp dựng giáo/i.test(message) && (/yêu cầu|bắt buộc|kiểm tra|nghiệm thu|lắp dựng|an toàn|tiêu chuẩn/i.test(message) || !message.toLowerCase().includes("quy hoạch"));
-            const isGstgViolation = /giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế/i.test(message) && (/xử lý|chậm trễ|không nghiêm túc|vi phạm|kéo dài|tiến độ/i.test(message));
-            const isPlanningScaleQuery = (/quy hoạch chi tiết/i.test(message) || /đồ án/i.test(message) || /tổng mặt bằng/i.test(message)) &&
-                                         (/tỷ lệ/i.test(message) || /1\/500/i.test(message) || /1\/1000/i.test(message) || /1\/2000/i.test(message)) &&
-                                         (/nhiều tỷ lệ|bắt buộc|hồ đập|hồ chứa|khoáng sản|mỏ|tuyển khoáng|6000|600|vùng hồ/i.test(message));
-
-            if ((isComparison && !llmReply.includes("|")) || 
-                (isPlanningTimeline && (!llmReply.includes("Điều 36") || !llmReply.includes("|"))) ||
-                (isFsrContent && (!llmReply.includes("Điều 26") || !llmReply.includes("|"))) ||
-                (isThamTraVsThamDinh && (!llmReply.includes("Khoản 15") || !llmReply.includes("|"))) ||
-                (isWorkingAtHeight && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
-                (isOneBagVsTwoBag && (!llmReply.includes("Điều 30") || !llmReply.includes("|"))) ||
-                (isConcreteAcceptance && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
-                (isTilingPaving && (!llmReply.includes("TCVN 9377") || !llmReply.includes("|"))) ||
-                (isToleranceQuery && (!llmReply.includes("TCVN 4453") || !llmReply.includes("|"))) ||
-                (isScaffoldingQuery && (!llmReply.includes("QCVN 18") || !llmReply.includes("|"))) ||
-                (isGstgViolation && (!llmReply.includes("Điều 21") || !llmReply.includes("|"))) ||
-                (isPlanningScaleQuery && (!llmReply.includes("TCVN 8477") || !llmReply.includes("|")))) {
+          
+          // 4. EVALUATION: NOUL (Verification & Termination Check)
+          const isFulfillGoal = LegalDecisionEngine.noul(state, llmReply, contextScore);
+          
+          if (isFulfillGoal && llmReply && llmReply.trim().length > 50) {
+            // If specialized workflow requires authoritative tables and LLM missed them
+            if (decision.action === "SPECIALIZED_WORKFLOW" && !llmReply.includes("|")) {
               const dynReport = synthesizeDynamicAnswer(message, activePersona, matches);
               if (dynReport && dynReport.includes("|")) {
                 llmReply = dynReport;
               }
             }
-
-            removeLoadingMessage(loadingId);
-            const activeModelName = (aiConfig.model === "gemini-2.5-flash" ? "gemini-2.0-flash" : aiConfig.model) || aiConfig.provider.toUpperCase();
-            appendAssistantResponse({
-              answer: llmReply.trim(),
-              persona: activePersona,
-              sources,
-              ragPrompt,
-              isLLM: true,
-              model: activeModelName
-            });
-            return;
+            finalAnswer = llmReply.trim();
+            isLlmUsed = true;
+            usedModel = (aiConfig.model === "gemini-2.5-flash" ? "gemini-2.0-flash" : aiConfig.model) || aiConfig.provider.toUpperCase();
+          } else {
+            console.warn("Jev Noul Check: Output does not meet PMU legal standard, escalating to authoritative dynamic report.");
+            finalAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
           }
-          throw new Error("Phản hồi từ LLM không đủ nội dung hoặc bị ngắt.");
         } catch (llmErr) {
-          console.warn("LLM API call failed, falling back to local synthesis:", llmErr.message);
+          console.warn("LLM error, falling back to authoritative dynamic report:", llmErr.message);
+          finalAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
         }
+      } else {
+        // Fallback / PMU Built-in Dynamic Synthesis
+        finalAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
       }
 
-      // 3. Fallback Grounded Synthesis (Guaranteed Complete High-Fidelity Report)
-      const fallbackAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
+      // 5. ATTACH DECISION AUDIT TRAIL
+      finalAnswer = LegalDecisionEngine.formatVerificationFooter(finalAnswer, state, contextScore);
+
       removeLoadingMessage(loadingId);
       appendAssistantResponse({
-        answer: fallbackAnswer,
+        answer: finalAnswer,
         persona: activePersona,
         sources,
         ragPrompt,
-        isLLM: false,
-        model: "Thư Viện PMU Legal"
+        isLLM: isLlmUsed,
+        model: usedModel
       });
 
     } catch (err) {

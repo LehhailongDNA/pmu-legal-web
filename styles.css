@@ -543,3 +543,13 @@ main {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
+/* Jev Decision Engine Audit Trail */
+.decision-audit-trail {
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 0.2s ease;
+}
+.decision-audit-trail:hover {
+  background-color: #f1f5f9 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
