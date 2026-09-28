@@ -213,6 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Render Content
       docContent.innerHTML = currentDoc.htmlContent;
+      enhanceDocumentAnchors(docContent);
       initCrossRefLinks();
 
       // Render Table of Contents
@@ -230,6 +231,325 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error("Error loading document:", err);
       docContent.innerHTML = `<div class="alert alert-danger">Không thể tải nội dung văn bản này (${err.message}).</div>`;
+    }
+  }
+
+  // Helper for text normalization and slug generation
+  function removeVietnameseTones(str) {
+    if (!str) return "";
+    return str.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  }
+
+  function toSlug(str) {
+    if (!str) return "";
+    return removeVietnameseTones(str.toLowerCase())
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  // 1. Auto-index and inject anchor IDs for tables, parts, sections, clauses across the document
+  function enhanceDocumentAnchors(root) {
+    if (!root) return;
+    const elements = root.querySelectorAll("p, h1, h2, h3, h4, h5, h6, th, td, div");
+    elements.forEach(el => {
+      if (el.children.length > 5 && el.textContent.length > 400) return;
+      const text = el.textContent.trim();
+      if (!text || text.length > 250) return;
+
+      // Table headings: e.g. "BẢNG 3.2", "Bảng 3.1", "Bảng 1", "Biểu 2.1", "Bảng A"
+      const tableMatch = text.match(/^(?:BẢNG|Bảng|BIỂU|Biểu)\s*([A-Za-z0-9\.\-_]+)/i);
+      if (tableMatch) {
+        const rawNum = tableMatch[1];
+        const normNum = rawNum.replace(/[\._]/g, "-").toLowerCase();
+        el.setAttribute("data-target-table", rawNum.toLowerCase());
+        el.setAttribute("data-target-table-norm", normNum);
+
+        const variants = [
+          `bảng-${normNum}`,
+          `bang-${normNum}`,
+          `bảng-${rawNum.toLowerCase()}`,
+          `bang-${rawNum.toLowerCase()}`,
+          `bảng-${rawNum}`,
+          `table-${normNum}`
+        ];
+        if (!el.id) el.id = `bảng-${normNum}`;
+        variants.forEach(vId => {
+          if (!document.getElementById(vId)) {
+            const anchor = document.createElement("span");
+            anchor.id = vId;
+            anchor.className = "injected-internal-anchor";
+            el.prepend(anchor);
+          }
+        });
+      }
+
+      // Part headings: e.g. "PHẦN I", "Phần 1", "PHẦN IV"
+      const partMatch = text.match(/^(?:PHẦN|Phần)\s*([IVXLCDM\d]+)/i);
+      if (partMatch) {
+        const pNum = partMatch[1].toLowerCase();
+        const pSlug = toSlug(`phan-${pNum}`);
+        if (!el.id) el.id = pSlug;
+        const variants = [`phan-${pNum}`, `phần-${pNum}`, `part-${pNum}`, `phan-${partMatch[1]}`];
+        variants.forEach(vId => {
+          if (!document.getElementById(vId)) {
+            const anchor = document.createElement("span");
+            anchor.id = vId;
+            anchor.className = "injected-internal-anchor";
+            el.prepend(anchor);
+          }
+        });
+        el.setAttribute("data-target-part", pNum);
+      }
+
+      // Appendix headings: e.g. "PHỤ LỤC I", "PHỤ LỤC III", "Phụ lục 3"
+      const plMatch = text.match(/^(?:PHỤ LỤC|Phụ lục)\s*([IVXLCDM\d]+)/i);
+      if (plMatch) {
+        const plNum = plMatch[1].toLowerCase();
+        const plSlug = toSlug(`phu-luc-${plNum}`);
+        if (!el.id) el.id = plSlug;
+        const variants = [`phu-luc-${plNum}`, `pl-${plNum}`, `phuluc-${plNum}`, `phu-luc-so-${plNum}`];
+        variants.forEach(vId => {
+          if (!document.getElementById(vId)) {
+            const anchor = document.createElement("span");
+            anchor.id = vId;
+            anchor.className = "injected-internal-anchor";
+            el.prepend(anchor);
+          }
+        });
+      }
+
+      // Chapter headings: e.g. "CHƯƠNG I", "Chương II", "Chương 2"
+      const chMatch = text.match(/^(?:CHƯƠNG|Chương)\s*([IVXLCDM\d]+)/i);
+      if (chMatch) {
+        const chNum = chMatch[1].toLowerCase();
+        const variants = [`chuong-${chNum}`, `chương-${chNum}`];
+        variants.forEach(vId => {
+          if (!document.getElementById(vId)) {
+            const anchor = document.createElement("span");
+            anchor.id = vId;
+            anchor.className = "injected-internal-anchor";
+            el.prepend(anchor);
+          }
+        });
+      }
+
+      // Section headings: e.g. "MỤC I", "Mục 2", "I. XÁC ĐỊNH...", "II. XÁC ĐỊNH..."
+      const secMatch = text.match(/^(?:MỤC|Mục)\s*([IVXLCDM\d\.]+)/i) || text.match(/^([IVXLCDM]+)\.\s+[A-ZÀ-Ỹ]/);
+      if (secMatch) {
+        const sNum = secMatch[1].replace(/\./g, "-").toLowerCase();
+        const variants = [`muc-${sNum}`, `mục-${sNum}`, `phan-${sNum}`];
+        variants.forEach(vId => {
+          if (!document.getElementById(vId)) {
+            const anchor = document.createElement("span");
+            anchor.id = vId;
+            anchor.className = "injected-internal-anchor";
+            el.prepend(anchor);
+          }
+        });
+      }
+
+      // Numbered items: e.g. "1.5. Xác định...", "2. Quy đổi...", "5.4. Hướng dẫn..."
+      const numMatch = text.match(/^(\d+(?:\.\d+)*)\.?\s+[A-ZÀ-Ỹ]/);
+      if (numMatch) {
+        const nSlug = numMatch[1].replace(/\./g, "-");
+        const nRaw = numMatch[1];
+        const variants = [`khoan-${nSlug}`, `muc-${nSlug}`, `sec-${nSlug}`, `khoan-${nRaw}`, `muc-${nRaw}`];
+        variants.forEach(vId => {
+          if (!document.getElementById(vId)) {
+            const anchor = document.createElement("span");
+            anchor.id = vId;
+            anchor.className = "injected-internal-anchor";
+            el.prepend(anchor);
+          }
+        });
+        el.setAttribute("data-target-clause", nRaw);
+      }
+    });
+  }
+
+  // 2. Smart Internal Target Resolver
+  function resolveInternalAnchor(link, targetAnchor, root) {
+    if (!root) root = docContent;
+
+    // A. Direct ID or slug variations
+    if (targetAnchor) {
+      let el = document.getElementById(targetAnchor) || root.querySelector("#" + CSS.escape(targetAnchor));
+      if (el) return el;
+
+      const slug = toSlug(targetAnchor);
+      el = document.getElementById(slug) || root.querySelector("#" + CSS.escape(slug));
+      if (el) return el;
+
+      const dotAnchor = targetAnchor.replace(/-/g, ".");
+      el = document.getElementById(dotAnchor) || document.getElementById(toSlug(dotAnchor));
+      if (el) return el;
+
+      const dashAnchor = targetAnchor.replace(/\./g, "-");
+      el = document.getElementById(dashAnchor) || document.getElementById(toSlug(dashAnchor));
+      if (el) return el;
+    }
+
+    const linkText = link.textContent.trim();
+
+    // B. Table Search (e.g. targetAnchor="bảng-3-2", text="Bảng 3.2", text="Bảng 3.5 của Phụ lục này")
+    const tableNumMatch = (targetAnchor && targetAnchor.match(/b[aả]ng-([a-z0-9\.\-]+)/i)) ||
+                          linkText.match(/B[aả]ng\s*([0-9A-Za-z\.\-]+)/i);
+    if (tableNumMatch) {
+      const rawNum = tableNumMatch[1].replace(/[\-_]/g, ".").toLowerCase();
+      const normNum = tableNumMatch[1].replace(/[\._]/g, "-").toLowerCase();
+
+      let el = root.querySelector(`[data-target-table="${rawNum}"]`) ||
+               root.querySelector(`[data-target-table-norm="${normNum}"]`) ||
+               document.getElementById(`bảng-${normNum}`) ||
+               document.getElementById(`bang-${normNum}`) ||
+               document.getElementById(`bảng-${rawNum}`) ||
+               document.getElementById(`bang-${rawNum}`);
+      if (el) return el;
+
+      const tableRegex = new RegExp(`^(?:BẢNG|Bảng|BIỂU|Biểu)\\s*${rawNum.replace('.', '\\.')}\\b`, "i");
+      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6, th, td");
+      for (const c of candidates) {
+        if (tableRegex.test(c.textContent.trim())) {
+          return c.closest("p, tr, table") || c;
+        }
+      }
+    }
+
+    // C. Clause / Part / Section Search (e.g. data-part="I", data-clause="2", or targetAnchor="muc-iv")
+    const part = link.dataset.part;
+    const clause = link.dataset.clause;
+
+    if (clause) {
+      const cSlug = clause.toString().replace(/\./g, "-");
+      let el = document.getElementById(`khoan-${cSlug}`) ||
+               document.getElementById(`muc-${cSlug}`) ||
+               document.getElementById(`sec-${cSlug}`);
+      if (el) return el;
+
+      const cRegex = new RegExp(`^(?:${clause}\\.|Mục\\s*${clause}\\b|Khoản\\s*${clause}\\b)`, "i");
+      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
+      for (const c of candidates) {
+        if (cRegex.test(c.textContent.trim())) {
+          return c;
+        }
+      }
+    }
+
+    if (part) {
+      const pSlug = toSlug(`phan-${part}`);
+      let el = document.getElementById(pSlug) || document.getElementById(`muc-${part.toLowerCase()}`);
+      if (el) return el;
+
+      const pRegex = new RegExp(`^(?:PHẦN|Phần|MỤC|Mục)\\s*${part}\\b`, "i");
+      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
+      for (const c of candidates) {
+        if (pRegex.test(c.textContent.trim())) {
+          return c;
+        }
+      }
+    }
+
+    // D. Section search from targetAnchor like "muc-iv", "muc-6", "muc-ii", "muc-5-1"
+    if (targetAnchor && /muc-([a-z0-9\.\-]+)/i.test(targetAnchor)) {
+      const sRaw = targetAnchor.match(/muc-([a-z0-9\.\-]+)/i)[1].replace(/-/g, ".").toLowerCase();
+      let el = document.getElementById(targetAnchor) || document.getElementById(`muc-${sRaw}`);
+      if (el) return el;
+
+      const sRegex = new RegExp(`^(?:MỤC|Mục|${sRaw}\\.)\\s*${sRaw}\\b`, "i");
+      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
+      for (const c of candidates) {
+        if (sRegex.test(c.textContent.trim()) || c.textContent.trim().toLowerCase().startsWith(`${sRaw}.`)) {
+          return c;
+        }
+      }
+    }
+
+    // E. Appendix Search (e.g. data-appendix="III" or linkText "Phụ lục III")
+    const appendix = link.dataset.appendix || (linkText.match(/Phụ lục\s*([IVXLCDM\d]+)/i) || [])[1];
+    if (appendix) {
+      const aSlug = toSlug(`phu-luc-${appendix}`);
+      let el = document.getElementById(aSlug) ||
+               document.getElementById(`pl-${appendix.toLowerCase()}`) ||
+               document.getElementById(`phu-luc-so-${appendix.toLowerCase()}`);
+      if (el) return el;
+
+      const aRegex = new RegExp(`^(?:PHỤ LỤC|Phụ lục)\\s*${appendix}\\b`, "i");
+      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6");
+      for (const c of candidates) {
+        if (aRegex.test(c.textContent.trim())) {
+          return c;
+        }
+      }
+    }
+
+    // F. Chapter Search (e.g. "Chương II")
+    const chapterMatch = linkText.match(/Chương\s*([IVXLCDM\d]+)/i);
+    if (chapterMatch) {
+      const chSlug = toSlug(`chuong-${chapterMatch[1]}`);
+      let el = document.getElementById(chSlug) || document.getElementById(`chuong-${chapterMatch[1].toLowerCase()}`);
+      if (el) return el;
+    }
+
+    // G. Fallback: Search element with exact or starting text
+    if (linkText.length > 3 && linkText.length < 50) {
+      const candidates = root.querySelectorAll("p, strong, h1, h2, h3, h4, h5, h6, th, td");
+      for (const c of candidates) {
+        if (c.textContent.trim().toLowerCase().startsWith(linkText.toLowerCase())) {
+          return c;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  // 3. Smooth Scroll to Target Element with Highlight and TOC Sync
+  function scrollToTargetElement(targetEl) {
+    if (!targetEl) return;
+
+    const container = docViewerContainer;
+    if (container) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = targetEl.getBoundingClientRect();
+      const offset = elRect.top - containerRect.top + container.scrollTop - 35;
+      container.scrollTo({ top: Math.max(0, offset), behavior: "smooth" });
+    } else {
+      targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    const highlightElem = (targetEl.classList && targetEl.classList.contains("injected-internal-anchor"))
+      ? (targetEl.parentElement || targetEl)
+      : targetEl;
+    highlightElem.classList.add("article-highlight");
+    setTimeout(() => highlightElem.classList.remove("article-highlight"), 3500);
+
+    // Sync TOC sidebar
+    updateTocActive(targetEl);
+  }
+
+  // 4. Update Table of Contents (TOC) active state
+  function updateTocActive(elementOrId) {
+    if (!tocList) return;
+    let id = typeof elementOrId === "string" ? elementOrId : elementOrId.id;
+    if (!id && typeof elementOrId === "object") {
+      let curr = elementOrId;
+      while (curr && curr !== docContent) {
+        if (curr.id && tocList.querySelector(`.toc-item[href="#${curr.id}"]`)) {
+          id = curr.id;
+          break;
+        }
+        curr = curr.previousElementSibling || curr.parentElement;
+      }
+    }
+    if (id) {
+      const activeLink = tocList.querySelector(`.toc-item[href="#${id}"]`);
+      if (activeLink) {
+        tocList.querySelectorAll(".toc-item").forEach(item => item.classList.remove("active"));
+        activeLink.classList.add("active");
+        activeLink.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     }
   }
 
@@ -260,14 +580,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Internal navigation within current document
         if (isInternalMention) {
-          if (targetAnchor) {
-            const el = document.getElementById(targetAnchor);
-            if (el) {
-              el.scrollIntoView({ behavior: "smooth", block: "start" });
-              el.classList.add("article-highlight");
-              setTimeout(() => el.classList.remove("article-highlight"), 3000);
-              return;
-            }
+          const targetEl = resolveInternalAnchor(link, targetAnchor, root);
+          if (targetEl) {
+            scrollToTargetElement(targetEl);
+            return;
           }
           if (article) {
             scrollToArticle(article, clause, point);
@@ -490,12 +806,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-      const highlightElem = (target.classList && target.classList.contains("article-anchor-target"))
-        ? (target.nextElementSibling || target)
-        : target;
-      highlightElem.classList.add("article-highlight");
-      setTimeout(() => highlightElem.classList.remove("article-highlight"), 3000);
+      scrollToTargetElement(target);
     }
   }
 
