@@ -1501,7 +1501,10 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
       let domain = "GENERAL_CONSTRUCTION";
       let domainName = "Pháp Luật Xây Dựng Chung";
 
-      if (/tận thu|thu hồi khoáng sản|khoáng sản|đá bazan|bazan|khai thác mỏ|đất đá dôi dư|bãi thải mỏ|vật liệu san lấp/i.test(qLower)) {
+      if (/khởi công|điều kiện khởi công|thông báo khởi công|lệnh khởi công/i.test(qLower)) {
+        domain = "CONSTRUCTION_COMMENCEMENT";
+        domainName = "Điều Kiện Khởi Công Xây Dựng";
+      } else if (/tận thu|thu hồi khoáng sản|khoáng sản|đá bazan|bazan|khai thác mỏ|đất đá dôi dư|bãi thải mỏ|vật liệu san lấp/i.test(qLower)) {
         domain = "MINERAL_RESOURCES";
         domainName = "Địa Chất & Khoáng Sản";
       } else if (/giám sát tác giả|tư vấn thiết kế|nhà thầu thiết kế|phạt hợp đồng|chậm tiến độ|tạm dừng hợp đồng|chấm dứt hợp đồng|bồi thường hợp đồng/i.test(qLower)) {
@@ -1551,6 +1554,15 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
       const { domain, intent, qLower } = state;
 
       // Nhánh xử lý quy trình đặc thù đã được chuẩn hóa cho PMU
+      if (domain === "CONSTRUCTION_COMMENCEMENT" || (/khởi công/i.test(qLower) && (/điều kiện/i.test(qLower) || /thế nào/i.test(qLower) || /quy định/i.test(qLower) || /thông báo/i.test(qLower)))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "CONSTRUCTION_COMMENCEMENT_CONDITIONS",
+          domain: "CONSTRUCTION_COMMENCEMENT",
+          targetDocs: ["135/2025", "207/2026", "339/2026"],
+          requiredArticles: [48, 12, 21]
+        };
+      }
       if (domain === "MINERAL_RESOURCES" && (/tận thu|thu hồi|mặt bằng|bazan/i.test(qLower))) {
         return {
           action: "SPECIALIZED_WORKFLOW",
@@ -1616,7 +1628,10 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
       else tierDiversityScore = 0.15;
 
       // Độ khớp lĩnh vực
-      if (domain === "MINERAL_RESOURCES") {
+      if (domain === "CONSTRUCTION_COMMENCEMENT") {
+        const hasCommence = candidates.some(c => (c.docCode || "").includes("135/2025") && c.articleNumber == 48);
+        domainScore = hasCommence ? 0.50 : 0.1;
+      } else if (domain === "MINERAL_RESOURCES") {
         const hasMineral = candidates.some(c => (c.docCode || "").includes("54/2024") || (c.docTitle || "").toLowerCase().includes("khoáng sản"));
         domainScore = hasMineral ? 0.45 : 0.05;
       } else if (domain === "CONSTRUCTION_CONTRACT") {
@@ -1653,6 +1668,7 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
       if (!hasLegalBases) return false;
 
       // Chốt chặn 2: Kiểm tra tính liên đới chuyên ngành
+      if (state.domain === "CONSTRUCTION_COMMENCEMENT" && !/khởi công|điều 48|135\/2025|mặt bằng|thông báo khởi công/i.test(text)) return false;
       if (state.domain === "MINERAL_RESOURCES" && !/khoáng sản|thu hồi|đá|54\/2024/i.test(text)) return false;
       if (state.domain === "URBAN_PLANNING" && !/quy hoạch|tỷ lệ|47\/2024|đồ án/i.test(text)) return false;
       if (state.domain === "CONSTRUCTION_CONTRACT" && !/hợp đồng|thiết kế|giám sát tác giả|135\/2025|207\/2026/i.test(text)) return false;
@@ -1750,6 +1766,14 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
               if (lowerDocCode.includes("qcvn 18") || lowerDocCode.includes("296") || lowerDocCode.includes("5308")) artScore += 4500;
             } else if (targetDomain === "ACCEPTANCE_QUALITY") {
               if (lowerDocCode.includes("4453") || lowerDocCode.includes("9377") || lowerDocCode.includes("5593")) artScore += 4500;
+            } else if (targetDomain === "CONSTRUCTION_COMMENCEMENT") {
+              if (lowerDocCode.includes("135/2025") && art.number == 48) artScore += 7000;
+              if (lowerDocCode.includes("207/2026") && art.number == 12) artScore += 6000;
+              if (lowerDocCode.includes("339/2026") && art.number == 21) artScore += 3500;
+              if (lowerDocCode.includes("206/2026") || lowerDocCode.includes("40/2026") || (lowerDocCode.includes("207/2026") && art.number == 29) || (lowerDocCode.includes("217/2026") && (art.number == 72 || art.number == 51))) {
+                artScore -= 8000;
+              }
+              if (isDocTCVN) artScore -= 8000;
             }
           }
 
@@ -1887,6 +1911,23 @@ Bạn là Chuyên gia Đấu thầu Hỗ trợ thẩm tra HSMT và đánh giá H
             if (isDocTCVN && (lowerDocTitle.includes("cốp pha") || lowerDocTitle.includes("mặt sân") || lowerDocTitle.includes("gạch đá") || lowerDocTitle.includes("trụ đất") || lowerDocTitle.includes("bê tông"))) {
               artScore -= 7000;
             }
+          }
+
+          // Booster for Construction Commencement / Điều kiện khởi công công trình (Điều 48 Luật 135/2025 & Điều 12 NĐ 207/2026)
+          if (/khởi công|điều kiện khởi công|thông báo khởi công/i.test(clean)) {
+            if (lowerDocCode.includes("135/2025") && (art.number == 48 || artTitleLower.includes("khởi công"))) {
+              artScore += 7000;
+            }
+            if (lowerDocCode.includes("207/2026") && (art.number == 12 || artTitleLower.includes("khởi công"))) {
+              artScore += 6000;
+            }
+            if (lowerDocCode.includes("339/2026") && (art.number == 21 || artTitleLower.includes("khởi công"))) {
+              artScore += 3500;
+            }
+            if (lowerDocCode.includes("206/2026") || lowerDocCode.includes("40/2026") || (lowerDocCode.includes("207/2026") && art.number == 29) || (lowerDocCode.includes("217/2026") && (art.number == 72 || art.number == 51))) {
+              artScore -= 8000;
+            }
+            if (isDocTCVN) artScore -= 8000;
           }
 
           keywords.forEach(kw => {
@@ -3033,6 +3074,67 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 > Rất nhiều Ban QLDA và Nhà thầu thi công nhầm tưởng đá bazan đào ra khi hạ cốt mặt bằng là "vật liệu thải" nên tự ý hợp đồng bán cho các bãi đá nghiền hoặc vận chuyển đi san lấp nơi khác. Hành vi này bị cơ quan Cảnh sát Môi trường và Thanh tra coi là **"Khai thác, tiêu thụ khoáng sản trái phép"**, có thể bị xử lý hình sự theo **Điều 227 Bộ luật Hình sự** hoặc xử phạt vi phạm hành chính, truy thu toàn bộ số tiền bất hợp pháp và tịch thu phương tiện!`;
     }
 
+    // Specialized Handler for Construction Commencement Conditions (Điều kiện khởi công công trình xây dựng - Điều 48 Luật 135/2025 & Điều 12 NĐ 207/2026)
+    if (/khởi công/i.test(qLower) && (/điều kiện|quy định|như thế nào|thế nào|thủ tục|hồ sơ|thông báo/i.test(qLower))) {
+      return `### 📋 BÁO CÁO PHÂN TÍCH PHÁP LÝ: ĐIỀU KIỆN KHỞI CÔNG XÂY DỰNG CÔNG TRÌNH
+
+📌 **1. Vấn đề pháp lý:**
+- Quy định điều kiện khởi công xây dựng công trình; các trường hợp đặc thù, thủ tục gửi Thông báo khởi công và chế tài xử lý vi phạm hành chính khi khởi công không đủ điều kiện.
+
+🏛️ **2. Căn cứ pháp lý đa tầng:**
+- **Luật Xây dựng số 135/2025/QH15** — **Điều 48**: *Điều kiện khởi công xây dựng công trình* (Khung điều kiện chuẩn, các trường hợp đặc thù, khởi công từng phần và nhà ở riêng lẻ).
+- **Nghị định số 207/2026/NĐ-CP** của Chính phủ — **Điều 12**: *Điều kiện khởi công xây dựng công trình* (Trình tự gửi Thông báo khởi công, mẫu biểu Phụ lục V, cập nhật CSDL quốc gia).
+- **Nghị định số 339/2026/NĐ-CP** của Chính phủ — **Điều 21**: *Xử phạt vi phạm hành chính về trật tự xây dựng & điều kiện khởi công*.
+
+---
+
+### ⚖️ I. NĂM (05) ĐIỀU KIỆN KHỞI CÔNG BẮT BUỘC THEO KHOẢN 1 ĐIỀU 48 LUẬT XÂY DỰNG 135/2025/QH15:
+
+Chủ đầu tư chỉ được phép khởi công xây dựng công trình khi đáp ứng **đồng thời 05 điều kiện** sau:
+
+1. **Có mặt bằng xây dựng:** Đã được bàn giao toàn bộ hoặc từng phần theo tiến độ xây dựng của dự án;
+2. **Có Giấy phép xây dựng:** Đối với công trình thuộc diện phải có giấy phép xây dựng theo quy định tại Điều 43 Luật 135/2025/QH15;
+3. **Có Thiết kế bản vẽ thi công:** Của hạng mục công trình, công trình khởi công đã được phê duyệt;
+4. **Có Hợp đồng thi công xây dựng:** Đã được ký kết giữa Chủ đầu tư và Nhà thầu thi công được lựa chọn theo đúng quy định pháp luật;
+5. **Đã gửi Thông báo khởi công:** Bằng văn bản hoặc qua môi trường điện tử cho cơ quan quản lý nhà nước về xây dựng tại địa phương theo quy định tại Điều 12 Nghị định 207/2026/NĐ-CP.
+
+---
+
+### 🚨 II. CÁC TRƯỜNG HỢP NGOẠI LỆ & ĐẶC THÙ (KHOẢN 2 & KHOẢN 3 ĐIỀU 48):
+
+| Trường hợp công trình | Điều kiện khởi công áp dụng | Căn cứ pháp lý |
+| :--- | :--- | :--- |
+| **Công trình thông thường** | Đáp ứng đủ **05 điều kiện** (Mặt bằng + GPXD + TKBVTC duyệt + Hợp đồng + Thông báo khởi công). | **Khoản 1 Điều 48** Luật 135/2025 |
+| **Công trình khẩn cấp, cấp bách, đầu tư công đặc biệt hoặc Thủ tướng cho phép khởi công sớm** | **Chỉ cần có mặt bằng xây dựng** được bàn giao (toàn bộ hoặc từng phần). Các thủ tục khác được hoàn thiện song song. | **Khoản 2 Điều 48** Luật 135/2025 |
+| **Khởi công theo từng giai đoạn / Từng phân đoạn** | Chỉ cần có mặt bằng và Thiết kế bản vẽ thi công đã được duyệt của **chính giai đoạn/phân đoạn khởi công đó**. | **Khoản 1 Điều 48** Luật 135/2025 |
+| **Nhà ở riêng lẻ** | Chỉ cần có **Giấy phép xây dựng** (trường hợp bắt buộc) và **Quyền sử dụng đất hợp pháp**. | **Khoản 3 Điều 48** Luật 135/2025 |
+
+---
+
+### 📮 III. QUY TRÌNH & THỦ TỤC GỬI THÔNG BÁO KHỞI CÔNG (ĐIỀU 12 NGHỊ ĐỊNH 207/2026/NĐ-CP):
+
+1. **Thời điểm gửi:** Chủ đầu tư phải gửi Thông báo khởi công **trước ngày chính thức khởi công** xây dựng công trình.
+2. **Cơ quan tiếp nhận:** Cơ quan quản lý nhà nước về xây dựng tại địa phương (Sở Xây dựng hoặc UBND cấp huyện theo phân cấp).
+3. **Hình thức gửi:** Gửi trực tiếp, qua dịch vụ bưu chính hoặc nộp trực tuyến qua Cổng dịch vụ công quốc gia / Hệ thống thông tin giải quyết TTHC cấp tỉnh.
+4. **Mẫu thông báo:** Thực hiện theo mẫu quy định tại **Phụ lục V** ban hành kèm theo Nghị định số 207/2026/NĐ-CP.
+5. **Trách nhiệm của cơ quan tiếp nhận:** Tiếp nhận, vào sổ theo dõi và cập nhật thông tin công trình vào Cơ sở dữ liệu quốc gia về hoạt động xây dựng để phục vụ công tác giám sát, kiểm tra trật tự xây dựng.
+
+---
+
+### 💰 IV. CHẾ TÀI XỬ PHẠT VI PHẠM HÀNH CHÍNH (NGHỊ ĐỊNH SỐ 339/2026/NĐ-CP):
+
+- **Không gửi thông báo khởi công:** Phạt tiền từ **10.000.000 đồng đến 20.000.000 đồng** (Điều 21).
+- **Khởi công khi chưa đủ điều kiện (chưa có mặt bằng, chưa duyệt TKBVTC, chưa ký hợp đồng):** Phạt tiền từ **30.000.000 đồng đến 50.000.000 đồng** đối với Chủ đầu tư (Điều 21).
+- **Khởi công không có Giấy phép xây dựng:** Phạt tiền từ **60.000.000 đồng đến 140.000.000 đồng**, đình chỉ thi công tuyệt đối và buộc làm thủ tục cấp phép trong thời hạn luật định (Điều 25).
+
+---
+
+### 💡 V. LƯU Ý BẢO VỆ PHÁP LÝ CHO BAN QUẢN LÝ DỰ ÁN (PMU):
+
+1. **Biên bản bàn giao mặt bằng là chốt chặn số 1:** Tuyệt đối không ký Lệnh khởi công cho nhà thầu khi chưa có Biên bản bàn giao tim mốc, ranh giới và mặt bằng thi công có xác nhận của địa phương/Hội đồng GPMB.
+2. **Lưu trữ Giấy biên nhận thông báo khởi công:** Luôn lưu giữ Giấy biên nhận hoặc mã số hồ sơ nộp thành công trên Cổng dịch vụ công trực tuyến để xuất trình cho Thanh tra Xây dựng khi kiểm tra đột xuất tại công trường.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -3040,9 +3142,15 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
     if (persona === "cost") personaTitle = "Báo Cáo Thẩm Tra Chi Phí & Định Mức (NĐ 206)";
     if (persona === "bidding") personaTitle = "Báo Cáo Thẩm Định Hồ Sơ Đấu Thầu";
 
-    // Group and categorize all retrieved articles by Legal Hierarchy
+    // Filter topArticles to only relevant ones (avoid dumping unrelated decree articles)
+    const maxScore = searchResults[0]?.score || 0;
+    const threshold = Math.max(300, maxScore * 0.45);
+    const filteredArticles = searchResults.filter(a => (a.score || 0) >= threshold).slice(0, 4);
+    const relevantArticles = filteredArticles.length > 0 ? filteredArticles : searchResults.slice(0, 3);
+
+    // Group and categorize relevant articles by Legal Hierarchy
     const tiersMap = new Map();
-    for (const art of topArticles) {
+    for (const art of relevantArticles) {
       const cat = categorizeDocument(art.docCode, art.docTitle);
       if (!tiersMap.has(cat.tier)) {
         tiersMap.set(cat.tier, { category: cat, docs: [] });
@@ -3065,15 +3173,13 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
 
     // 3. Multi-Document Cross-Synthesis
     const isTimeline = /thời gian|thời hạn|bao lâu|khi nào|mấy ngày|tiến độ/i.test(qLower);
-    const isContent = /nội dung|bao gồm|những gì|gồm những|các bước|quy trình|hồ sơ/i.test(qLower);
-    const isAuthority = /thẩm quyền|cơ quan nào|ai|cấp nào|trách nhiệm của/i.test(qLower);
 
     md += `### 🎯 NỘI DUNG TỔNG HỢP LIÊN VĂN BẢN (XÂU CHUỖI TỪNG CẤP ĐỘ PHÁP LÝ):\n\n`;
 
     if (isTimeline) {
       // Gather all timeline rules across all tiers
       const allTimelines = [];
-      topArticles.forEach(art => {
+      relevantArticles.forEach(art => {
         const content = (art.content || art.snippet || "").trim();
         const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
         lines.forEach(l => {
@@ -3107,10 +3213,10 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
         const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
         const points = lines.filter(l => /^(\d+\.|\b[a-z]\)|\-|\+)\s+/i.test(l));
 
-        const artLabel = art.articleNumber ? `Điều ${art.articleNumber}: ${art.articleTitle || ''}` : (a.articleTitle || a.docTitle);
+        const artLabel = art.articleNumber ? `Điều ${art.articleNumber}: ${art.articleTitle || ''}` : (art.articleTitle || art.docTitle);
         md += `* **Theo ${art.docCode} (${artLabel}):**\n`;
         if (points.length > 0) {
-          points.slice(0, 6).forEach(pt => {
+          points.slice(0, 3).forEach(pt => {
             if (/^\d+\./.test(pt)) {
               md += `  - **${pt}**\n`;
             } else {
@@ -3118,7 +3224,7 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
             }
           });
         } else {
-          md += `  > ${content.slice(0, 350)}...\n`;
+          md += `  > ${content.slice(0, 250)}...\n`;
         }
         md += `\n`;
       });
@@ -3133,14 +3239,6 @@ $\\rightarrow$ **Đây là hành vi vi phạm nghiêm trọng nghĩa vụ hợp 
         const summaryText = (a.articleTitle || a.snippet || '').slice(0, 80).replace(/[\r\n|]/g, ' ');
         md += `| **${tData.category.badge}** | ${a.docCode} ${artNum} | ${summaryText}... | Tuân thủ đúng cấp thẩm quyền & quy trình |\n`;
       });
-    });
-
-    md += `\n---\n\n### 📖 TRÍCH NGUYÊN VĂN CÁC ĐIỀU KHOẢN TRỌNG TÂM ĐỂ ĐỐI CHIẾU:\n\n`;
-    topArticles.slice(0, 4).forEach((a, idx) => {
-      const artLabel = a.articleNumber ? `Điều ${a.articleNumber}: ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
-      let contentClean = (a.content || a.snippet || "").trim();
-      md += `##### **${idx + 1}. ${artLabel} (${a.docCode})**\n`;
-      md += `> ${contentClean.replace(/\n+/g, "\n> ")}\n\n`;
     });
 
     return md;
