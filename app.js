@@ -1543,6 +1543,9 @@ NGUYÊN TẮC:
       } else if (/điều hòa|thông gió|hvac|chiller|vrv|vrf|lắp đặt thiết bị|nghiệm thu.*thiết bị|chạy thử/i.test(qLower)) {
         domain = "HVAC_MEP_ACCEPTANCE";
         domainName = "Nghiệm Thu Điều Hòa & Cơ Điện";
+      } else if (/mẫu.*thẩm tra|thẩm tra.*mẫu|báo cáo.*thẩm tra.*mẫu|mẫu số.*thẩm tra|mẫu dấu.*thẩm tra|dấu thẩm tra/i.test(qLower)) {
+        domain = "VERIFICATION_REPORT_TEMPLATES";
+        domainName = "Mẫu Báo Cáo Thẩm Tra & Mẫu Dấu";
       }
 
       // Phân loại Ý định (Intent Classification)
@@ -1623,6 +1626,15 @@ NGUYÊN TẮC:
           requiredArticles: [22, 23, 25]
         };
       }
+      if (domain === "VERIFICATION_REPORT_TEMPLATES" || (/thẩm tra/i.test(qLower) && /mẫu/i.test(qLower))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "VERIFICATION_REPORT_TEMPLATES",
+          domain: "VERIFICATION_REPORT_TEMPLATES",
+          targetDocs: ["217/2026", "206/2026"],
+          requiredArticles: ["PL I", 8, 16]
+        };
+      }
 
       // Điều hướng tìm kiếm & tổng hợp thông thường theo Domain
       return {
@@ -1676,6 +1688,9 @@ NGUYÊN TẮC:
       } else if (domain === "HVAC_MEP_ACCEPTANCE") {
         const hasHvac = candidates.some(c => (c.docCode || "").includes("207/2026") || (c.docCode || "").includes("5639") || (c.docCode || "").includes("5687") || (c.docCode || "").includes("06:2022"));
         domainScore = hasHvac ? 0.48 : 0.1;
+      } else if (domain === "VERIFICATION_REPORT_TEMPLATES") {
+        const hasTemplate = candidates.some(c => (c.docCode || "").includes("217/2026") || (c.docCode || "").includes("206/2026"));
+        domainScore = hasTemplate ? 0.48 : 0.1;
       } else {
         domainScore = 0.35;
       }
@@ -1701,6 +1716,7 @@ NGUYÊN TẮC:
       if (state.domain === "CONSTRUCTION_CONTRACT" && !/hợp đồng|thiết kế|giám sát tác giả|135\/2025|207\/2026/i.test(text)) return false;
       if (state.domain === "OCCUPATIONAL_SAFETY" && !/an toàn|ngã cao|giàn giáo|qcvn 18/i.test(text)) return false;
       if (state.domain === "HVAC_MEP_ACCEPTANCE" && !/điều hòa|thông gió|chạy thử|5639|207\/2026|áp lực|chân không|chiller/i.test(text)) return false;
+      if (state.domain === "VERIFICATION_REPORT_TEMPLATES" && !/mẫu số 02|mẫu số 11|mẫu số 14|217\/2026|phụ lục i|thẩm tra/i.test(text)) return false;
 
       // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu, danh sách hành động hoặc đối thoại nghiệp vụ rõ ràng
       const hasStructure = text.includes("|") || /quy trình|các bước|bước \d+|lưu ý|trách nhiệm|khuyến nghị|theo quy định|căn cứ|thực tế|cần|phải|trường hợp|nguyên tắc/i.test(text);
@@ -1810,6 +1826,15 @@ NGUYÊN TẮC:
               if (lowerDocCode.includes("13333") || lowerDocCode.includes("13581") || lowerDocCode.includes("371") || lowerDocCode.includes("4453") || lowerDocCode.includes("9342")) {
                 artScore -= 9000;
               }
+            } else if (targetDomain === "VERIFICATION_REPORT_TEMPLATES") {
+              if (lowerDocCode.includes("217/2026")) {
+                artScore += 7000;
+                if ((art.number || "").toString().includes("PL I") || artTitleLower.includes("phụ lục i") || artSnippetLower.includes("mẫu số 02") || artSnippetLower.includes("mẫu số 11") || artSnippetLower.includes("mẫu số 14")) {
+                  artScore += 5000;
+                }
+              }
+              if (lowerDocCode.includes("206/2026") && (art.number == 8 || art.number == 16)) artScore += 5000;
+              if (lowerDocCode.includes("339/2026") || isDocTCVN) artScore -= 8000;
             }
           }
 
@@ -1982,6 +2007,22 @@ NGUYÊN TẮC:
             }
             if (lowerDocCode.includes("13333") || lowerDocCode.includes("13581") || lowerDocCode.includes("371") || lowerDocTitle.includes("bê tông") || lowerDocTitle.includes("khí aerosol")) {
               artScore -= 9500;
+            }
+          }
+
+          // Booster for Verification Report Templates & Stamps (NĐ 217/2026 Phụ lục I: Mẫu 02, Mẫu 11, Mẫu 14; NĐ 206/2026 Điều 8, 16)
+          if ((clean.includes("thẩm tra") || clean.includes("báo cáo thẩm tra")) && (clean.includes("mẫu") || clean.includes("mẫu số") || clean.includes("mẫu dấu") || clean.includes("dấu"))) {
+            if (lowerDocCode.includes("217/2026")) {
+              artScore += 7500;
+              if ((art.number || "").toString().includes("PL I") || artTitleLower.includes("phụ lục i") || artSnippetLower.includes("mẫu số 02") || artSnippetLower.includes("mẫu số 11") || artSnippetLower.includes("mẫu số 14")) {
+                artScore += 5000;
+              }
+            }
+            if (lowerDocCode.includes("206/2026") && (art.number == 8 || art.number == 16)) {
+              artScore += 5000;
+            }
+            if (lowerDocCode.includes("339/2026") || (lowerDocCode.includes("135/2025") && (art.number == 35 || art.number == 36)) || isDocTCVN) {
+              artScore -= 8500;
             }
           }
 
@@ -3224,6 +3265,41 @@ Một điểm chốt chặn sống còn mà cảnh sát PCCC khi kiểm tra nghi
 Khi giả lập kích hoạt đầu báo cháy hoặc tủ trung tâm PCCC báo động, toàn bộ hệ thống điều hòa trung tâm phải lập tức ngắt điện dừng hoạt động; các van chặn lửa (Fire Damper - FD) trên đường ống gió xuyên khoang cháy phải đóng kín để ngăn truyền khói độc.
 
 Hồ sơ nghiệm thu cuối cùng cần đầy đủ: Biên bản nghiệm thu công việc lắp đặt, Biên bản thử áp lực/thử kín đường ống, Báo cáo cân chỉnh TAB, Nhật ký chạy thử liên động có tải 72 giờ và Bản vẽ hoàn công kèm quy trình vận hành bảo trì (O&M).`;
+    }
+
+    // Specialized Handler for Verification Report Templates & Stamps (Phụ lục I NĐ 217/2026/NĐ-CP & Điều 8, 16 NĐ 206/2026/NĐ-CP)
+    if (/thẩm tra/i.test(qLower) && (/mẫu/i.test(qLower) || /mẫu số/i.test(qLower) || /dấu/i.test(qLower))) {
+      return `### Mẫu báo cáo kết quả thẩm tra của nhà thầu tư vấn và con dấu thẩm tra
+
+Về câu chuyện mẫu báo cáo thẩm tra của tư vấn, anh em làm dự án cần phân biệt rõ ràng hai phần: thẩm tra phần thiết kế kỹ thuật xây dựng và thẩm tra phần chi phí (dự toán/tổng mức đầu tư). Nhiều bên tư vấn quen tay lấy đại mẫu cũ thời Nghị định 15/2021 nộp vào là bị Chủ đầu tư hoặc cơ quan chuyên môn về xây dựng trả về ngay, mất thời gian vô cùng.
+
+Theo hệ thống quy định hiện hành tại Nghị định số 217/2026/NĐ-CP và Nghị định số 206/2026/NĐ-CP, việc dùng mẫu báo cáo thẩm tra được quy định chuẩn hóa như sau:
+
+#### 1. Mẫu báo cáo thẩm tra thiết kế xây dựng (Quy định tại Phụ lục I ban hành kèm Nghị định số 217/2026/NĐ-CP)
+Tùy vào bước thiết kế của dự án mà nhà thầu tư vấn bắt buộc phải dùng đúng mẫu tương ứng:
+
+- Thẩm tra thiết kế trong giai đoạn Báo cáo nghiên cứu khả thi (FSR / Thiết kế cơ sở): Sử dụng Mẫu số 02 Phụ lục I Nghị định số 217/2026/NĐ-CP ("Báo cáo kết quả thẩm tra thiết kế xây dựng trong Báo cáo nghiên cứu khả thi đầu tư xây dựng"). Mẫu này áp dụng cho cả dự án đầu tư hoặc Báo cáo kinh tế - kỹ thuật. Nội dung tập trung đánh giá sự phù hợp của thiết kế cơ sở với quy hoạch, sự đáp ứng quy chuẩn kỹ thuật an toàn chịu lực, giải pháp kết cấu, PCCC và bảo vệ môi trường.
+
+- Thẩm tra thiết kế xây dựng triển khai sau thiết kế cơ sở (Bản vẽ thi công / Thiết kế kỹ thuật): Sử dụng Mẫu số 11 Phụ lục I Nghị định số 217/2026/NĐ-CP ("Báo cáo kết quả thẩm tra thiết kế xây dựng triển khai sau khi dự án được phê duyệt"). Mẫu này đánh giá chi tiết việc tuân thủ thiết kế cơ sở đã duyệt, tính chính xác của mô hình tính toán kết cấu, an toàn phòng chống cháy nổ và mức độ chi tiết của hồ sơ bản vẽ phục vụ thi công.
+
+- Mẫu dấu xác nhận thẩm tra đóng lên hồ sơ bản vẽ: Sử dụng Mẫu số 14 Phụ lục I Nghị định số 217/2026/NĐ-CP ("Mẫu dấu thẩm định, thẩm tra, phê duyệt thiết kế xây dựng"). Lưu ý là sau khi phát hành báo cáo, tư vấn thẩm tra phải đóng dấu này lên từng bản vẽ đã kiểm tra đạt yêu cầu. Trên con dấu ghi rõ: Tên đơn vị thẩm tra, Số văn bản báo cáo thẩm tra, ngày tháng năm, chữ ký của Chủ nhiệm thẩm tra và người đại diện theo pháp luật của nhà thầu tư vấn.
+
+#### 2. Báo cáo thẩm tra chi phí đầu tư xây dựng (Tổng mức đầu tư và Dự toán xây dựng)
+Riêng phần chi phí, căn cứ pháp lý áp dụng là Nghị định số 206/2026/NĐ-CP:
+
+- Thẩm tra Tổng mức đầu tư (Điều 8 Nghị định số 206/2026/NĐ-CP) và Thẩm tra Dự toán xây dựng (Điều 16 Nghị định số 206/2026/NĐ-CP).
+- Tuy Nghị định số 206/2026/NĐ-CP không đóng cứng một biểu mẫu duy nhất như bên thiết kế, nhưng quy định bắt buộc Báo cáo thẩm tra chi phí phải gồm 2 phần không thể tách rời:
+  - Phần thuyết minh thẩm tra: Đánh giá phương pháp lập dự toán, căn cứ áp dụng định mức kinh tế - kỹ thuật, bảng giá ca máy, đơn giá vật liệu xây dựng theo công bố của địa phương, tính đúng đủ các khoản mục chi phí quản lý dự án, tư vấn và dự phòng.
+  - Bảng tổng hợp đối chiếu chênh lệch chi phí: Lập bảng so sánh chi tiết giữa giá trị do tư vấn thiết kế lập và giá trị do tư vấn thẩm tra xác định lại. Mỗi khoản mục chênh lệch tăng hay giảm đều phải giải trình rõ nguyên nhân (do sai khối lượng bóc tách, áp sai mã hiệu định mức, hay tính trùng lặp chi phí).
+
+#### 3. Quy cách ký duyệt và tính pháp lý của hồ sơ báo cáo
+Một điểm anh em PMU cần soi rất kỹ khi tiếp nhận báo cáo thẩm tra từ tư vấn:
+Báo cáo thẩm tra không thể chỉ có một chữ ký của Giám đốc doanh nghiệp. Theo quy định quản lý năng lực hành nghề, báo cáo bắt buộc phải có chữ ký tươi và ghi rõ số chứng chỉ hành nghề của:
+- Chủ nhiệm thẩm tra (chủ trì chung toàn bộ hồ sơ).
+- Từng cá nhân Chủ trì thẩm tra các bộ môn chuyên ngành (kiến trúc, kết cấu công trình, cơ điện MEP, phòng cháy chữa cháy, thẩm tra dự toán chi phí). Chứng chỉ hành nghề của các chủ trì phải đúng lĩnh vực và còn hạn sử dụng.
+- Đại diện theo pháp luật của tổ chức tư vấn thẩm tra ký tên và đóng dấu pháp nhân của công ty.
+
+Nếu thuê tư vấn độc lập thẩm tra thiết kế và chi phí cùng lúc, tư vấn có thể phát hành Báo cáo thẩm tra tích hợp cả thiết kế và dự toán, nhưng cấu trúc nội dung và chữ ký các chủ môn vẫn phải bảo đảm đầy đủ các thành phần như Mẫu số 02 hoặc Mẫu số 11 nêu trên.`;
     }
 
     // Default dynamic synthesis report
