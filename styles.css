@@ -209,14 +209,33 @@ main {
   width: 100%;
   margin: 1.5rem 0;
   border-collapse: collapse;
+  font-size: 0.9rem;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .legal-content th, .legal-content td {
-  border: 1px solid var(--pmu-border);
-  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  padding: 8px 12px;
+  vertical-align: top;
+  line-height: 1.5;
 }
 .legal-content th {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
+  text-align: left;
+}
+.legal-content th:first-child,
+.legal-content td:first-child {
+  text-align: center;
+  font-weight: 500;
+}
+.legal-content tr:nth-child(even) td {
   background-color: #f8fafc;
-  color: var(--pmu-primary);
+}
+.legal-content tr:hover td {
+  background-color: #f1f5f9;
 }
 
 /* 3. Right Sidebar: Mục lục Điều (Independent Scroll) */
