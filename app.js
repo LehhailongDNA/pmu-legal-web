@@ -1038,6 +1038,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const phrases = [];
     // Extract domain compound phrases first so multi-word terms are preserved
     const DOMAIN_COMPOUNDS = [
+      "qcvn 02:2022", "qcvn 02", "số liệu điều kiện tự nhiên", "điều kiện tự nhiên",
       "hồ sơ quản lý chất lượng", "quản lý chất lượng", "hồ sơ hoàn thành công trình",
       "hồ sơ hoàn thành", "hồ sơ nghiệm thu", "tư vấn giám sát", "nhà thầu giám sát",
       "giám sát thi công", "hợp đồng giám sát", "giám sát tác giả", "tư vấn thiết kế",
@@ -1452,66 +1453,33 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   // 5. CLIENT-SIDE RAG AI ASSISTANT (MATCH LOCAL AI QUALITY)
   // ==========================================
+  // HỆ THỐNG PROMPT ĐỊNH HƯỚNG TÍNH CÁCH & CẤU TRÚC PHẢN HỒI AGENT
+  // ==========================================
+  const BASE_AGENT_PROMPT = `# VAI TRÒ & PHONG CÁCH
+Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ban Quản lý Dự án (PMU). 
+- Giao tiếp: Tự nhiên, đĩnh đạc, đi thẳng vào trọng tâm chuyên môn như một đồng nghiệp/chuyên gia tư vấn dày dạn kinh nghiệm.
+- Nghiêm cấm: Tránh hoàn toàn lối hành văn robot, lặp lại các tiêu đề rập khuôn (như "Báo cáo tra cứu...", "Nội dung đa tầng..."), và không tự tạo bảng biểu vô nghĩa chỉ để lặp lại văn bản. Tuyệt đối không dùng bất kỳ icon hay emoji nào và không dùng ký hiệu toán học có dấu dollar ($).
+
+# NGUYÊN TẮC XỬ LÝ NỘI DUNG (RAG & PHÁP LÝ)
+1. Lọc nhiễu ngữ cảnh: Chỉ trích dẫn các điều khoản thực sự liên quan trực tiếp đến câu hỏi. Tuyệt đối không đưa vào những điều luật chứa từ khóa chung chung nhưng sai ngữ cảnh (ví dụ: hỏi về khí hậu/tự nhiên thì không trích dẫn quy định về đào đất, cấp nước, nhà liên kế).
+2. Đi thẳng vào bản chất:
+   - Câu đầu tiên: Trả lời trực diện quy tắc cốt lõi hoặc tên văn bản/tiêu chuẩn quy chuẩn áp dụng.
+   - Thân bài: Giải thích ngắn gọn cách áp dụng thực tế (áp dụng bắt buộc hay tự nguyện, lấy số liệu ở đâu, lưu ý gì khi thẩm tra/nghiệm thu).
+   - Viện dẫn căn cứ: Nêu tên văn bản + Điều khoản cụ thể ngay trong dòng lập luận, không tách thành mục riêng rồi chép đi chép lại.
+3. Cảnh báo hiệu lực: Luôn chú ý trạng thái hiệu lực của văn bản (văn bản nào thay thế, quy chuẩn nào bắt buộc).
+4. Khống chế mô hình chính quyền địa phương 2 cấp: Hệ thống chính quyền địa phương chỉ có 02 cấp: cấp Tỉnh/Thành phố trực thuộc trung ương và cấp Phường/Xã (hoàn toàn không còn cấp huyện). Chỉ áp dụng lưu ý này khi câu hỏi hoặc ngữ cảnh liên quan trực tiếp đến thẩm quyền hành chính, cơ quan phê duyệt, cấp phép, kiểm tra nghiệm thu. Tuyệt đối không tự tiện chèn vào những câu hỏi kỹ thuật hay quy chuẩn thuần túy.
+
+# CẤU TRÚC PHẢN HỒI GỢI Ý (Tự nhiên, không gò bó)
+- Trực tiếp giải đáp: Trả lời ngay câu hỏi trong 1-2 câu.
+- Căn cứ pháp lý & Quy tắc áp dụng: Trình bày logic từ Quy chuẩn kỹ thuật quốc gia (QCVN - bắt buộc) đến Tiêu chuẩn kỹ thuật (TCVN - viện dẫn áp dụng).
+- Khuyến nghị thực tế cho PMU: Điểm cần lưu ý khi lập hồ sơ, thẩm định hoặc làm việc với tư vấn thiết kế.`;
+
   const defaultSystemPrompts = {
-    legal: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế.
-
-XƯNG HÔ VÀ PHONG CÁCH:
-- Giữ phong cách trao đổi kỹ thuật chuyên nghiệp, tự nhiên, nhã nhặn, tôn trọng giữa các đồng nghiệp trong ngành xây dựng.
-- Tuyệt đối KHÔNG dùng các đại từ xưng hô trịch thượng hay sỗ sàng như "Ông", "Tôi", "Tôi nhắc ông", "Ông phải làm rõ". Hãy đi thẳng vào nội dung chuyên môn: "Về vấn đề này...", "Khi thực hiện...", "Hồ sơ gồm...", "PMU và nhà thầu cần lưu ý...".
-- Đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
-- Tránh lạm dụng format danh sách liệt kê (bullet points) cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
-
-LƯU Ý VỀ MÔ HÌNH CHÍNH QUYỀN 2 CẤP:
-Hiện nay hệ thống chính quyền địa phương chỉ có 02 cấp: cấp Tỉnh/Thành phố trực thuộc trung ương và cấp Phường/Xã (không còn cấp huyện). CHỈ ÁP DỤNG LƯU Ý NÀY khi câu hỏi hoặc ngữ cảnh liên quan trực tiếp đến thẩm quyền hành chính, cơ quan phê duyệt, cấp phép, kiểm tra nghiệm thu. TUYỆT ĐỐI KHÔNG tự tiện chèn câu giảng đạo "hiện nay không còn cấp huyện" vào những câu hỏi kỹ thuật, hồ sơ quản lý chất lượng hay thủ tục không liên quan.
-
-NGUYÊN TẮC:
-1. Giọng điệu tự nhiên, lịch thiệp, đi thẳng vào trọng tâm chuyên môn.
-2. Tuyệt đối không sử dụng icon hay emoji nào trong toàn bộ câu trả lời.
-3. Lồng ghép viện dẫn văn bản, số Điều/Khoản tự nhiên vào câu nói để người đọc nắm ngay bản chất pháp lý.
-4. Không sử dụng ký hiệu toán học chứa dấu dollar ($). Dùng các ký hiệu thông thường như ≤, ≥, ±, m², m³.`,
-
-    verifier: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong công tác thẩm tra hồ sơ pháp lý dự án.
-
-XƯNG HÔ VÀ PHONG CÁCH:
-- Trao đổi lịch sự, tôn trọng, đi thẳng vào chuyên môn, không xưng hô "Ông - Tôi" trịch thượng.
-- Đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
-- LƯU Ý VỀ MÔ HÌNH CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có Tỉnh/Thành phố và Phường/Xã. Chỉ đề cập khi câu hỏi liên quan đến thẩm quyền phê duyệt/cấp phép.
-
-NGUYÊN TẮC:
-1. Không dùng bất kỳ icon hay emoji nào.
-2. Chỉ rõ điểm nghẽn pháp lý, rủi ro cụ thể và giải pháp tháo gỡ thực tế cho PMU.
-3. Không dùng ký hiệu dollar ($).`,
-
-    technical: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế về mặt kỹ thuật, quy chuẩn và tiêu chuẩn xây dựng.
-
-XƯNG HÔ VÀ PHONG CÁCH:
-- Đi thẳng vào phân tích kỹ thuật, không xưng hô "Ông - Tôi".
-- Đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
-
-NGUYÊN TẮC:
-1. Tuyệt đối không dùng icon hay emoji.
-2. Nêu rõ dung sai, chỉ tiêu kỹ thuật và viện dẫn đúng số hiệu TCVN, QCVN.
-3. Không dùng ký hiệu dollar ($).`,
-
-    cost: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong quản lý chi phí, dự toán và định mức xây dựng.
-
-XƯNG HÔ VÀ PHONG CÁCH:
-- Trao đổi lịch thiệp, đi thẳng vào số liệu và điều khoản, không xưng hô "Ông - Tôi".
-- Lập luận dứt khoát, gắn liền với Nghị định 206/2026/NĐ-CP và bài toán thực tế của Ban QLDA.
-
-NGUYÊN TẮC:
-1. Không dùng icon/emoji.
-2. Không dùng ký hiệu dollar ($).`,
-
-    bidding: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong lĩnh vực đấu thầu.
-
-XƯNG HÔ VÀ PHONG CÁCH:
-- Trao đổi lịch sự, khách quan, không xưng hô "Ông - Tôi".
-- Đánh giá tính hợp lệ, rủi ro hạn chế cạnh tranh rõ ràng theo Luật Đấu thầu và các Nghị định hướng dẫn.
-
-NGUYÊN TẮC:
-1. Không dùng icon/emoji.
-2. Không dùng ký hiệu dollar ($).`
+    legal: `${BASE_AGENT_PROMPT}\n\n[Trọng tâm nghiệp vụ: Pháp luật Xây dựng, trình tự thủ tục đầu tư và tính tuân thủ pháp lý dự án]`,
+    verifier: `${BASE_AGENT_PROMPT}\n\n[Trọng tâm nghiệp vụ: Thẩm tra hồ sơ thiết kế, dự toán, kiểm soát sai sót kỹ thuật và rủi ro pháp lý cho PMU]`,
+    technical: `${BASE_AGENT_PROMPT}\n\n[Trọng tâm nghiệp vụ: Quy chuẩn kỹ thuật quốc gia QCVN, tiêu chuẩn TCVN, thông số kỹ thuật, an toàn và dung sai thi công]`,
+    cost: `${BASE_AGENT_PROMPT}\n\n[Trọng tâm nghiệp vụ: Quản lý chi phí đầu tư xây dựng, định mức, đơn giá và Nghị định 206/2026/NĐ-CP]`,
+    bidding: `${BASE_AGENT_PROMPT}\n\n[Trọng tâm nghiệp vụ: Đấu thầu, mua sắm công, hồ sơ mời thầu và đánh giá E-HSDT theo Luật Đấu thầu]`
   };
 
   /**
@@ -1570,6 +1538,9 @@ NGUYÊN TẮC:
       } else if (/hồ sơ quản lý chất lượng|quản lý chất lượng.*hồ sơ|hồ sơ chất lượng|hồ sơ hoàn thành công trình|danh mục hồ sơ hoàn thành/i.test(qLower) || (/hồ sơ/i.test(qLower) && /chất lượng/i.test(qLower))) {
         domain = "QUALITY_MANAGEMENT_DOSSIER";
         domainName = "Hồ Sơ Quản Lý Chất Lượng & Hoàn Thành Công Trình";
+      } else if (/qcvn\s*02|02:2022|số liệu điều kiện tự nhiên/i.test(qLower)) {
+        domain = "NATURAL_CONDITIONS_DATA";
+        domainName = "Số Liệu Điều Kiện Tự Nhiên & Khí Hậu (QCVN 02:2022/BXD)";
       }
 
       // Phân loại Ý định (Intent Classification)
@@ -1677,6 +1648,15 @@ NGUYÊN TẮC:
           requiredArticles: ["PL VII", 28, 14, 22, 23, 24]
         };
       }
+      if (domain === "NATURAL_CONDITIONS_DATA" || /qcvn\s*02|02:2022/i.test(qLower)) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "NATURAL_CONDITIONS_DATA_QCVN02",
+          domain: "NATURAL_CONDITIONS_DATA",
+          targetDocs: ["QCVN 02:2022/BXD", "02/2022/TT-BXD"],
+          requiredArticles: ["Lời nói đầu"]
+        };
+      }
 
       // Điều hướng tìm kiếm & tổng hợp thông thường theo Domain
       return {
@@ -1745,6 +1725,9 @@ NGUYÊN TẮC:
           (c.docCode || "").includes("207/2026") && ((c.articleNumber || "").toString().includes("PL VII") || c.articleNumber == 28)
         );
         domainScore = hasQuality ? 0.50 : 0.1;
+      } else if (domain === "NATURAL_CONDITIONS_DATA") {
+        const hasQcvn02 = candidates.some(c => (c.docCode || "").includes("02:2022"));
+        domainScore = hasQcvn02 ? 0.50 : 0.1;
       } else {
         domainScore = 0.35;
       }
@@ -1773,6 +1756,7 @@ NGUYÊN TẮC:
       if (state.domain === "VERIFICATION_REPORT_TEMPLATES" && !/mẫu số 02|mẫu số 11|mẫu số 14|217\/2026|phụ lục i|thẩm tra/i.test(text)) return false;
       if (state.domain === "CONSTRUCTION_SUPERVISION" && !/giám sát|tư vấn giám sát|điều 63|điều 20|207\/2026|135\/2025|nghiệm thu|chất lượng/i.test(text)) return false;
       if (state.domain === "QUALITY_MANAGEMENT_DOSSIER" && !/hồ sơ|chất lượng|hoàn thành|phụ lục vii|điều 28|207\/2026|nghiệm thu/i.test(text)) return false;
+      if (state.domain === "NATURAL_CONDITIONS_DATA" && !/qcvn 02|02:2022|khí hậu|điều kiện tự nhiên|gió|nhiệt độ|mưa|động đất/i.test(text)) return false;
 
       // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu, danh sách hành động hoặc đối thoại nghiệp vụ rõ ràng
       const hasStructure = text.includes("|") || /quy trình|các bước|bước \d+|lưu ý|trách nhiệm|khuyến nghị|theo quy định|căn cứ|thực tế|cần|phải|trường hợp|nguyên tắc/i.test(text);
@@ -1812,11 +1796,22 @@ NGUYÊN TẮC:
     const targetDomain = decision ? (decision.domain || decision) : null;
     const candidates = [];
 
+    // Direct code normalization for exact document lookup (e.g. "QCVN 02:2022/BXD")
+    function normCode(str) { return (str || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+    const qNorm = normCode(query);
+
     for (const item of searchIndex) {
       let docMatchScore = 0;
       const lowerDocTitle = (item.title || "").toLowerCase();
       const lowerDocCode = (item.docCode || "").toLowerCase();
       const isDocTCVN = item.scope === "tcvn" || lowerDocCode.includes("tcvn") || lowerDocCode.includes("qcvn");
+
+      // Direct exact or substring match for document code
+      const itemNorm = normCode(item.docCode);
+      const isDirectDocMatch = qNorm.length >= 4 && (itemNorm.includes(qNorm) || qNorm.includes(itemNorm));
+      if (isDirectDocMatch) {
+        docMatchScore += 15000;
+      }
 
       phrases.forEach(p => {
         if (lowerDocTitle.includes(p)) docMatchScore += 150;
@@ -1908,6 +1903,12 @@ NGUYÊN TẮC:
               }
               if (lowerDocCode.includes("41/2026") && !clean.includes("nhập khẩu")) artScore -= 8000;
               if (isDocTCVN) artScore -= 8000;
+            } else if (targetDomain === "NATURAL_CONDITIONS_DATA") {
+              if (lowerDocCode.includes("02:2022") || lowerDocTitle.includes("điều kiện tự nhiên")) {
+                artScore += 9500;
+              } else {
+                artScore -= 8000;
+              }
             }
           }
 
@@ -2138,6 +2139,15 @@ NGUYÊN TẮC:
             }
           }
 
+          // Booster for Natural Conditions & Climate Data (QCVN 02:2022/BXD)
+          if (/qcvn\s*02|02:2022|số liệu điều kiện tự nhiên/i.test(clean)) {
+            if (lowerDocCode.includes("02:2022") || lowerDocTitle.includes("điều kiện tự nhiên")) {
+              artScore += 12000;
+            } else {
+              artScore -= 8000;
+            }
+          }
+
           keywords.forEach(kw => {
             if (art.number && art.number.toString() === kw) artScore += 150;
             if (artTitleLower.includes(kw)) artScore += 30;
@@ -2146,7 +2156,7 @@ NGUYÊN TẮC:
 
           // Only penalize pure TCVN if query is strictly legal/administrative AND not technical/safety
           const isTechnicalQuery = /kỹ thuật|thi công|an toàn|giàn giáo|dàn giáo|giáo thi công|trên cao|ngã cao|rơi ngã|tải trọng|kết cấu|khoảng cách|chiều cao|pccc|nghiệm thu/i.test(clean);
-          if (isDocTCVN && !isTechnicalQuery && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn")) {
+          if (isDocTCVN && !isDirectDocMatch && !isTechnicalQuery && !clean.includes("tiêu chuẩn") && !clean.includes("quy chuẩn") && !clean.includes("tcvn") && !clean.includes("qcvn")) {
             artScore = Math.floor(artScore * 0.3);
           }
 
@@ -2219,26 +2229,7 @@ CÂU HỎI NGHIỆP VỤ:
 "${question}"
 
 ==================================================
-HƯỚNG DẪN TRẢ LỜI (BẮT BUỘC TUÂN THỦ):
-1. VAI TRÒ & PHONG CÁCH DIỄN ĐẠT:
-   - Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế.
-   - Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
-   - Tránh lạm dụng format danh sách liệt kê (bullet points) cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
-   - TUYỆT ĐỐI KHÔNG sử dụng icon hoặc emoji nào trong câu trả lời (bỏ toàn bộ các icon như 📌, 🏛️, 📋, 💡, 🚨, ⚖️, ...).
-
-2. CĂN CỨ VÀ NỘI DUNG PHÁP LÝ:
-   - Chỉ sử dụng các dữ liệu và điều khoản có trong phần "NGỮ CẢNH" ở trên. Không tự suy diễn hay bịa đặt điều luật không có trong ngữ cảnh.
-   - Lồng ghép tên văn bản, số Điều/Khoản một cách tự nhiên vào câu chữ để đồng nghiệp tra cứu, không liệt kê rườm rà.
-   - Chỉ dùng bảng Markdown khi thực sự cần so sánh đối chiếu đa tiêu chí hoặc làm rõ hai quy trình.
-   - Chỉ dùng gạch đầu dòng khi liệt kê các điều kiện bắt buộc độc lập hoặc các bước thủ tục tuần tự.
-
-3. KHỐNG CHẾ MÔ HÌNH CHÍNH QUYỀN ĐỊA PHƯƠNG (BẮT BUỘC TUÂN THỦ):
-   - Hiện nay hệ thống chính quyền địa phương chỉ có 02 cấp: cấp Tỉnh/Thành phố trực thuộc trung ương và cấp Phường/Xã. Hoàn toàn KHÔNG CÒN cấp huyện (quận, huyện, thị xã).
-   - Tuyệt đối KHÔNG viện dẫn, nhắc đến hay gán thẩm quyền cho cấp huyện, UBND cấp huyện, Phòng Quản lý đô thị hay Phòng Kinh tế - Hạ tầng cấp huyện trong bất kỳ thủ tục, thông báo, cấp phép hay quản lý trật tự xây dựng nào.
-   - Thẩm quyền chỉ phân định giữa cơ quan cấp Tỉnh (UBND tỉnh, Sở Xây dựng, Sở TN&MT...) và cấp cơ sở là UBND Phường/Xã theo phân cấp.
-
-4. QUY TẮC HIỂN THỊ KÝ HIỆU KỸ THUẬT:
-   - Tuyệt đối không dùng ký hiệu toán học có dấu dollar ($...$). Dùng trực tiếp các ký tự thông thường: ≤, ≥, ±, m², m³, R28.`;
+${BASE_AGENT_PROMPT}`;
   }
 
   // Utility to eliminate confusing LaTeX $...$ symbols, remove emojis/icons, and normalize engineering notations
@@ -3499,6 +3490,35 @@ Mọi vật tư, vật liệu hay thiết bị đưa vào lắp đặt bắt bu�
 Chủ đầu tư có trách nhiệm tổ chức lập, tập hợp đầy đủ 1 bộ hồ sơ hoàn thành gốc để lưu trữ vĩnh viễn, còn các nhà thầu lưu trữ phần hồ sơ liên quan đến công việc do mình thực hiện theo Điều 28 Nghị định 207/2026/NĐ-CP.`;
     }
 
+    // Specialized Handler for Natural Conditions & Climate Data (QCVN 02:2022/BXD)
+    if (/qcvn\s*02|02:2022|số liệu điều kiện tự nhiên/i.test(qLower)) {
+      return `Quy chuẩn kỹ thuật quốc gia QCVN 02:2022/BXD về "Số liệu điều kiện tự nhiên dùng trong xây dựng" do Viện Khoa học Công nghệ Xây dựng biên soạn và được Bộ Xây dựng ban hành kèm theo Thông tư số 02/2022/TT-BXD ngày 26/9/2022 (thay thế hoàn toàn QCVN 02:2009/BXD).
+
+Về giá trị pháp lý, đây là quy chuẩn kỹ thuật quốc gia bắt buộc áp dụng trên phạm vi cả nước. Trong toàn bộ chu trình đầu tư xây dựng — từ khảo sát xây dựng, lập báo cáo nghiên cứu khả thi, đến tính toán thiết kế kết cấu, hệ thống cơ điện (MEP), điều hòa thông gió — mọi số liệu đầu vào về khí hậu, thời tiết, thiên tai và địa chấn đều bắt buộc phải lấy theo quy chuẩn này. Khi nộp hồ sơ thẩm định tại cơ quan chuyên môn về xây dựng (Sở Xây dựng hoặc các Cục chuyên ngành), nếu thuyết minh thiết kế vẫn dùng số liệu cũ của QCVN 02:2009 hoặc dẫn nguồn không chính thống, cơ quan thẩm định sẽ từ chối hoặc yêu cầu sửa đổi, tính toán lại toàn bộ.
+
+QCVN 02:2022/BXD chuẩn hóa 4 nhóm dữ liệu kỹ thuật cốt lõi sau:
+
+1. Dữ liệu khí tượng và khí hậu công trình (Chương 2)
+Cung cấp chuỗi số liệu quan trắc khí hậu nhiều năm cho tất cả các tỉnh thành và các trạm khí tượng trên toàn quốc:
+- Nhiệt độ không khí: Chuẩn hóa nhiệt độ trung bình năm, nhiệt độ trung bình của tháng nóng nhất/lạnh nhất, nhiệt độ cực trị (tối cao tuyệt đối, tối thấp tuyệt đối) phục vụ tính toán dãn nở nhiệt kết cấu bê tông, thép và làm thông số vi khí hậu ngoài nhà để tính công suất phụ tải lạnh hệ thống điều hòa không khí.
+- Độ ẩm không khí: Độ ẩm tương đối trung bình năm, các tháng đặc trưng và độ ẩm cực trị, làm căn cứ tính toán đọng sương, ngưng tụ ẩm và giải pháp thông gió, chống ẩm mốc cho công trình.
+- Lượng mưa: Phân bố lượng mưa trung bình năm, lượng mưa ngày lớn nhất và cường độ mưa tính toán theo các chu kỳ lặp (dữ liệu đầu vào cho tính toán thoát nước mái và mạng lưới thoát nước mưa hạ tầng kỹ thuật).
+- Bức xạ mặt trời và số giờ nắng: Làm cơ sở tính toán hiệu quả năng lượng công trình theo QCVN 09:2017/BXD và thiết kế hệ thống che nắng, tận dụng năng lượng mặt trời.
+
+2. Áp lực gió và hướng gió chủ đạo (Chương 2)
+Quy chuẩn chuẩn hóa bản đồ phân vùng áp lực gió và bảng tra áp lực gió tiêu chuẩn W0 cho từng địa danh hành chính (cấp xã/phường, tỉnh/thành phố). Đây là thông số đầu vào bắt buộc để kỹ sư kết cấu phối hợp cùng TCVN 2737:2023 (Tải trọng và tác động) xác định tải trọng gió tác động lên công trình (đặc biệt quan trọng với nhà cao tầng, công trình kết cấu thép nhịp lớn và tháp trụ).
+
+3. Các hiện tượng thời tiết bất lợi và khí hậu cực đoan (Chương 3)
+- Tần suất bão và áp thấp nhiệt đới theo các dải bờ biển và hải đảo.
+- Mật độ sét đánh đất trung bình hàng năm (số ngày dông, mật độ sét đánh đất Ng trên 1 km² mỗi năm) phân bố theo từng khu vực địa lý. Đây là căn cứ bắt buộc khi thiết kế bán kính bảo vệ và cấp bảo vệ của hệ thống chống sét công trình theo TCVN 9385.
+- Các hiện tượng mưa đá, lốc xoáy và nước dâng do bão phục vụ đánh giá rủi ro thiên tai.
+
+4. Bản đồ và số liệu phân vùng gia tốc nền động đất (Chương 4 & Phụ lục)
+QCVN 02:2022/BXD cập nhật chi tiết bản đồ phân vùng gia tốc nền cực đại (PGA) tương ứng với chu kỳ lặp 475 năm (xác suất vượt 10% trong 50 năm) và các chu kỳ lặp khác cho toàn bộ các địa phương trên cả nước. Kỹ sư kết cấu bắt buộc phải lấy giá trị gia tốc nền tham chiếu agR từ quy chuẩn này để đưa vào mô hình tính toán kháng chấn cho công trình theo tiêu chuẩn TCVN 9386 (Thiết kế công trình chịu động đất).
+
+Lưu ý thực tế: Khi lập nhiệm vụ khảo sát, thẩm tra thiết kế hoặc kiểm tra hồ sơ, anh em cần kiểm tra đối chiếu trực tiếp địa bàn dự án với phụ lục bảng tra của QCVN 02:2022/BXD, tránh việc đơn vị tư vấn thiết kế sao chép số liệu cũ từ các dự án trước đây.`;
+    }
+
     // Default dynamic synthesis report
     let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
     if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
@@ -3523,87 +3543,46 @@ Chủ đầu tư có trách nhiệm tổ chức lập, tập hợp đầy đủ 
     }
     const sortedTiers = Array.from(tiersMap.entries()).sort((a, b) => a[0] - b[0]);
 
-    let md = `### ${personaTitle}\n\n`;
-    md += `**1. Vấn đề pháp lý:** ${question}\n\n`;
-    md += `**2. Hệ thống văn bản quy phạm pháp luật liên quan (Tổng hợp đa tầng từ Luật -> Nghị định -> Thông tư -> Quy chuẩn):**\n`;
-    sortedTiers.forEach(([tierNum, tData]) => {
-      md += `\n##### **${tData.category.badge} — ${tData.category.name}:**\n`;
-      tData.docs.forEach(a => {
-        const artLabel = a.articleNumber ? `Điều ${a.articleNumber}. ${a.articleTitle || ''}` : (a.articleTitle || a.docTitle);
-        md += `- **${a.docCode}** (*${a.docTitle}*) — **${artLabel}**\n`;
-      });
-    });
-    md += `\n---\n\n`;
-
-    // 3. Multi-Document Cross-Synthesis
-    const isTimeline = /thời gian|thời hạn|bao lâu|khi nào|mấy ngày|tiến độ/i.test(qLower);
-
-    md += `### NỘI DUNG TỔNG HỢP LIÊN VĂN BẢN (XÂU CHUỖI TỪNG CẤP ĐỘ PHÁP LÝ):\n\n`;
-
-    if (isTimeline) {
-      // Gather all timeline rules across all tiers
-      const allTimelines = [];
-      relevantArticles.forEach(art => {
-        const content = (art.content || art.snippet || "").trim();
-        const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-        lines.forEach(l => {
-          const tMatch = l.match(/(?:thời hạn|thời gian|trong thời hạn|không quá|ít nhất)\s+([^,.;:]+(?:ngày|ngày làm việc|tháng|năm))/i);
-          if (tMatch) {
-            allTimelines.push({
-              match: tMatch[0],
-              line: l.replace(/^[0-9a-z\.\-\+\)]+\s*/i, "").slice(0, 110),
-              docCode: art.docCode,
-              artNum: art.articleNumber ? `Điều ${art.articleNumber}` : ""
-            });
-          }
-        });
-      });
-
-      if (allTimelines.length > 0) {
-        md += `| Quy định thời hạn | Chi tiết nội dung thực hiện | Căn cứ văn bản |\n`;
-        md += `| :--- | :--- | :--- |\n`;
-        allTimelines.slice(0, 10).forEach(tm => {
-          md += `| **${tm.match}** | ${tm.line}... | ${tm.docCode} ${tm.artNum} |\n`;
-        });
-        md += `\n\n`;
-      }
+    // Default dynamic synthesis following the new persona guidelines:
+    // - Trực tiếp giải đáp: Trả lời ngay câu hỏi trong 1-2 câu.
+    // - Căn cứ pháp lý & Quy tắc áp dụng: Trình bày logic, không bảng biểu vô nghĩa, viện dẫn cụ thể trong dòng.
+    // - Khuyến nghị thực tế cho PMU: Điểm cần lưu ý khi lập hồ sơ, thẩm định hoặc làm việc với tư vấn thiết kế.
+    let directLead = "";
+    if (relevantArticles.length > 0) {
+      const topArt = relevantArticles[0];
+      const artLabel = topArt.articleNumber ? `Điều ${topArt.articleNumber}` : (topArt.articleTitle || "");
+      directLead = `Về vấn đề này, quy định pháp lý cốt lõi được điều chỉnh trực tiếp tại **${artLabel ? artLabel + " " : ""}${topArt.docCode}** (*${topArt.docTitle}*).`;
+    } else {
+      directLead = `Về vấn đề này, các quy định pháp luật xây dựng hiện hành đưa ra các yêu cầu cụ thể như sau:`;
     }
 
-    // Detail synthesis tier by tier
-    sortedTiers.forEach(([tierNum, tData]) => {
-      md += `#### **${tData.category.badge}: ${tData.category.name}**\n`;
-      tData.docs.forEach(art => {
-        const content = (art.content || art.snippet || "").trim();
-        const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-        const points = lines.filter(l => /^(\d+\.|\b[a-z]\)|\-|\+)\s+/i.test(l));
+    let md = `${directLead}\n\n`;
 
-        const artLabel = art.articleNumber ? `Điều ${art.articleNumber}: ${art.articleTitle || ''}` : (art.articleTitle || art.docTitle);
-        md += `* **Theo ${art.docCode} (${artLabel}):**\n`;
-        if (points.length > 0) {
-          points.slice(0, 3).forEach(pt => {
-            if (/^\d+\./.test(pt)) {
-              md += `  - **${pt}**\n`;
-            } else {
-              md += `    + ${pt}\n`;
-            }
-          });
-        } else {
-          md += `  > ${content.slice(0, 250)}...\n`;
-        }
-        md += `\n`;
-      });
+    // Căn cứ pháp lý & Quy tắc áp dụng
+    md += `### Căn cứ pháp lý và nguyên tắc áp dụng\n\n`;
+    relevantArticles.forEach(art => {
+      const artLabel = art.articleNumber ? `Điều ${art.articleNumber}. ${art.articleTitle || ''}` : (art.articleTitle || art.docTitle);
+      const content = (art.content || art.snippet || "").trim();
+      const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      const points = lines.filter(l => /^(\d+\.|\b[a-z]\)|\-|\+)\s+/i.test(l));
+
+      md += `- **${art.docCode} (${artLabel}):**\n`;
+      if (points.length > 0) {
+        points.slice(0, 3).forEach(pt => {
+          md += `  + ${pt}\n`;
+        });
+      } else {
+        md += `  ${content.slice(0, 250)}...\n`;
+      }
+      md += `\n`;
     });
 
-    md += `---\n### BẢNG ĐỐI CHIẾU TRÁCH NHIỆM & QUY ĐỊNH ĐA TẦNG PHÁP LÝ:\n\n`;
-    md += `| Cấp bậc văn bản | Số hiệu văn bản & Điều khoản | Nội dung quy định then chốt | Ý nghĩa thực thi cho PMU |\n`;
-    md += `| :--- | :--- | :--- | :--- |\n`;
-    sortedTiers.forEach(([tierNum, tData]) => {
-      tData.docs.slice(0, 2).forEach(a => {
-        const artNum = a.articleNumber ? `Điều ${a.articleNumber}` : '';
-        const summaryText = (a.articleTitle || a.snippet || '').slice(0, 80).replace(/[\r\n|]/g, ' ');
-        md += `| **${tData.category.badge}** | ${a.docCode} ${artNum} | ${summaryText}... | Tuân thủ đúng cấp thẩm quyền & quy trình |\n`;
-      });
-    });
+    // Khuyến nghị thực tế cho PMU
+    md += `### Khuyến nghị thực tế cho PMU\n\n`;
+    md += `Khi tổ chức thực hiện, Ban QLDA và các đơn vị tư vấn cần lưu ý:\n`;
+    md += `1. **Kiểm tra tính pháp lý và hiệu lực:** Rà soát kỹ lưỡng các điều khoản viện dẫn trong hồ sơ thiết kế, dự toán hoặc hồ sơ nghiệm thu theo đúng văn bản hiện hành.\n`;
+    md += `2. **Phân định rõ trách nhiệm:** Xác định cụ thể phạm vi công việc và trách nhiệm giữa Chủ đầu tư, Tư vấn giám sát và Nhà thầu thi công để phòng ngừa rủi ro khi kiểm tra công tác nghiệm thu.\n`;
+    md += `3. **Tuân thủ quy chuẩn kỹ thuật:** Đối với các chỉ tiêu kỹ thuật bắt buộc theo Quy chuẩn QCVN, phải tuân thủ nghiêm ngặt và không được tự ý hạ thấp tiêu chuẩn áp dụng.`;
 
     return md;
   }
