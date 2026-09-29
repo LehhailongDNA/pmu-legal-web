@@ -1538,7 +1538,7 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
       } else if (/hồ sơ quản lý chất lượng|quản lý chất lượng.*hồ sơ|hồ sơ chất lượng|hồ sơ hoàn thành công trình|danh mục hồ sơ hoàn thành/i.test(qLower) || (/hồ sơ/i.test(qLower) && /chất lượng/i.test(qLower))) {
         domain = "QUALITY_MANAGEMENT_DOSSIER";
         domainName = "Hồ Sơ Quản Lý Chất Lượng & Hoàn Thành Công Trình";
-      } else if (/qcvn\s*02|02:2022|số liệu điều kiện tự nhiên/i.test(qLower)) {
+      } else if (/qcvn\s*02|02:2022|điều kiện tự nhiên|khí hậu.*xây dựng|số liệu.*tự nhiên/i.test(qLower)) {
         domain = "NATURAL_CONDITIONS_DATA";
         domainName = "Số Liệu Điều Kiện Tự Nhiên & Khí Hậu (QCVN 02:2022/BXD)";
       }
@@ -1648,7 +1648,7 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
           requiredArticles: ["PL VII", 28, 14, 22, 23, 24]
         };
       }
-      if (domain === "NATURAL_CONDITIONS_DATA" || /qcvn\s*02|02:2022/i.test(qLower)) {
+      if (domain === "NATURAL_CONDITIONS_DATA" || /qcvn\s*02|02:2022|điều kiện tự nhiên|khí hậu.*xây dựng|số liệu.*tự nhiên/i.test(qLower)) {
         return {
           action: "SPECIALIZED_WORKFLOW",
           workflowId: "NATURAL_CONDITIONS_DATA_QCVN02",
@@ -2140,11 +2140,11 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
           }
 
           // Booster for Natural Conditions & Climate Data (QCVN 02:2022/BXD)
-          if (/qcvn\s*02|02:2022|số liệu điều kiện tự nhiên/i.test(clean)) {
+          if (/qcvn\s*02|02:2022|điều kiện tự nhiên|khí hậu.*xây dựng|số liệu.*tự nhiên/i.test(clean)) {
             if (lowerDocCode.includes("02:2022") || lowerDocTitle.includes("điều kiện tự nhiên")) {
-              artScore += 12000;
+              artScore += 15000;
             } else {
-              artScore -= 8000;
+              artScore -= 12000;
             }
           }
 
@@ -3491,40 +3491,26 @@ Chủ đầu tư có trách nhiệm tổ chức lập, tập hợp đầy đủ 
     }
 
     // Specialized Handler for Natural Conditions & Climate Data (QCVN 02:2022/BXD)
-    if (/qcvn\s*02|02:2022|số liệu điều kiện tự nhiên/i.test(qLower)) {
-      return `Quy chuẩn kỹ thuật quốc gia QCVN 02:2022/BXD về "Số liệu điều kiện tự nhiên dùng trong xây dựng" do Viện Khoa học Công nghệ Xây dựng biên soạn và được Bộ Xây dựng ban hành kèm theo Thông tư số 02/2022/TT-BXD ngày 26/9/2022 (thay thế hoàn toàn QCVN 02:2009/BXD).
+    if (/qcvn\s*02|02:2022|điều kiện tự nhiên|khí hậu.*xây dựng|số liệu.*tự nhiên/i.test(qLower)) {
+      return `Trong thiết kế xây dựng công trình, mọi số liệu về điều kiện tự nhiên (khí hậu, áp lực gió, giông sét, động đất) bắt buộc phải trích xuất và áp dụng trực tiếp từ Quy chuẩn kỹ thuật quốc gia QCVN 02:2022/BXD (ban hành kèm theo Thông tư số 02/2022/TT-BXD của Bộ Xây dựng, có hiệu lực từ ngày 05/07/2023 thay thế hoàn toàn QCVN 02:2009/BXD).
 
-Về giá trị pháp lý, đây là quy chuẩn kỹ thuật quốc gia bắt buộc áp dụng trên phạm vi cả nước. Trong toàn bộ chu trình đầu tư xây dựng — từ khảo sát xây dựng, lập báo cáo nghiên cứu khả thi, đến tính toán thiết kế kết cấu, hệ thống cơ điện (MEP), điều hòa thông gió — mọi số liệu đầu vào về khí hậu, thời tiết, thiên tai và địa chấn đều bắt buộc phải lấy theo quy chuẩn này. Khi nộp hồ sơ thẩm định tại cơ quan chuyên môn về xây dựng (Sở Xây dựng hoặc các Cục chuyên ngành), nếu thuyết minh thiết kế vẫn dùng số liệu cũ của QCVN 02:2009 hoặc dẫn nguồn không chính thống, cơ quan thẩm định sẽ từ chối hoặc yêu cầu sửa đổi, tính toán lại toàn bộ.
+### Căn cứ pháp lý & Quy tắc áp dụng
+Quy tắc áp dụng được phân định rõ ràng giữa Quy chuẩn kỹ thuật quốc gia (QCVN - bắt buộc áp dụng) và các Tiêu chuẩn kỹ thuật chuyên ngành (TCVN - viện dẫn áp dụng):
 
-QCVN 02:2022/BXD chuẩn hóa 4 nhóm dữ liệu kỹ thuật cốt lõi sau:
+1. Giá trị bắt buộc tối cao của QCVN 02:2022/BXD
+Theo quy định của Luật Tiêu chuẩn và Quy chuẩn kỹ thuật cùng Điều 6 và Điều 27 Luật Xây dựng số 135/2025/QH15, quy chuẩn xây dựng mang tính pháp lý bắt buộc trên phạm vi toàn quốc. Số liệu trong QCVN 02:2022/BXD là căn cứ đầu vào pháp lý duy nhất được công nhận; nếu thuyết minh thiết kế sử dụng số liệu cũ của QCVN 02:2009 hoặc dẫn nguồn không chính thống bên ngoài, cơ quan chuyên môn về xây dựng (Sở Xây dựng hoặc Cục quản lý chuyên ngành) sẽ từ chối và trả lại hồ sơ thẩm định.
 
-1. Dữ liệu khí tượng và khí hậu công trình (Chương 2)
-Cung cấp chuỗi số liệu quan trắc khí hậu nhiều năm cho tất cả các tỉnh thành và các trạm khí tượng trên toàn quốc:
-- Nhiệt độ không khí: Chuẩn hóa nhiệt độ trung bình năm, nhiệt độ trung bình của tháng nóng nhất/lạnh nhất, nhiệt độ cực trị (tối cao tuyệt đối, tối thấp tuyệt đối) phục vụ tính toán dãn nở nhiệt kết cấu bê tông, thép và làm thông số vi khí hậu ngoài nhà để tính công suất phụ tải lạnh hệ thống điều hòa không khí.
-- Độ ẩm không khí: Độ ẩm tương đối trung bình năm, các tháng đặc trưng và độ ẩm cực trị, làm căn cứ tính toán đọng sương, ngưng tụ ẩm và giải pháp thông gió, chống ẩm mốc cho công trình.
-- Lượng mưa: Phân bố lượng mưa trung bình năm, lượng mưa ngày lớn nhất và cường độ mưa tính toán theo các chu kỳ lặp (dữ liệu đầu vào cho tính toán thoát nước mái và mạng lưới thoát nước mưa hạ tầng kỹ thuật).
-- Bức xạ mặt trời và số giờ nắng: Làm cơ sở tính toán hiệu quả năng lượng công trình theo QCVN 09:2017/BXD và thiết kế hệ thống che nắng, tận dụng năng lượng mặt trời.
+2. Quy tắc dẫn chiếu số liệu vào các Tiêu chuẩn thiết kế (TCVN)
+Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu vào" để đưa vào công thức tính toán của các tiêu chuẩn thiết kế:
+- Tính toán tải trọng gió: Giá trị áp lực gió tiêu chuẩn W0 và bản đồ phân vùng áp lực gió tại Chương 2 và Phụ lục E của QCVN 02:2022/BXD là thông số đầu vào bắt buộc để đưa vào tiêu chuẩn TCVN 2737:2023 (Tải trọng và tác động) nhằm tính toán tải trọng gió tác động lên kết cấu công trình.
+- Tính toán kháng chấn (động đất): Giá trị gia tốc nền cực đại PGA tương ứng chu kỳ lặp 475 năm (tham số agR) theo từng địa danh hành chính cấp huyện/xã trong QCVN 02:2022/BXD là dữ liệu bắt buộc để thiết lập phổ phản ứng thiết kế theo tiêu chuẩn TCVN 9386 (Thiết kế công trình chịu động đất).
+- Thiết kế hệ thống chống sét: Mật độ sét đánh đất trung bình hàng năm Ng (số lần sét đánh/km²/năm) quy định tại Chương 3 QCVN 02:2022/BXD là cơ sở bắt buộc để tính toán cấp bảo vệ và bán kính bảo vệ chống sét theo tiêu chuẩn TCVN 9385.
+- Thiết kế hệ thống điều hòa - thông gió (HVAC): Nhiệt độ cực trị (tối cao/tối thấp), độ ẩm tương đối và bức xạ mặt trời tại Chương 2 QCVN 02:2022/BXD là dữ liệu vi khí hậu đầu vào để tính chọn công suất thiết bị làm lạnh theo tiêu chuẩn TCVN 5687:2024 và tính toán hiệu quả năng lượng công trình theo QCVN 09:2017/BXD.
 
-2. Áp lực gió và hướng gió chủ đạo (Chương 2)
-Quy chuẩn chuẩn hóa bản đồ phân vùng áp lực gió và bảng tra áp lực gió tiêu chuẩn W0 cho từng địa danh hành chính (cấp xã/phường, tỉnh/thành phố). Đây là thông số đầu vào bắt buộc để kỹ sư kết cấu phối hợp cùng TCVN 2737:2023 (Tải trọng và tác động) xác định tải trọng gió tác động lên công trình (đặc biệt quan trọng với nhà cao tầng, công trình kết cấu thép nhịp lớn và tháp trụ).
-
-3. Các hiện tượng thời tiết bất lợi và khí hậu cực đoan (Chương 3)
-- Tần suất bão và áp thấp nhiệt đới theo các dải bờ biển và hải đảo.
-- Mật độ sét đánh đất trung bình hàng năm (số ngày dông, mật độ sét đánh đất Ng trên 1 km² mỗi năm) phân bố theo từng khu vực địa lý. Đây là căn cứ bắt buộc khi thiết kế bán kính bảo vệ và cấp bảo vệ của hệ thống chống sét công trình theo TCVN 9385.
-- Các hiện tượng mưa đá, lốc xoáy và nước dâng do bão phục vụ đánh giá rủi ro thiên tai.
-
-4. Bản đồ và số liệu phân vùng gia tốc nền động đất (Chương 4 & Phụ lục)
-QCVN 02:2022/BXD cập nhật chi tiết bản đồ phân vùng gia tốc nền cực đại (PGA) tương ứng với chu kỳ lặp 475 năm (xác suất vượt 10% trong 50 năm) và các chu kỳ lặp khác cho toàn bộ các địa phương trên cả nước. Kỹ sư kết cấu bắt buộc phải lấy giá trị gia tốc nền tham chiếu agR từ quy chuẩn này để đưa vào mô hình tính toán kháng chấn cho công trình theo tiêu chuẩn TCVN 9386 (Thiết kế công trình chịu động đất).
-
-Lưu ý thực tế: Khi lập nhiệm vụ khảo sát, thẩm tra thiết kế hoặc kiểm tra hồ sơ, anh em cần kiểm tra đối chiếu trực tiếp địa bàn dự án với phụ lục bảng tra của QCVN 02:2022/BXD, tránh việc đơn vị tư vấn thiết kế sao chép số liệu cũ từ các dự án trước đây.`;
+### Khuyến nghị thực tế cho PMU
+1. Kiểm soát Đề cương khảo sát và Nhiệm vụ thiết kế: Ban QLDA cần ghi rõ yêu cầu trong Hợp đồng và Nhiệm vụ thiết kế: "Toàn bộ số liệu khí hậu, gió, động đất, sét phải trích xuất chính xác theo địa bàn công trình từ QCVN 02:2022/BXD".
+2. Phòng ngừa sao chép số liệu cũ: Thực tế nhiều đơn vị tư vấn thiết kế vẫn copy thuyết minh từ các dự án cũ dẫn chiếu QCVN 02:2009/BXD hoặc TCVN 2737:1995 đã hết hiệu lực. PMU và đơn vị thẩm tra cần đối chiếu trực tiếp bảng tra phân vùng gió và gia tốc nền của địa phương dự án để yêu cầu tư vấn tính toán lại trước khi trình cơ quan chuyên môn thẩm định.`;
     }
-
-    // Default dynamic synthesis report
-    let personaTitle = "Báo Cáo Tra Cứu Pháp Lý Đầu Tư Xây Dựng";
-    if (persona === "verifier") personaTitle = "Báo Cáo Thẩm Tra Hồ Sơ Dự Án";
-    if (persona === "technical") personaTitle = "Báo Cáo Thẩm Tra Kỹ Thuật (QCVN/TCVN)";
-    if (persona === "cost") personaTitle = "Báo Cáo Thẩm Tra Chi Phí & Định Mức (NĐ 206)";
-    if (persona === "bidding") personaTitle = "Báo Cáo Thẩm Định Hồ Sơ Đấu Thầu";
 
     // Filter topArticles to only relevant ones (avoid dumping unrelated decree articles)
     const maxScore = searchResults[0]?.score || 0;
