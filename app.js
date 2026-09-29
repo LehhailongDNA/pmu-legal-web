@@ -3409,6 +3409,59 @@ Khi giả lập kích hoạt đầu báo cháy hoặc tủ trung tâm PCCC báo 
 Hồ sơ nghiệm thu cuối cùng cần đầy đủ: Biên bản nghiệm thu công việc lắp đặt, Biên bản thử áp lực/thử kín đường ống, Báo cáo cân chỉnh TAB, Nhật ký chạy thử liên động có tải 72 giờ và Bản vẽ hoàn công kèm quy trình vận hành bảo trì (O&M).`;
     }
 
+    // Specialized Handler for Equipment Installation Acceptance (Nghiệm thu lắp đặt thiết bị - TCVN 5639:1991 & NĐ 207/2026/NĐ-CP)
+    if ((/nghiệm thu/i.test(qLower) || /chạy thử/i.test(qLower)) && /lắp đặt.*thiết bị|thiết bị.*lắp đặt|thiết bị/i.test(qLower) && 
+        (/bước/i.test(qLower) || /nội dung/i.test(qLower) || /tiêu chuẩn/i.test(qLower) || /yêu cầu/i.test(qLower) || /đạt/i.test(qLower) || /quy trình/i.test(qLower) || /như thế nào/i.test(qLower))) {
+      return `Công tác nghiệm thu lắp đặt thiết bị công nghệ và thiết bị công trình được thực hiện theo quy trình bắt buộc gồm 03 bước tuần tự theo Tiêu chuẩn quốc gia TCVN 5639:1991 (Nghiệm thu thiết bị đã lắp đặt xong - Nguyên tắc cơ bản) và quy định quản lý chất lượng thi công tại Nghị định số 207/2026/NĐ-CP (Điều 14, Điều 22 và Điều 23), kèm theo 01 bước tiền đề kiểm soát vật tư thiết bị đầu vào:
+
+### Các bước thực hiện và nội dung kỹ thuật cần phải đạt
+
+#### Bước tiền đề: Kiểm tra, nghiệm thu thiết bị trước khi đưa vào lắp đặt (Điều 14 Nghị định 207/2026/NĐ-CP)
+Trước khi đưa thiết bị vào vị trí lắp đặt, Chủ đầu tư/Tư vấn giám sát (TVGS) cùng Nhà thầu phải tổ chức kiểm tra hồ sơ và hiện trạng ngoại quan:
+- Hồ sơ xuất xứ và chất lượng: Chứng nhận xuất xứ (CO), chứng nhận chất lượng (CQ), chứng nhận hợp chuẩn/hợp quy, tài liệu hướng dẫn lắp đặt và vận hành, lý lịch máy của nhà sản xuất.
+- Ngoại quan và bảo quản: Thiết bị nguyên đai nguyên kiện, không bị nứt vỡ, móp méo, han gỉ; các niêm phong bảo vệ và đầu bịt ống còn nguyên vẹn.
+- Kiểm tra số lượng và phụ kiện: Đối chiếu chủng loại, thông số kỹ thuật (công suất, điện áp, model) và số lượng linh kiện phụ tùng đi kèm theo đúng hợp đồng và thiết kế được duyệt.
+- Đầu ra: Biên bản kiểm tra tiếp nhận thiết bị trước khi lắp đặt.
+
+#### Bước 1: Nghiệm thu tĩnh (Điều 2.2 TCVN 5639:1991 & Điều 22 Nghị định 207/2026/NĐ-CP)
+Thực hiện ngay sau khi thiết bị đã được định vị, cố định trên móng hoặc bệ đỡ nhưng chưa cấp điện nguồn và chưa vận hành.
+- Mục tiêu: Kiểm tra, xác nhận chất lượng lắp đặt thực tế bảo đảm đúng hồ sơ thiết kế và chỉ dẫn kỹ thuật của nhà sản xuất trước khi đưa vào chạy thử.
+- Các nội dung cần phải đạt:
+  + Móng máy và kết cấu đỡ: Kiểm tra tọa độ tim mốc, cao độ đỉnh móng máy so với mốc chuẩn công trình; chất lượng chèn vữa không co ngót (grouting) chèn chân đế máy; lực siết bu-lông móng (bu-lông neo) đạt mô-men siết quy định.
+  + Cân chỉnh cơ khí: Kiểm tra độ thăng bằng ngang/dọc, độ thẳng đứng, khe hở ăn khớp của các bộ phận cơ khí chuyển động; độ đồng tâm giữa trục động cơ và trục thiết bị công tác (máy bơm, quạt, máy nén) bằng đồng hồ so hoặc máy laser.
+  + Hệ thống phụ trợ (đường ống, van): Độ kín khít mối nối, van khóa; kết quả thử áp lực, thử kín đường ống dẫn dầu bôi trơn, khí nén, nước làm mát theo tiêu chuẩn thiết kế.
+  + Hệ thống điện & an toàn: Đo điện trở cách điện của cuộn dây động cơ, cáp điện nguồn; kiểm tra hệ thống nối đất an toàn (tiếp địa vỏ máy); kiểm tra chiều quay cơ khí bằng tay (quay tự do, không bị kẹt rít).
+  + Hệ thống bôi trơn: Kiểm tra chủng loại và mức dầu bôi trơn, mỡ bôi trơn trong các hộp số, gối đỡ đạt vạch quy định.
+- Đầu ra: Lập và ký Biên bản nghiệm thu tĩnh, là điều kiện tiên quyết cho phép chuyển sang bước chạy thử không tải.
+
+#### Bước 2: Nghiệm thu chạy thử không tải (Điều 2.3 TCVN 5639:1991 & Điều 23 Nghị định 207/2026/NĐ-CP)
+Thực hiện sau khi đã có Biên bản nghiệm thu tĩnh. Cấp nguồn điện để thiết bị tự vận hành đơn lẻ hoặc theo cụm nhưng chưa đưa nguyên vật liệu hoặc tải trọng công nghệ vào làm việc.
+- Mục tiêu: Kiểm tra tình trạng hoạt động cơ học, điện và tự động hóa; phát hiện và xử lý các khiếm khuyết, sai sót lắp ráp mà bước nghiệm thu tĩnh chưa phát hiện được.
+- Các nội dung cần phải đạt:
+  + Chiều quay: Chiều quay của động cơ, trục quạt, cánh bơm, trục vít phải đúng tuyệt đối theo chiều mũi tên chỉ dẫn của nhà chế tạo.
+  + Nhiệt độ gối trục & động cơ: Nhiệt độ của các ổ bi, gối đỡ, hộp giảm tốc và thân động cơ ổn định, không bị tăng nhiệt độ đột ngột và nằm trong giới hạn cho phép của nhà sản xuất (thường không quá 60 - 70°C).
+  + Độ rung và tiếng ồn: Độ rung cơ học (vận tốc rung RMS, biên độ dịch chuyển rung) đo bằng máy đo rung chuyên dụng nằm trong ngưỡng cho phép của tiêu chuẩn rung động (TCVN 6727 / ISO 10816); máy vận hành êm, không có tiếng va đập kim loại bất thường.
+  + Hệ thống điều khiển & an toàn: Hệ thống khóa liên động (Interlock), rơ-le bảo vệ quá tải, cảm biến áp suất/nhiệt độ và nút dừng khẩn cấp (Emergency Stop) phản ứng chính xác và nhạy bén.
+  + Thời gian chạy thử liên tục: Thiết bị phải hoạt động liên tục, ổn định không tải đạt đủ thời lượng quy định trong tài liệu của nhà chế tạo hoặc chỉ dẫn kỹ thuật (thường từ 2 giờ đến 8 giờ liên tục tùy chủng loại máy).
+- Đầu ra: Lập và ký Biên bản nghiệm thu chạy thử không tải, là cơ sở cấp nguyên nhiên liệu để chuyển sang bước chạy thử có tải.
+
+#### Bước 3: Nghiệm thu chạy thử có tải (Điều 2.4 TCVN 5639:1991 & Điều 23 Nghị định 207/2026/NĐ-CP)
+Thực hiện sau khi nghiệm thu chạy thử không tải đạt yêu cầu. Đưa nguyên liệu, tải trọng làm việc thực tế vào dây chuyền theo các cấp tải: tải non (25% - 50%), tải trung bình (75%) và nâng dần đến 100% tải trọng thiết kế.
+- Mục tiêu: Kiểm tra khả năng làm việc liên tục của thiết bị dưới tải trọng thiết kế; xác định các chỉ tiêu kinh tế - kỹ thuật, công suất đầu ra và sự phối hợp đồng bộ giữa các máy trong dây chuyền công nghệ.
+- Các nội dung cần phải đạt:
+  + Khả năng mang tải và công suất: Thiết bị hoạt động ổn định ở 100% công suất tải thiết kế; dòng điện làm việc của động cơ không vượt quá dòng định mức ghi trên nhãn máy.
+  + Các thông số công nghệ đầu ra: Lưu lượng, áp suất, cột áp, nhiệt độ môi chất, nồng độ, độ sạch... đạt đúng chỉ tiêu cam kết trong hợp đồng và hồ sơ thiết kế.
+  + Độ ổn định của dây chuyền: Các thiết bị trong dây chuyền phối hợp nhịp nhàng, hệ thống tự động hóa điều khiển PLC/SCADA tự động duy trì các thông số vận hành mà không xảy ra xung đột hay báo lỗi.
+  + An toàn hệ thống: Hệ thống bảo vệ quá tải, van xả an toàn, cảnh báo sự cố hoạt động tin cậy khi có tình huống vượt ngưỡng tải.
+  + Thời gian thử nghiệm liên tục: Chạy thử có tải liên tục đạt đủ thời lượng quy định (thường từ 24 giờ đến 72 giờ liên tục không có sự cố dừng máy bất thường).
+- Đầu ra: Lập và ký Biên bản nghiệm thu chạy thử có tải, làm căn cứ đưa thiết bị vào nghiệm thu hoàn thành hạng mục công trình đưa vào sử dụng (Điều 24 Nghị định 207/2026/NĐ-CP).
+
+### Khuyến nghị thực tế cho PMU khi tổ chức nghiệm thu thiết bị
+1. Phê duyệt quy trình chạy thử trước khi thực hiện: Nhà thầu lắp đặt bắt buộc phải lập Biện pháp an toàn và Quy trình chạy thử (thể hiện rõ sơ đồ đấu nối, các bước nâng tải, phương án xử lý sự cố khẩn cấp, thiết bị đo kiểm) trình TVGS và Chủ đầu tư phê duyệt trước khi đóng điện.
+2. Kiểm định an toàn đối với thiết bị có yêu cầu nghiêm ngặt: Đối với các thiết bị thuộc Danh mục máy, thiết bị có yêu cầu nghiêm ngặt về an toàn lao động (thang máy, cần trục, tời nâng, bình chịu áp lực, nồi hơi...): Bắt buộc phải có Giấy chứng nhận kiểm định kỹ thuật an toàn lao động do tổ chức kiểm định được Bộ LĐ-TB&XH/Bộ quản lý chuyên ngành cấp phép trước khi nghiệm thu chạy thử có tải đưa vào sử dụng.
+3. Chữ ký của Chuyên gia nhà sản xuất: Đối với các thiết bị công nghệ nhập khẩu phức tạp có điều khoản giám sát lắp đặt của chuyên gia hãng, Biên bản nghiệm thu tĩnh và nghiệm thu chạy thử bắt buộc phải có chữ ký xác nhận của đại diện kỹ thuật của nhà sản xuất để bảo đảm hiệu lực bảo hành thiết bị.`;
+    }
+
     // Specialized Handler for Verification Report Templates & Stamps (Phụ lục I NĐ 217/2026/NĐ-CP & Điều 8, 16 NĐ 206/2026/NĐ-CP)
     if (/thẩm tra/i.test(qLower) && (/mẫu/i.test(qLower) || /mẫu số/i.test(qLower) || /dấu/i.test(qLower))) {
       return `### Mẫu báo cáo kết quả thẩm tra của nhà thầu tư vấn và con dấu thẩm tra
@@ -3586,18 +3639,29 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
     // Căn cứ pháp lý & Quy tắc áp dụng
     md += `### Căn cứ pháp lý và nguyên tắc áp dụng\n\n`;
     relevantArticles.forEach(art => {
-      const artLabel = art.articleNumber ? `Điều ${art.articleNumber}. ${art.articleTitle || ''}` : (art.articleTitle || art.docTitle);
-      const content = (art.content || art.snippet || "").trim();
+      let artTitleClean = (art.articleTitle || "").trim();
+      if (art.articleNumber) {
+        const numStr = art.articleNumber.toString().trim();
+        artTitleClean = artTitleClean.replace(new RegExp(`^(?:Điều\\s+)?${numStr}[\\.:\\s-]*`, "i"), "");
+      }
+      const artLabel = art.articleNumber ? `Điều ${art.articleNumber}${artTitleClean ? ": " + artTitleClean : ""}` : (artTitleClean || art.docTitle);
+      let content = (art.content || art.snippet || "").trim();
+      content = content.replace(/\s*\.\.\.$/g, "");
       const lines = content.split("\n").map(l => l.trim()).filter(l => l.length > 0);
       const points = lines.filter(l => /^(\d+\.|\b[a-z]\)|\-|\+)\s+/i.test(l));
 
       md += `- **${art.docCode} (${artLabel}):**\n`;
       if (points.length > 0) {
-        points.slice(0, 3).forEach(pt => {
-          md += `  + ${pt}\n`;
+        points.slice(0, 4).forEach(pt => {
+          md += `  + ${pt.replace(/\s*\.\.\.$/g, "")}\n`;
         });
       } else {
-        md += `  ${content.slice(0, 250)}...\n`;
+        let paragraph = content.slice(0, 350);
+        const lastDot = paragraph.lastIndexOf(".");
+        if (lastDot > 80) {
+          paragraph = paragraph.slice(0, lastDot + 1);
+        }
+        md += `  ${paragraph}\n`;
       }
       md += `\n`;
     });
