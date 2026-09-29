@@ -1952,6 +1952,18 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
             artScore -= 5000;
           }
 
+          // Booster for Two-Stage Bidding (Điều 32, Điều 33 Luật Đấu thầu 22/2023)
+          if (/2\s*giai\s*đoạn|hai\s*giai\s*đoạn/i.test(clean)) {
+            if (lowerDocCode.includes("22/2023")) {
+              if (/1\s*túi|một\s*túi/i.test(clean) && art.number == 32) artScore += 8000;
+              else if (/2\s*túi|hai\s*túi/i.test(clean) && art.number == 33) artScore += 8000;
+              else if (art.number == 32 || art.number == 33) artScore += 5000;
+            }
+            if (art.number == 30 || art.number == 31) {
+              artScore -= 5000;
+            }
+          }
+
           // Booster for Concrete Acceptance / Thi công & Nghiệm thu Bê tông (TCVN 4453:1995 & NĐ 207/2026)
           if (clean.includes("bê tông") && (clean.includes("nghiệm thu") || clean.includes("thi công") || clean.includes("đổ") || clean.includes("cốp pha") || clean.includes("cốt thép") || clean.includes("checklist") || clean.includes("kiểm tra"))) {
             if (lowerDocCode.includes("4453") || artTitleLower.includes("bê tông") || artSnippetLower.includes("bê tông") || (lowerDocCode.includes("207/2026") && art.number == 22)) {
@@ -2632,52 +2644,79 @@ Tuyệt đối **CẤM** người lao động làm việc trên cao trong các �
 4. **Quyền đình chỉ thi công:** Tư vấn giám sát và cán bộ PMU có quyền và nghĩa vụ **đình chỉ ngay lập tức** công việc nếu phát hiện người lao động không cài dây an toàn đúng cách, giàn giáo chưa được nghiệm thu an toàn, hoặc khi thời tiết chuyển biến xấu có mưa giông gió mạnh.`;
     }
 
+    // Specialized Handler for Two-Stage One-Envelope Bidding (Hai giai đoạn một túi hồ sơ - Điều 32 Luật Đấu thầu 22/2023)
+    if (/2\s*giai\s*đoạn\s*1\s*túi|hai\s*giai\s*đoạn\s*một\s*túi|2\s*gđ\s*1\s*ths/i.test(qLower) || 
+        ((/2\s*giai\s*đoạn|hai\s*giai\s*đoạn/i.test(qLower)) && (/1\s*túi|một\s*túi/i.test(qLower) || /áp dụng|khi nào|gói thầu nào/i.test(qLower)) && !/2\s*túi|hai\s*túi/i.test(qLower))) {
+      return `Trong kế hoạch lựa chọn nhà thầu, phương thức hai giai đoạn một túi hồ sơ chỉ nên áp dụng cho các gói thầu mua sắm hàng hóa, xây lắp hoặc hỗn hợp có tính chất kỹ thuật, công nghệ mới, phức tạp, đặc thù mà tại thời điểm lập hồ sơ mời thầu Chủ đầu tư chưa thể xác định được chính xác yêu cầu kỹ thuật chi tiết.
+
+### Căn cứ pháp lý & Quy tắc áp dụng
+
+Căn cứ quy định tại Điều 32 Luật Đấu thầu số 22/2023/QH15 và các quy định hướng dẫn chi tiết tại Nghị định số 214/2025/NĐ-CP:
+
+1. Điều kiện và đối tượng gói thầu áp dụng (Khoản 1 Điều 32)
+Phương thức hai giai đoạn một túi hồ sơ được áp dụng khi tổ chức đấu thầu rộng rãi hoặc đấu thầu hạn chế đối với:
+- Gói thầu mua sắm hàng hóa, xây lắp, gói thầu hỗn hợp (EPC, EC, EP, Chìa khóa trao tay...).
+- Có yêu cầu kỹ thuật, công nghệ mới, phức tạp hoặc có tính đặc thù cao.
+- Điều kiện tiên quyết: Tại thời điểm mời thầu, Chủ đầu tư/Bên mời thầu mới chỉ xác định được yêu cầu đầu ra tổng thể, công năng sử dụng hoặc sơ đồ công nghệ sơ bộ, chưa đủ cơ sở để xác định chính xác quy cách kỹ thuật, giải pháp công nghệ cụ thể và tiêu chuẩn kỹ thuật chi tiết.
+- Lưu ý loại trừ: Tuyệt đối không áp dụng phương thức này cho gói thầu dịch vụ tư vấn (gói thầu tư vấn đấu thầu rộng rãi bắt buộc áp dụng một giai đoạn hai túi hồ sơ theo Điều 31).
+
+2. Bản chất vận hành 02 giai đoạn của phương thức
+- Giai đoạn một (Chuẩn hóa kỹ thuật, chưa nộp giá): Nhà thầu nộp hồ sơ dự thầu gồm đề xuất về kỹ thuật và phương án tài chính (chưa bao gồm giá dự thầu và chưa yêu cầu bảo đảm dự thầu). Bên mời thầu tiến hành trao đổi trực tiếp với từng nhà thầu để làm rõ năng lực, giải pháp công nghệ, đề xuất kỹ thuật. Trên cơ sở tổng hợp ý kiến và giải pháp của các nhà thầu, Bên mời thầu chuẩn hóa lại yêu cầu kỹ thuật, tiêu chuẩn đánh giá và hoàn thiện Hồ sơ mời thầu giai đoạn hai.
+- Giai đoạn hai (Nộp kỹ thuật chuẩn hóa kèm giá dự thầu): Bên mời thầu phát hành HSMT giai đoạn hai cho các nhà thầu đã tham gia giai đoạn một. Ở giai đoạn này, nhà thầu nộp đồng thời đề xuất kỹ thuật hoàn chỉnh, giá dự thầu và bảo đảm dự thầu chung trong một túi hồ sơ. Việc mở thầu và đánh giá được thực hiện tương tự như phương thức một giai đoạn một túi hồ sơ.
+
+### Khuyến nghị thực tế cho PMU khi lập KHLCNT
+
+1. Nhận diện chính xác gói thầu phù hợp:
+Nên đưa phương thức 2 giai đoạn 1 túi vào Kế hoạch lựa chọn nhà thầu đối với: các dự án nhà máy xử lý rác/nước thải công nghệ cao, hệ thống điều khiển trung tâm tự động hóa thông minh (BMS/SCADA), thiết bị y tế chuyên sâu, hoặc công trình xây lắp kết cấu phức tạp sử dụng công nghệ thi công hoàn toàn mới mà thị trường có nhiều giải pháp công nghệ cạnh tranh khác nhau.
+
+2. Tránh lạm dụng cho các công trình thông thường:
+Đối với các công trình xây lắp dân dụng, giao thông, thủy lợi thông thường (trường học, bệnh viện tiêu chuẩn, đường giao thông, cầu cống...) đã có hồ sơ Thiết kế bản vẽ thi công hoặc Thiết kế cơ sở đầy đủ: Bắt buộc phải áp dụng phương thức một giai đoạn một túi hồ sơ (Điều 30) hoặc một giai đoạn hai túi hồ sơ nếu yêu cầu kỹ thuật cao (Điều 31). Nếu đưa phương thức 2 giai đoạn vào các gói thầu này, cơ quan thẩm định KHLCNT sẽ bác bỏ do không đáp ứng tiêu chí "chưa xác định được yêu cầu kỹ thuật cụ thể".
+
+3. Cân nhắc rủi ro kéo dài tiến độ:
+Phương thức 2 giai đoạn đòi hỏi thời gian chuẩn bị HSMT, tổ chức trao đổi kỹ thuật giai đoạn 1 và lập HSMT giai đoạn 2 rất dài (thường mất từ 4 đến 6 tháng). PMU cần cân đối tiến độ giải ngân vốn đầu tư công; nếu dự án có thể thuê tư vấn lập chỉ dẫn kỹ thuật và thiết kế chi tiết ngay từ đầu thì nên hoàn thiện thiết kế để đấu thầu một giai đoạn nhằm tiết kiệm thời gian.`;
+    }
+
+    // Specialized Handler for Two-Stage Two-Envelope Bidding (Hai giai đoạn hai túi hồ sơ - Điều 33 Luật Đấu thầu 22/2023)
+    if (/2\s*giai\s*đoạn\s*2\s*túi|hai\s*giai\s*đoạn\s*hai\s*túi|2\s*gđ\s*2\s*ths/i.test(qLower)) {
+      return `Trong kế hoạch lựa chọn nhà thầu, phương thức hai giai đoạn hai túi hồ sơ được áp dụng cho các gói thầu mua sắm hàng hóa, xây lắp, hỗn hợp có kỹ thuật, công nghệ mới, phức tạp, đặc thù và cần đánh giá đề xuất kỹ thuật độc lập trước khi mở túi tài chính ở giai đoạn hai.
+
+### Căn cứ pháp lý & Quy tắc áp dụng
+
+Căn cứ Điều 33 Luật Đấu thầu số 22/2023/QH15 và Nghị định số 214/2025/NĐ-CP:
+1. Đối tượng áp dụng: Đấu thầu rộng rãi, đấu thầu hạn chế đối với gói thầu mua sắm hàng hóa, xây lắp, hỗn hợp có kỹ thuật, công nghệ mới, phức tạp, có tính đặc thù mà chưa xác định được chính xác yêu cầu kỹ thuật cụ thể tại thời điểm mời thầu giai đoạn một.
+2. Quy trình thực hiện:
+- Giai đoạn một: Nhà thầu nộp hồ sơ đề xuất kỹ thuật và phương án tài chính riêng biệt (chưa có giá dự thầu). Bên mời thầu trao đổi với từng nhà thầu để chuẩn hóa HSMT giai đoạn hai.
+- Giai đoạn hai: Nhà thầu nộp đồng thời 02 túi độc lập gồm Hồ sơ đề xuất kỹ thuật (HSĐXKT) và Hồ sơ đề xuất tài chính (HSĐXTC) kèm bảo đảm dự thầu. Chỉ mở HSĐXTC của nhà thầu đáp ứng yêu cầu kỹ thuật.
+
+### Khuyến nghị thực tế cho PMU
+Chỉ áp dụng khi gói thầu có tính chất công nghệ đặc biệt phức tạp, giá trị lớn và cần bảo mật tuyệt đối về giá để không gây định kiến tâm lý khi chấm điểm kỹ thuật ở giai đoạn hai.`;
+    }
+
     // Specialized Handler for Bidding Procedure Comparison (1 Giai đoạn 1 túi vs 1 Giai đoạn 2 túi - Luật Đấu thầu 22/2023)
-    if ((/1.*túi|một.*túi/i.test(qLower) && /2.*túi|hai.*túi/i.test(qLower)) || 
-        (/giai đoạn/i.test(qLower) && /túi/i.test(qLower) && (/khác|so sánh|phân biệt/i.test(qLower) || (/1/i.test(qLower) && /2/i.test(qLower))))) {
-      return `### Báo Cáo Phân Tích Pháp Lý: So Sánh Phương Thức Đấu Thầu "Một Giai Đoạn Một Túi Hồ Sơ" & "Một Giai Đoạn Hai Túi Hồ Sơ"
+    if (!/2\s*giai\s*đoạn|hai\s*giai\s*đoạn/i.test(qLower) && (
+        (/1.*túi|một.*túi/i.test(qLower) && /2.*túi|hai.*túi/i.test(qLower)) || 
+        (/giai đoạn/i.test(qLower) && /túi/i.test(qLower) && (/khác|so sánh|phân biệt/i.test(qLower) || (/1/i.test(qLower) && /2/i.test(qLower))))
+    )) {
+      return `### So Sánh Phương Thức Đấu Thầu "Một Giai Đoạn Một Túi Hồ Sơ" & "Một Giai Đoạn Hai Túi Hồ Sơ"
 
-**1. Vấn đề pháp lý:** ${question}
+Quy định lựa chọn phương thức đấu thầu được căn cứ trực tiếp theo **Điều 30, Điều 31 Luật Đấu thầu số 22/2023/QH15** và hướng dẫn chi tiết tại **Nghị định số 214/2025/NĐ-CP**.
 
-**2. Căn cứ pháp lý áp dụng:**
-- **Luật Đấu thầu số 22/2023/QH15**:
-  - **Điều 30:** Phương thức một giai đoạn một túi hồ sơ (1GĐ 1THS).
-  - **Điều 31:** Phương thức một giai đoạn hai túi hồ sơ (1GĐ 2THS).
-  - **Điều 58:** Quy trình đánh giá hồ sơ dự thầu đối với phương thức một giai đoạn một túi hồ sơ.
-  - **Điều 59:** Quy trình đánh giá hồ sơ dự thầu đối với phương thức một giai đoạn hai túi hồ sơ.
-- **Nghị định số 214/2025/NĐ-CP** của Chính phủ:
-  - **Mục 1 Chương III (Điều 24 - Điều 36):** Quy trình chi tiết lựa chọn nhà thầu đối với phương thức một giai đoạn một túi hồ sơ.
-  - **Mục 2 Chương III (Điều 37 - Điều 45):** Quy trình chi tiết lựa chọn nhà thầu đối với phương thức một giai đoạn hai túi hồ sơ (Quy định phê duyệt danh sách đạt kỹ thuật trước khi mở tài chính).
-- **Thông tư số 79/2025/TT-BTC** (và các Thông tư hướng dẫn về E-HSMT):
-  - Hướng dẫn lập E-HSMT và cơ chế khóa/mã hóa túi tài chính tự động trên Hệ thống mạng đấu thầu quốc gia.
-
----
-
-### BẢNG SO SÁNH TOÀN DIỆN VỀ NGHIỆP VỤ GIỮA 02 PHƯƠNG THỨC:
+### Bảng so sánh nghiệp vụ giữa 02 phương thức:
 
 | Tiêu chí so sánh | Một Giai Đoạn Một Túi Hồ Sơ (1GĐ 1THS) | Một Giai Đoạn Hai Túi Hồ Sơ (1GĐ 2THS) |
 | :--- | :--- | :--- |
 | **1. Căn cứ pháp lý** | **Điều 30 & Điều 58** Luật Đấu thầu số 22/2023/QH15 | **Điều 31 & Điều 59** Luật Đấu thầu số 22/2023/QH15 |
 | **2. Bản chất phương thức** | Đánh giá đồng thời hoặc đánh giá rút gọn kết hợp kỹ thuật và tài chính. Thủ tục đơn giản, thời gian nhanh chóng cho gói thầu thông dụng. | Đánh giá tách bạch tuyệt đối 02 bước: **"Kỹ thuật đạt thì mới xem xét đến giá"**. Bảo đảm tối đa chất lượng chuyên môn cho gói thầu phức tạp. |
-| **3. Phạm vi / Trường hợp áp dụng (Khoản 1)** | • Đấu thầu rộng rãi, hạn chế gói thầu: **Xây lắp, Mua sắm hàng hóa, Phi tư vấn, Hỗn hợp thông thường** (không đòi hỏi kỹ thuật cao).<br>• **Chào hàng cạnh tranh** (hàng hóa, xây lắp, phi tư vấn).<br>• **Chỉ định thầu** (áp dụng cho mọi loại gói thầu kể cả tư vấn).<br>• **Mua sắm trực tiếp** (hàng hóa). | • **Gói thầu Cung cấp dịch vụ tư vấn** (Bắt buộc 100% khi đấu thầu rộng rãi, hạn chế).<br>• Đấu thầu rộng rãi, hạn chế gói thầu: Xây lắp, hàng hóa, phi tư vấn, hỗn hợp **đòi hỏi kỹ thuật cao** theo pháp luật về khoa học công nghệ. |
-| **4. Quy cách nộp hồ sơ của Nhà thầu (Khoản 2)** | Nhà thầu nộp **01 bộ hồ sơ duy nhất**, trong đó đề xuất về kỹ thuật và đề xuất về tài chính được đóng chung trong một túi hồ sơ (hoặc 1 file E-HSDT đồng nhất trên mạng). | Nhà thầu nộp đồng thời nhưng **tách riêng biệt thành 02 túi hồ sơ độc lập**:<br>1) Hồ sơ đề xuất về kỹ thuật (HSĐXKT)<br>2) Hồ sơ đề xuất về tài chính (HSĐXTC). |
-| **5. Quy trình mở thầu (Khoản 3)** | **Mở thầu 01 lần duy nhất** ngay sau thời điểm đóng thầu. Công khai đồng thời toàn bộ nội dung: tư cách hợp lệ, bảo đảm dự thầu, tiến độ, giải pháp kỹ thuật và **công khai ngay giá dự thầu, thư giảm giá** của tất cả nhà thầu. | **Mở thầu 02 lần độc lập**:<br>• **Lần 1 (sau đóng thầu):** Chỉ mở HSĐXKT. Túi tài chính được niêm phong/hệ thống mạng tự động khóa bảo mật.<br>• **Lần 2:** Chỉ mở HSĐXTC của các nhà thầu đã được Chủ đầu tư phê duyệt **đạt yêu cầu kỹ thuật**. Nhà thầu trượt kỹ thuật sẽ không được mở túi giá. |
-| **6. Trình tự đánh giá HSDT (Điều 58 vs Điều 59)** | Có thể áp dụng đánh giá tuần tự (Hợp lệ $\rightarrow$ Năng lực $\rightarrow$ Kỹ thuật $\rightarrow$ Giá) hoặc phương pháp đánh giá "xếp hạng trước, đánh giá chi tiết sau" (chỉ đánh giá chi tiết nhà thầu có giá thấp nhất / điểm tổng hợp cao nhất). | Bắt buộc 2 bước chặt chẽ:<br>• **Bước 1:** Đánh giá HSĐXKT $\rightarrow$ Thẩm định & Phê duyệt Danh sách nhà thầu đạt kỹ thuật $\rightarrow$ Công khai trên Mạng Đấu thầu quốc gia.<br>• **Bước 2:** Mở HSĐXTC $\rightarrow$ Đánh giá tài chính $\rightarrow$ Xếp hạng nhà thầu $\rightarrow$ Mời thương thảo. |
-| **7. Tính bảo mật giá & Tính khách quan** | Giá dự thầu được biết ngay từ đầu, Tổ chuyên gia chịu áp lực so sánh giá trong quá trình chấm điểm. | Giá dự thầu được bảo mật tuyệt đối trong quá trình chấm kỹ thuật. Điểm kỹ thuật hoàn toàn độc lập, khách quan, không bị định kiến bởi giá cao hay thấp. |
-| **8. Thời gian & Thủ tục hành chính** | Nhanh hơn, ít bước hành chính hơn (đánh giá tối đa 45 ngày; gói quy mô nhỏ 25 ngày). | Dài hơn, phát sinh thêm thủ tục thẩm định và ban hành Quyết định phê duyệt Danh sách nhà thầu đạt yêu cầu kỹ thuật trước khi mở túi tài chính. |
+| **3. Phạm vi áp dụng** | • Gói thầu xây lắp, mua sắm hàng hóa, phi tư vấn, hỗn hợp thông thường (không đòi hỏi kỹ thuật cao).<br>• Chào hàng cạnh tranh, chỉ định thầu, mua sắm trực tiếp. | • **Gói thầu Cung cấp dịch vụ tư vấn** (Bắt buộc 100% khi đấu thầu rộng rãi, hạn chế).<br>• Gói thầu xây lắp, hàng hóa, phi tư vấn, hỗn hợp **đòi hỏi kỹ thuật cao** theo pháp luật KH&CN. |
+| **4. Quy cách nộp hồ sơ** | Nhà thầu nộp **01 bộ hồ sơ duy nhất**, đề xuất kỹ thuật và đề xuất tài chính đóng chung trong một túi hồ sơ. | Nhà thầu nộp đồng thời nhưng **tách riêng biệt thành 02 túi hồ sơ độc lập**: HSĐXKT và HSĐXTC. |
+| **5. Quy trình mở thầu** | Mở thầu 01 lần duy nhất ngay sau đóng thầu, công khai đồng thời nội dung kỹ thuật và giá dự thầu của tất cả nhà thầu. | Mở thầu 02 lần độc lập: Lần 1 chỉ mở HSĐXKT (túi tài chính khóa bảo mật); Lần 2 chỉ mở HSĐXTC của nhà thầu **đạt yêu cầu kỹ thuật**. |
+| **6. Trình tự đánh giá** | Tuần tự hoặc theo phương pháp xếp hạng trước, đánh giá chi tiết sau. | Đánh giá HSĐXKT -> Phê duyệt danh sách đạt kỹ thuật -> Mở HSĐXTC -> Xếp hạng nhà thầu -> Mời thương thảo. |
+| **7. Tính bảo mật giá** | Giá dự thầu được công khai ngay từ đầu. | Giá dự thầu được bảo mật tuyệt đối trong quá trình chấm điểm kỹ thuật. |
+| **8. Thời gian thực hiện** | Nhanh hơn, ít bước hành chính hơn (tối đa 45 ngày; gói quy mô nhỏ 25 ngày). | Dài hơn do phát sinh thêm thủ tục thẩm định và phê duyệt danh sách nhà thầu đạt yêu cầu kỹ thuật trước khi mở túi tài chính. |
 
----
-
-### Lưu ý kiểm soát nghiệp vụ quan trọng cho Ban Quản lý Dự án (PMU):
-
-1. **Tuyệt đối không áp dụng sai phương thức lựa chọn nhà thầu:**
-   - Đối với **Gói thầu tư vấn** (khảo sát, thiết kế, giám sát, quản lý dự án...): Khi tổ chức đấu thầu rộng rãi hoặc đấu thầu hạn chế, **bắt buộc 100% phải áp dụng phương thức một giai đoạn hai túi hồ sơ (Điều 31)**. Tuyệt đối không được phê duyệt kế hoạch lựa chọn nhà thầu áp dụng 1GĐ 1THS cho gói thầu tư vấn đấu thầu rộng rãi.
-   - Đối với gói thầu xây lắp, mua sắm hàng hóa thông thường: Phải áp dụng 1GĐ 1THS (Điều 30) để rút ngắn thời gian và đơn giản hóa thủ tục. Chỉ áp dụng 1GĐ 2THS khi gói thầu có yêu cầu kỹ thuật cao theo quy chuẩn/tiêu chuẩn đặc thù.
-2. **Cơ chế kiểm soát mở thầu trên Hệ thống mạng đấu thầu quốc gia:**
-   - Trong phương thức 1GĐ 2THS, Bên mời thầu chỉ được phép mở HSĐXTC sau khi Chủ đầu tư đã ký ban hành Quyết định phê duyệt danh sách nhà thầu đáp ứng yêu cầu kỹ thuật và đăng tải đầy đủ quyết định này lên hệ thống.
-3. **Tránh nhầm lẫn với Phương thức Hai giai đoạn (Điều 32, Điều 33):**
-   - Phương thức **Một giai đoạn** (Điều 30, 31): Đã có hồ sơ thiết kế, yêu cầu kỹ thuật đầy đủ, nhà thầu nộp ngay đề xuất giá từ đầu.
-   - Phương thức **Hai giai đoạn** (Điều 32, 33): Chỉ áp dụng cho gói thầu mua sắm, xây lắp, hỗn hợp có quy mô lớn, kỹ thuật công nghệ mới mà **chưa xác định được chính xác yêu cầu kỹ thuật cụ thể** tại thời điểm mời thầu (Giai đoạn 1 chưa nộp giá dự thầu, sang Giai đoạn 2 mới nộp giá).`;
+### Lưu ý thực tế cho PMU
+1. Gói thầu tư vấn (khảo sát, thiết kế, giám sát, QLDA...): Bắt buộc 100% phải áp dụng phương thức một giai đoạn hai túi hồ sơ khi đấu thầu rộng rãi hoặc hạn chế. Tuyệt đối không phê duyệt KHLCNT áp dụng 1GĐ 1THS cho gói thầu tư vấn.
+2. Gói thầu xây lắp, mua sắm hàng hóa thông thường: Phải áp dụng 1GĐ 1THS để rút ngắn thời gian, đẩy nhanh tiến độ giải ngân. Chỉ áp dụng 1GĐ 2THS khi gói thầu có yêu cầu kỹ thuật cao đặc thù.`;
     }
 
     // Specialized Handler for Concrete Works Acceptance Checklist (Nghiệm thu công tác bê tông - TCVN 4453:1995 & NĐ 207/2026)
