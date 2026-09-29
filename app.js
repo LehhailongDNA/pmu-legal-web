@@ -1038,11 +1038,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const phrases = [];
     // Extract domain compound phrases first so multi-word terms are preserved
     const DOMAIN_COMPOUNDS = [
-      "tư vấn giám sát", "nhà thầu giám sát", "giám sát thi công", "hợp đồng giám sát",
-      "giám sát tác giả", "tư vấn thiết kế", "nhà thầu thiết kế", "tư vấn thẩm tra",
-      "thẩm tra thiết kế", "thẩm tra dự toán", "điều kiện khởi công", "thông báo khởi công",
-      "chỉ định thầu", "chỉ định thầu rút gọn", "đánh giá e-hsdt", "tận thu khoáng sản",
-      "hệ thống điều hòa", "điều hòa trung tâm", "nghiệm thu lắp đặt", "chạy thử liên động"
+      "hồ sơ quản lý chất lượng", "quản lý chất lượng", "hồ sơ hoàn thành công trình",
+      "hồ sơ hoàn thành", "hồ sơ nghiệm thu", "tư vấn giám sát", "nhà thầu giám sát",
+      "giám sát thi công", "hợp đồng giám sát", "giám sát tác giả", "tư vấn thiết kế",
+      "nhà thầu thiết kế", "tư vấn thẩm tra", "thẩm tra thiết kế", "thẩm tra dự toán",
+      "điều kiện khởi công", "thông báo khởi công", "chỉ định thầu", "chỉ định thầu rút gọn",
+      "đánh giá e-hsdt", "tận thu khoáng sản", "hệ thống điều hòa", "điều hòa trung tâm",
+      "nghiệm thu lắp đặt", "chạy thử liên động"
     ];
     DOMAIN_COMPOUNDS.forEach(dc => {
       if (clean.includes(dc)) phrases.push(dc);
@@ -1453,25 +1455,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const defaultSystemPrompts = {
     legal: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế.
 
-Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
+XƯNG HÔ VÀ PHONG CÁCH:
+- Giữ phong cách trao đổi kỹ thuật chuyên nghiệp, tự nhiên, nhã nhặn, tôn trọng giữa các đồng nghiệp trong ngành xây dựng.
+- Tuyệt đối KHÔNG dùng các đại từ xưng hô trịch thượng hay sỗ sàng như "Ông", "Tôi", "Tôi nhắc ông", "Ông phải làm rõ". Hãy đi thẳng vào nội dung chuyên môn: "Về vấn đề này...", "Khi thực hiện...", "Hồ sơ gồm...", "PMU và nhà thầu cần lưu ý...".
+- Đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
+- Tránh lạm dụng format danh sách liệt kê (bullet points) cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
 
-Tránh lạm dụng format danh sách liệt kê (bullet points) cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
-
-KHỐNG CHẾ MÔ HÌNH CHÍNH QUYỀN ĐỊA PHƯƠNG (BẮT BUỘC TUÂN THỦ):
-Hiện nay hệ thống chính quyền địa phương chỉ có 02 cấp: cấp Tỉnh/Thành phố trực thuộc trung ương và cấp Phường/Xã. Hoàn toàn KHÔNG CÒN cấp huyện (quận, huyện, thị xã). Tuyệt đối KHÔNG viện dẫn hoặc gán thẩm quyền cho cấp huyện, UBND cấp huyện hay phòng ban chuyên môn cấp huyện trong mọi thủ tục, cấp phép hay tiếp nhận thông báo. Mọi thẩm quyền thuộc về cấp Tỉnh hoặc cấp Phường/Xã theo phân cấp.
+LƯU Ý VỀ MÔ HÌNH CHÍNH QUYỀN 2 CẤP:
+Hiện nay hệ thống chính quyền địa phương chỉ có 02 cấp: cấp Tỉnh/Thành phố trực thuộc trung ương và cấp Phường/Xã (không còn cấp huyện). CHỈ ÁP DỤNG LƯU Ý NÀY khi câu hỏi hoặc ngữ cảnh liên quan trực tiếp đến thẩm quyền hành chính, cơ quan phê duyệt, cấp phép, kiểm tra nghiệm thu. TUYỆT ĐỐI KHÔNG tự tiện chèn câu giảng đạo "hiện nay không còn cấp huyện" vào những câu hỏi kỹ thuật, hồ sơ quản lý chất lượng hay thủ tục không liên quan.
 
 NGUYÊN TẮC:
-1. Giọng điệu tự nhiên như người đang gõ phím trao đổi công việc, có nhận định rõ ràng, đi thẳng vào trọng tâm vấn đề.
+1. Giọng điệu tự nhiên, lịch thiệp, đi thẳng vào trọng tâm chuyên môn.
 2. Tuyệt đối không sử dụng icon hay emoji nào trong toàn bộ câu trả lời.
-3. Không ép buộc cấu trúc tiêu đề khuôn mẫu nếu không cần thiết; lồng ghép viện dẫn văn bản, số Điều/Khoản tự nhiên vào câu nói để người đọc nắm ngay bản chất pháp lý.
-4. Chỉ lập bảng khi cần so sánh đa tiêu chí, và chỉ dùng gạch đầu dòng khi liệt kê các điều kiện hoặc quy trình bắt buộc riêng rẽ.
-5. Không sử dụng ký hiệu toán học chứa dấu dollar ($). Dùng các ký hiệu thông thường như ≤, ≥, ±, m², m³.`,
+3. Lồng ghép viện dẫn văn bản, số Điều/Khoản tự nhiên vào câu nói để người đọc nắm ngay bản chất pháp lý.
+4. Không sử dụng ký hiệu toán học chứa dấu dollar ($). Dùng các ký hiệu thông thường như ≤, ≥, ±, m², m³.`,
 
     verifier: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong công tác thẩm tra hồ sơ pháp lý dự án.
 
-Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
-
-KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã. Tuyệt đối không viện dẫn cấp huyện hay UBND huyện.
+XƯNG HÔ VÀ PHONG CÁCH:
+- Trao đổi lịch sự, tôn trọng, đi thẳng vào chuyên môn, không xưng hô "Ông - Tôi" trịch thượng.
+- Đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
+- LƯU Ý VỀ MÔ HÌNH CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có Tỉnh/Thành phố và Phường/Xã. Chỉ đề cập khi câu hỏi liên quan đến thẩm quyền phê duyệt/cấp phép.
 
 NGUYÊN TẮC:
 1. Không dùng bất kỳ icon hay emoji nào.
@@ -1480,9 +1484,9 @@ NGUYÊN TẮC:
 
     technical: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế về mặt kỹ thuật, quy chuẩn và tiêu chuẩn xây dựng.
 
-Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
-
-KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã.
+XƯNG HÔ VÀ PHONG CÁCH:
+- Đi thẳng vào phân tích kỹ thuật, không xưng hô "Ông - Tôi".
+- Đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng.
 
 NGUYÊN TẮC:
 1. Tuyệt đối không dùng icon hay emoji.
@@ -1491,25 +1495,23 @@ NGUYÊN TẮC:
 
     cost: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong quản lý chi phí, dự toán và định mức xây dựng.
 
-Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
-
-KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã.
+XƯNG HÔ VÀ PHONG CÁCH:
+- Trao đổi lịch thiệp, đi thẳng vào số liệu và điều khoản, không xưng hô "Ông - Tôi".
+- Lập luận dứt khoát, gắn liền với Nghị định 206/2026/NĐ-CP và bài toán thực tế của Ban QLDA.
 
 NGUYÊN TẮC:
 1. Không dùng icon/emoji.
-2. Lập luận dứt khoát, gắn liền với Nghị định 206/2026/NĐ-CP và bài toán thực tế của Ban QLDA.
-3. Không dùng ký hiệu dollar ($).`,
+2. Không dùng ký hiệu dollar ($).`,
 
     bidding: `Hãy trả lời như một người đồng nghiệp có kinh nghiệm đang trò chuyện trực tiếp qua Slack/chat nội bộ: thẳng thắn, ngắn gọn, có chính kiến và thực tế trong lĩnh vực đấu thầu.
 
-Hãy đan xen giữa câu dài diễn giải ý phức tạp và các câu ngắn dứt khoát. Không bắt buộc mọi ý đều phải chia thành gạch đầu dòng. Tránh lạm dụng format danh sách liệt kê cho những câu trả lời chỉ cần 1-2 đoạn văn đối thoại tự nhiên.
-
-KHỐNG CHẾ CHÍNH QUYỀN 2 CẤP: Không còn cấp huyện, chỉ có cấp Tỉnh/Thành phố và cấp Phường/Xã.
+XƯNG HÔ VÀ PHONG CÁCH:
+- Trao đổi lịch sự, khách quan, không xưng hô "Ông - Tôi".
+- Đánh giá tính hợp lệ, rủi ro hạn chế cạnh tranh rõ ràng theo Luật Đấu thầu và các Nghị định hướng dẫn.
 
 NGUYÊN TẮC:
 1. Không dùng icon/emoji.
-2. Đánh giá tính hợp lệ, rủi ro hạn chế cạnh tranh rõ ràng, có chính kiến dứt khoát theo Luật Đấu thầu 22/2023 và NĐ 214/2025, NĐ 274/2026.
-3. Không dùng ký hiệu dollar ($).`
+2. Không dùng ký hiệu dollar ($).`
   };
 
   /**
@@ -1565,6 +1567,9 @@ NGUYÊN TẮC:
       } else if (/tư vấn giám sát|nhà thầu giám sát|giám sát thi công|đơn vị giám sát|tổ chức giám sát|kỹ sư giám sát|nhiệm vụ giám sát|trách nhiệm giám sát/i.test(qLower) || (/giám sát/i.test(qLower) && (/hợp đồng/i.test(qLower) || /nội dung/i.test(qLower)))) {
         domain = "CONSTRUCTION_SUPERVISION";
         domainName = "Tư Vấn Giám Sát Thi Công Xây Dựng";
+      } else if (/hồ sơ quản lý chất lượng|quản lý chất lượng.*hồ sơ|hồ sơ chất lượng|hồ sơ hoàn thành công trình|danh mục hồ sơ hoàn thành/i.test(qLower) || (/hồ sơ/i.test(qLower) && /chất lượng/i.test(qLower))) {
+        domain = "QUALITY_MANAGEMENT_DOSSIER";
+        domainName = "Hồ Sơ Quản Lý Chất Lượng & Hoàn Thành Công Trình";
       }
 
       // Phân loại Ý định (Intent Classification)
@@ -1663,6 +1668,15 @@ NGUYÊN TẮC:
           requiredArticles: [63, 20, 29]
         };
       }
+      if (domain === "QUALITY_MANAGEMENT_DOSSIER" || (/hồ sơ/i.test(qLower) && (/quản lý chất lượng/i.test(qLower) || /chất lượng/i.test(qLower) || /hoàn thành/i.test(qLower)))) {
+        return {
+          action: "SPECIALIZED_WORKFLOW",
+          workflowId: "QUALITY_MANAGEMENT_DOSSIER",
+          domain: "QUALITY_MANAGEMENT_DOSSIER",
+          targetDocs: ["207/2026", "135/2025"],
+          requiredArticles: ["PL VII", 28, 14, 22, 23, 24]
+        };
+      }
 
       // Điều hướng tìm kiếm & tổng hợp thông thường theo Domain
       return {
@@ -1726,6 +1740,11 @@ NGUYÊN TẮC:
           ((c.docCode || "").includes("339/2026") && c.articleNumber == 29)
         );
         domainScore = hasSupervision ? 0.50 : 0.1;
+      } else if (domain === "QUALITY_MANAGEMENT_DOSSIER") {
+        const hasQuality = candidates.some(c => 
+          (c.docCode || "").includes("207/2026") && ((c.articleNumber || "").toString().includes("PL VII") || c.articleNumber == 28)
+        );
+        domainScore = hasQuality ? 0.50 : 0.1;
       } else {
         domainScore = 0.35;
       }
@@ -1753,6 +1772,7 @@ NGUYÊN TẮC:
       if (state.domain === "HVAC_MEP_ACCEPTANCE" && !/điều hòa|thông gió|chạy thử|5639|207\/2026|áp lực|chân không|chiller/i.test(text)) return false;
       if (state.domain === "VERIFICATION_REPORT_TEMPLATES" && !/mẫu số 02|mẫu số 11|mẫu số 14|217\/2026|phụ lục i|thẩm tra/i.test(text)) return false;
       if (state.domain === "CONSTRUCTION_SUPERVISION" && !/giám sát|tư vấn giám sát|điều 63|điều 20|207\/2026|135\/2025|nghiệm thu|chất lượng/i.test(text)) return false;
+      if (state.domain === "QUALITY_MANAGEMENT_DOSSIER" && !/hồ sơ|chất lượng|hoàn thành|phụ lục vii|điều 28|207\/2026|nghiệm thu/i.test(text)) return false;
 
       // Chốt chặn 3: Bắt buộc có cấu trúc bảng đối chiếu, danh sách hành động hoặc đối thoại nghiệp vụ rõ ràng
       const hasStructure = text.includes("|") || /quy trình|các bước|bước \d+|lưu ý|trách nhiệm|khuyến nghị|theo quy định|căn cứ|thực tế|cần|phải|trường hợp|nguyên tắc/i.test(text);
@@ -1879,6 +1899,15 @@ NGUYÊN TẮC:
               }
               if (lowerDocCode.includes("339/2026") && art.number == 29) artScore += 4500;
               if (lowerDocCode.includes("214/2025") || (lowerDocCode.includes("22/2023") && !clean.includes("đấu thầu")) || isDocTCVN) artScore -= 8500;
+            } else if (targetDomain === "QUALITY_MANAGEMENT_DOSSIER") {
+              if (lowerDocCode.includes("207/2026")) {
+                if ((art.number || "").toString().includes("PL VII") || artTitleLower.includes("phụ lục vii") || artTitleLower.includes("hồ sơ hoàn thành") || artSnippetLower.includes("hồ sơ quản lý thi công")) artScore += 9500;
+                if (art.number == 28) artScore += 8500;
+                if ([14, 22, 23, 24, 7, 8].includes(Number(art.number)) || (art.number || "").toString().startsWith("PL II")) artScore += 5000;
+                if (art.number == 38 && !clean.includes("bảo trì")) artScore -= 8000;
+              }
+              if (lowerDocCode.includes("41/2026") && !clean.includes("nhập khẩu")) artScore -= 8000;
+              if (isDocTCVN) artScore -= 8000;
             }
           }
 
@@ -2085,6 +2114,27 @@ NGUYÊN TẮC:
             }
             if (lowerDocCode.includes("214/2025") || (lowerDocCode.includes("22/2023") && !clean.includes("đấu thầu"))) {
               artScore -= 9500;
+            }
+          }
+
+          // Booster for Quality Management Dossier & Completion Dossier (NĐ 207/2026 Điều 28, Phụ lục VII Mục III; Phụ lục IIa, IIb)
+          if ((clean.includes("quản lý chất lượng") || clean.includes("chất lượng")) && (clean.includes("hồ sơ") || clean.includes("danh mục") || clean.includes("tài liệu") || clean.includes("bao gồm"))) {
+            if (lowerDocCode.includes("207/2026")) {
+              if ((art.number || "").toString().includes("PL VII") || artTitleLower.includes("phụ lục vii") || artTitleLower.includes("hồ sơ hoàn thành") || artSnippetLower.includes("hồ sơ quản lý thi công")) {
+                artScore += 9500;
+              }
+              if (art.number == 28) {
+                artScore += 8500;
+              }
+              if ([14, 22, 23, 24, 7, 8].includes(Number(art.number)) || (art.number || "").toString().startsWith("PL II")) {
+                artScore += 5000;
+              }
+              if (art.number == 38 && !clean.includes("bảo trì")) {
+                artScore -= 8000;
+              }
+            }
+            if (lowerDocCode.includes("41/2026") && !clean.includes("nhập khẩu")) {
+              artScore -= 8000;
             }
           }
 
@@ -3402,6 +3452,51 @@ Về chế độ thông tin báo cáo gửi Chủ đầu tư, TVGS bắt buộc 
 - Báo cáo hoàn thành công tác giám sát thi công xây dựng gói thầu hoặc toàn bộ công trình theo Phụ lục IVb Nghị định số 207/2026/NĐ-CP để phục vụ công tác kiểm tra nghiệm thu của cơ quan chuyên môn về xây dựng (Sở Xây dựng / cơ quan quản lý chuyên ngành).
 
 Lưu ý thực tế: Theo khoản 2 Điều 63 Luật Xây dựng 135/2025/QH15 và Điều 29 Nghị định 339/2026/NĐ-CP, nếu TVGS buông lỏng quản lý, ký khống khối lượng, nghiệm thu công trình không đạt chuẩn hoặc không kiểm tra năng lực nhà thầu phụ, đơn vị tư vấn không những bị phạt tiền từ 30 đến 60 triệu đồng mà còn phải bồi thường toàn bộ thiệt hại xảy ra và bị công khai vi phạm, tước quyền tham gia đấu thầu các dự án tiếp theo.`;
+    }
+
+    // Specialized Handler for Quality Management Dossier & Completion Dossier (Điều 28 & Phụ lục VII Mục III NĐ 207/2026/NĐ-CP)
+    if (/hồ sơ/i.test(qLower) && (/quản lý chất lượng/i.test(qLower) || (/chất lượng/i.test(qLower) && (/bao gồm/i.test(qLower) || /tài liệu/i.test(qLower) || /hoàn thành/i.test(qLower) || /thi công/i.test(qLower))))) {
+      return `### Thành phần hồ sơ quản lý chất lượng thi công xây dựng công trình
+
+Trong hoạt động xây dựng, khi nói đến "Hồ sơ quản lý chất lượng" thì các Ban QLDA, Tư vấn giám sát và Nhà thầu thi công đều hiểu là tập hồ sơ hình thành xuyên suốt giai đoạn thi công xây dựng phục vụ nghiệm thu chuyển bước và nghiệm thu hoàn thành bàn giao công trình đưa vào khai thác sử dụng.
+
+Căn cứ pháp lý chuẩn xác và trực tiếp nhất hiện nay là **Điều 28 và Mục III Phụ lục VII Nghị định số 207/2026/NĐ-CP** (Hồ sơ quản lý thi công xây dựng công trình, thuộc Danh mục hồ sơ hoàn thành công trình).
+
+Theo quy định, một bộ hồ sơ quản lý chất lượng thi công đầy đủ bao gồm 5 nhóm tài liệu chính sau:
+
+#### 1. Hồ sơ căn cứ pháp lý hiện trường và quản lý thiết kế
+- Quyết định phê duyệt thiết kế xây dựng công trình, chỉ dẫn kỹ thuật kèm danh mục hồ sơ bản vẽ thiết kế đã được phê duyệt.
+- Danh mục các thay đổi thiết kế trong quá trình thi công xây dựng và các văn bản thẩm định, phê duyệt của cấp có thẩm quyền.
+- Biên bản bàn giao tim mốc định vị công trình, hệ thống mốc cao độ và trắc đạc hiện trường giữa Chủ đầu tư và Nhà thầu.
+- Kế hoạch, biện pháp kiểm tra, kiểm soát chất lượng thi công xây dựng và biện pháp bảo đảm an toàn lao động, vệ sinh môi trường đã được TVGS và Chủ đầu tư chấp thuận.
+
+#### 2. Hồ sơ kiểm soát chất lượng vật tư, vật liệu và thiết bị đầu vào (Điều 14 NĐ 207)
+Mọi vật tư, vật liệu hay thiết bị đưa vào lắp đặt bắt buộc phải có đầy đủ chứng chỉ nguồn gốc và kết quả thí nghiệm:
+- Chứng chỉ xuất xưởng của nhà sản xuất, chứng nhận hợp chuẩn, chứng nhận hợp quy và thông báo tiếp nhận hồ sơ công bố hợp quy của cơ quan chuyên ngành; chứng nhận xuất xứ (CO), chứng nhận chất lượng (CQ) và nhãn mác hàng hóa theo quy định của Luật Chất lượng sản phẩm hàng hóa.
+- Phiếu kết quả thí nghiệm kiểm tra chất lượng vật liệu đầu vào do phòng thí nghiệm chuyên ngành xây dựng (LAS-XD) hợp chuẩn thực hiện (kéo uốn thép, nén dập đá, kiểm tra xi măng, cát, gạch...).
+- Kết quả thí nghiệm đối chứng, kiểm định chất lượng công trình hoặc thử nghiệm khả năng chịu lực của kết cấu (nếu có, theo Điều 8 Nghị định 207/2026/NĐ-CP).
+- Hồ sơ quản lý chất lượng và lý lịch của thiết bị công nghệ, thiết bị công trình lắp đặt vào dự án.
+
+#### 3. Nhật ký thi công và hệ thống biên bản nghiệm thu (Điều 22, Điều 23 và Phụ lục IIa)
+Đây là phần tài liệu dày và quan trọng nhất của hồ sơ chất lượng:
+- **Nhật ký thi công xây dựng công trình:** Do nhà thầu thi công lập và TVGS xác nhận hàng ngày theo Phụ lục IIa Nghị định 207/2026/NĐ-CP (ghi chép liên tục về thời tiết, số lượng nhân sự, thiết bị, diễn biến thi công, kết quả nghiệm thu và sự cố nếu có).
+- **Biên bản nghiệm thu công việc xây dựng (Điều 22):** Nghiệm thu từng công việc riêng lẻ, đặc biệt là các công việc bị che khuất (như nghiệm thu hố móng, cốt thép, đường ống luồn âm sàn trước khi đổ bê tông). Kèm theo biên bản là bản vẽ hoàn công công việc xây dựng và phiếu yêu cầu nghiệm thu.
+- **Biên bản nghiệm thu giai đoạn thi công hoặc bộ phận công trình (Điều 23):** Nghiệm thu phần ngầm (cọc, móng), nghiệm thu phần thân (kết cấu khung cột sàn), nghiệm thu phần hoàn thiện và nghiệm thu các hệ thống cơ điện (MEP).
+- Kết quả đo đạc trắc đạc hoàn công, kết quả quan trắc công trình (quan trắc lún, nghiêng, chuyển vị) trong quá trình thi công theo quy định tại Điều 7 Nghị định 207/2026/NĐ-CP.
+
+#### 4. Bản vẽ hoàn công và quy trình vận hành bảo trì (Phụ lục IIb và Điều 34)
+- **Bản vẽ hoàn công:** Toàn bộ tập bản vẽ hoàn công các bộ môn (kiến trúc, kết cấu, MEP, hạ tầng) thể hiện đúng kích thước, cao độ và vị trí thi công thực tế; đóng dấu bản vẽ hoàn công theo mẫu tại Phụ lục IIb Nghị định số 207/2026/NĐ-CP có đầy đủ chữ ký của Chỉ huy trưởng công trường, Giám sát trưởng và đại diện Chủ đầu tư.
+- Quy trình vận hành, khai thác sử dụng công trình và Quy trình bảo trì công trình xây dựng (Điều 34 Nghị định 207/2026/NĐ-CP).
+
+#### 5. Văn bản nghiệm thu chuyên ngành và chấp thuận của cơ quan nhà nước
+Để công trình đủ điều kiện đưa vào sử dụng theo Điều 29 Nghị định 207/2026/NĐ-CP, hồ sơ chất lượng phải chốt bằng các văn bản pháp lý chuyên ngành:
+- Văn bản chấp thuận kết quả nghiệm thu về phòng cháy và chữa cháy của cơ quan Cảnh sát PCCC.
+- Giấy phép môi trường hoặc văn bản chấp thuận công trình bảo vệ môi trường theo Luật Bảo vệ môi trường.
+- Giấy chứng nhận kiểm định an toàn kỹ thuật đối với các thiết bị có yêu cầu nghiêm ngặt về an toàn lao động (thang máy, cẩu trục, bình chịu áp lực...).
+- Biên bản nghiệm thu hoàn thành hạng mục công trình hoặc toàn bộ công trình xây dựng giữa Chủ đầu tư và các nhà thầu (Điều 24 Nghị định 207/2026/NĐ-CP).
+- **Văn bản thông báo kết quả kiểm tra công tác nghiệm thu** của cơ quan chuyên môn về xây dựng có thẩm quyền (Sở Xây dựng cấp Tỉnh hoặc cơ quan quản lý chuyên ngành theo phân cấp, quy định tại Điều 25, Điều 27 Nghị định 207/2026/NĐ-CP và khoản 4 Điều 57 Luật Xây dựng số 135/2025/QH15).
+
+Chủ đầu tư có trách nhiệm tổ chức lập, tập hợp đầy đủ 1 bộ hồ sơ hoàn thành gốc để lưu trữ vĩnh viễn, còn các nhà thầu lưu trữ phần hồ sơ liên quan đến công việc do mình thực hiện theo Điều 28 Nghị định 207/2026/NĐ-CP.`;
     }
 
     // Default dynamic synthesis report
