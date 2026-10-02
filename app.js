@@ -180,6 +180,55 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Helper: Fetch target doc with candidate aliases fallback
+  async function fetchTargetDoc(docId) {
+    if (!docId) return null;
+    if (docCache.has(docId)) return docCache.get(docId);
+
+    const candidates = [docId];
+    const stripped = docId.replace(/^(luat|nghi_dinh|thong_tu|vbhn)[-_]/i, "");
+    if (stripped !== docId && !candidates.includes(stripped)) candidates.push(stripped);
+    if (!docId.startsWith("luat_")) candidates.push(`luat_${stripped}`);
+    if (!docId.startsWith("nghi_dinh_")) candidates.push(`nghi_dinh_${stripped}`);
+    if (!docId.startsWith("thong_tu_")) candidates.push(`thong_tu_${stripped}`);
+
+    if (searchIndex && Array.isArray(searchIndex)) {
+      const strippedClean = stripped.replace(/[^a-z0-9]/gi, "").toLowerCase();
+      const matched = searchIndex.find(d => {
+        if (!d) return false;
+        if (d.id === docId || d.id === stripped) return true;
+        const dClean = (d.id || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+        if (dClean && (dClean === strippedClean || dClean.includes(strippedClean) || strippedClean.includes(dClean))) return true;
+        const codeClean = (d.docCode || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+        if (codeClean && (codeClean === strippedClean || codeClean.includes(strippedClean) || strippedClean.includes(codeClean))) return true;
+        return false;
+      });
+      if (matched && matched.id && !candidates.includes(matched.id)) {
+        candidates.push(matched.id);
+      }
+    }
+
+    for (const c of candidates) {
+      if (docCache.has(c)) {
+        const found = docCache.get(c);
+        docCache.set(docId, found);
+        return found;
+      }
+      try {
+        const res = await fetch(`./data/docs/${encodeURIComponent(c)}.json`);
+        if (res.ok) {
+          const data = await res.json();
+          docCache.set(c, data);
+          docCache.set(docId, data);
+          return data;
+        }
+      } catch (err) {
+        // continue
+      }
+    }
+    return null;
+  }
+
   // 2. Load Single Document
   async function loadDocument(docId, targetArticleId = null, targetClause = null, targetPoint = null) {
     try {
@@ -196,13 +245,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       docContent.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Đang tải văn bản...</p></div>`;
 
-      let docData = docCache.get(docId);
-      if (!docData) {
-        const res = await fetch(`./data/docs/${encodeURIComponent(docId)}.json`);
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-        docData = await res.json();
-        docCache.set(docId, docData);
-      }
+      let docData = await fetchTargetDoc(docId);
+      if (!docData) throw new Error(`Không tìm thấy dữ liệu văn bản: ${docId}`);
 
       currentDoc = docData;
       currentDoc.htmlContent = currentDoc.htmlContent || "";
@@ -679,13 +723,8 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchReference(docId, article, clause, point) {
     if (!docId) return null;
     try {
-      let targetDoc = docCache.get(docId);
-      if (!targetDoc) {
-        const res = await fetch(`./data/docs/${encodeURIComponent(docId)}.json`);
-        if (!res.ok) return null;
-        targetDoc = await res.json();
-        docCache.set(docId, targetDoc);
-      }
+      let targetDoc = await fetchTargetDoc(docId);
+      if (!targetDoc) return null;
 
       if (!article) {
         return {
@@ -1301,6 +1340,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // 5. Multi-Persona AI Chat Assistant (100% Client-Side with User API Key)
   function setPersona(personaKey) {
     activePersona = personaKey;
+    if (typeof chatSessionHistory !== "undefined") chatSessionHistory.length = 0;
+    if (typeof CaseWorkingMemory !== "undefined") CaseWorkingMemory.reset();
     const cfg = personaConfig[personaKey] || personaConfig.legal;
 
     const aiNotice = (!aiConfig.apiKey && aiConfig.provider !== "ollama") ? `
@@ -1351,6 +1392,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   clearChatBtn.addEventListener("click", () => {
+    if (typeof chatSessionHistory !== "undefined") chatSessionHistory.length = 0;
+    if (typeof CaseWorkingMemory !== "undefined") CaseWorkingMemory.reset();
     setPersona(activePersona);
   });
 
@@ -1481,6 +1524,152 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
     cost: `${BASE_AGENT_PROMPT}\n\n[Trọng tâm nghiệp vụ: Quản lý chi phí đầu tư xây dựng, định mức, đơn giá và Nghị định 206/2026/NĐ-CP]`,
     bidding: `${BASE_AGENT_PROMPT}\n\n[Trọng tâm nghiệp vụ: Đấu thầu, mua sắm công, hồ sơ mời thầu và đánh giá E-HSDT theo Luật Đấu thầu]`
   };
+
+  // ==========================================
+  // AGENT WORKING MEMORY & DOSSIER STATE (HINDSIGHT ARCHITECTURE)
+  // Duy trì ngữ cảnh vụ việc liên tục qua nhiều lượt trao đổi, bóc tách thực tế vụ việc (World Facts)
+  // và giải quyết hiện tượng đứt gãy ngữ cảnh khi người dùng bổ sung / phản biện tiếp nối.
+  // ==========================================
+  const CaseWorkingMemory = {
+    state: {
+      active: false,
+      packageName: null,       // Tên gói thầu: ví dụ "lập quy hoạch chi tiết dự án khai thác tuyển quặng"
+      packageType: null,       // "Dịch vụ tư vấn", "Xây lắp", "Dịch vụ phi tư vấn", "Mua sắm hàng hóa"
+      estimatedPrice: null,    // Giá dự toán: "3,5 tỷ đồng", "3.5 tỷ", "800 triệu"...
+      procurementMethod: null, // "Chỉ định thầu thông thường", "Chỉ định thầu rút gọn", "Đấu thầu rộng rãi"
+      legalBases: [],          // Các văn bản / điều khoản đã trích dẫn trong chuỗi hội thoại
+      recentTurns: []          // Lịch sử trao đổi tóm lược { userQuery, assistantSummary }
+    },
+
+    extractFacts(userText, assistantReply = "") {
+      if (!userText || typeof userText !== "string") return;
+      const text = userText.toLowerCase();
+
+      // 1. Nhận diện tên / nội dung gói thầu
+      const pkgMatch = userText.match(/gói thầu\s+([^,.;\n]+?)(?=\s+có giá|\s+giá dự toán|\s+dự toán|\s+thuộc|\s+áp dụng|$)/i);
+      if (pkgMatch) {
+        this.state.packageName = pkgMatch[1].trim();
+        this.state.active = true;
+      }
+
+      // 2. Phân loại dịch vụ gói thầu
+      if (/tư vấn|lập quy hoạch|thiết kế|thẩm tra|giám sát|khảo sát/i.test(text)) {
+        this.state.packageType = "Dịch vụ tư vấn";
+        this.state.active = true;
+      } else if (/xây lắp|thi công|xây dựng/i.test(text)) {
+        this.state.packageType = "Xây lắp";
+        this.state.active = true;
+      } else if (/phi tư vấn/i.test(text)) {
+        this.state.packageType = "Dịch vụ phi tư vấn";
+        this.state.active = true;
+      } else if (/mua sắm|hàng hóa/i.test(text)) {
+        this.state.packageType = "Mua sắm hàng hóa";
+        this.state.active = true;
+      }
+
+      // 3. Nhận diện giá dự toán / giá gói thầu (ví dụ 3,5 tỷ, 3.5 tỷ, 800 triệu, 500 triệu, 3 tỷ, 5 tỷ...)
+      const priceMatch = userText.match(/(\d+(?:[.,]\d+)?)\s*(tỷ(?:\s*đồng)?|triệu(?:\s*đồng)?|nghìn(?:\s*đồng)?|ngàn(?:\s*đồng)?|vnđ|đồng|\bđ\b(?!\w))/i);
+      if (priceMatch) {
+        this.state.estimatedPrice = priceMatch[0].trim();
+        this.state.active = true;
+      }
+
+      // 4. Nhận diện hình thức lựa chọn nhà thầu
+      if (/chỉ định thầu\s+rút gọn|chỉ định thầu\s+đơn giản/i.test(text)) {
+        this.state.procurementMethod = "Chỉ định thầu rút gọn / đơn giản";
+        this.state.active = true;
+      } else if (/chỉ định thầu\s+thông thường/i.test(text)) {
+        this.state.procurementMethod = "Chỉ định thầu thông thường";
+        this.state.active = true;
+      } else if (/chỉ định thầu/i.test(text)) {
+        if (!this.state.procurementMethod) this.state.procurementMethod = "Chỉ định thầu";
+        this.state.active = true;
+      } else if (/đấu thầu rộng rãi/i.test(text)) {
+        this.state.procurementMethod = "Đấu thầu rộng rãi";
+        this.state.active = true;
+      }
+
+      // 5. Bóc tách căn cứ pháp lý được nêu
+      const citationPatterns = [
+        /(?:điều|khoản|điểm|mục)\s+[\w\d]+/gi,
+        /(?:nghị\s*định|luật|thông\s*tư)\s+[\w\d/_-]+/gi,
+        /\b\d{1,4}\/\d{4}\/[a-zđ-]+/gi
+      ];
+      citationPatterns.forEach(pattern => {
+        const found = userText.match(pattern);
+        if (found) {
+          found.forEach(item => {
+            const clean = item.trim();
+            if (!this.state.legalBases.some(b => b.toLowerCase() === clean.toLowerCase())) {
+              this.state.legalBases.push(clean);
+            }
+          });
+          this.state.active = true;
+        }
+      });
+
+      // 6. Lưu tóm lược tiến trình hội thoại
+      if (assistantReply) {
+        const cleanAnswer = assistantReply.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+        const summary = cleanAnswer.slice(0, 350);
+        this.state.recentTurns.push({
+          userQuery: userText.trim(),
+          assistantSummary: summary
+        });
+        if (this.state.recentTurns.length > 5) {
+          this.state.recentTurns.shift();
+        }
+      }
+    },
+
+    getWorkingContextForPrompt() {
+      if (!this.state.active && this.state.recentTurns.length === 0) return "";
+      let s = "==================================================\n";
+      s += "HỒ SƠ VỤ VIỆC & TIẾN TRÌNH TRAO ĐỔI HIỆN HÀNH (AGENT WORKING MEMORY):\n";
+      if (this.state.packageName) s += `- Tên/nội dung gói thầu: ${this.state.packageName}\n`;
+      if (this.state.packageType) s += `- Phân loại gói thầu: ${this.state.packageType}\n`;
+      if (this.state.estimatedPrice) s += `- Giá trị / Dự toán gói thầu: ${this.state.estimatedPrice}\n`;
+      if (this.state.procurementMethod) s += `- Hình thức xem xét: ${this.state.procurementMethod}\n`;
+      if (this.state.legalBases.length > 0) s += `- Các căn cứ pháp lý đã viện dẫn: ${this.state.legalBases.slice(-6).join(", ")}\n`;
+
+      if (this.state.recentTurns.length > 0) {
+        s += "\nLỊCH SỬ TRAO ĐỔI TRƯỚC ĐÓ TRONG PHIÊN LÀM VIỆC:\n";
+        this.state.recentTurns.forEach((turn, idx) => {
+          s += `[Lượt ${idx + 1}] Người dùng hỏi/nêu: "${turn.userQuery}"\n`;
+          s += `[Lượt ${idx + 1}] Chuyên gia đã trả lời: "${turn.assistantSummary}..."\n`;
+        });
+      }
+
+      s += "\nNGUYÊN TẮC BẮT BUỘC DUY TRÌ TÍNH LIÊN TỤC VỤ VIỆC:\n";
+      s += "1. Xuyên suốt hồ sơ vụ việc: Khi người dùng đưa ra một điều khoản mới hoặc phản biện (ví dụ: 'Điều 4 nghị định 349 đã điều chỉnh mức chỉ định thầu'), bạn BẮT BUỘC phải đối chiếu ngay quy định mới đó với các thông số của hồ sơ đang xem xét (ví dụ: so sánh hạn mức mới 03 tỷ đồng của gói dịch vụ tư vấn theo Điều 4 NĐ 349 với giá dự toán 3,5 tỷ đồng của gói thầu lập quy hoạch chi tiết này).\n";
+      s += "2. Trả lời nhất quán và sắc bén: Làm rõ quy định mới vừa được bổ sung có hiệu lực thế nào, nhưng với giá gói thầu 3,5 tỷ thì vẫn vượt trần 03 tỷ, do đó kết luận về việc phải áp dụng chỉ định thầu theo trường hợp đặc thù (điểm e khoản 5 Điều 78 NĐ 214) và quy trình thông thường (Điều 79 NĐ 349) vẫn hoàn toàn chính xác.\n";
+      s += "3. TUYỆT ĐỐI KHÔNG trả lời tách rời ngữ cảnh như một câu hỏi độc lập mới.\n";
+      s += "==================================================";
+      return s;
+    },
+
+    getRetrievalKeywords() {
+      const kw = [];
+      if (this.state.packageType) kw.push(this.state.packageType);
+      if (this.state.packageName) kw.push(this.state.packageName);
+      if (this.state.estimatedPrice) kw.push(this.state.estimatedPrice);
+      return kw.join(" ");
+    },
+
+    reset() {
+      this.state = {
+        active: false,
+        packageName: null,
+        packageType: null,
+        estimatedPrice: null,
+        procurementMethod: null,
+        legalBases: [],
+        recentTurns: []
+      };
+    }
+  };
+
+  const chatSessionHistory = []; // Lưu các lượt trao đổi trong phiên: { role: 'user' | 'assistant', content: string }
 
   /**
    * LEGAL DECISION ENGINE (Kiến trúc Jev Engineering Practice)
@@ -1795,6 +1984,108 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
     const { clean, phrases, keywords } = extractSearchFeatures(query);
     const targetDomain = decision ? (decision.domain || decision) : null;
     const candidates = [];
+
+    // 0. Extract explicit statutory citations (e.g. "điều 5 nghị định 349", "khoản 5 điều 78 nghị định 214")
+    const explicitCitations = [];
+    const p1 = /(?:(?:điểm|điểm)\s+([a-zđ0-9]+)\s+)?(?:(?:khoản|khoản)\s+([0-9]+[a-z]?)\s+)?(?:Điều|Điều)\s+([0-9]+[a-z]?)[^,;.\n]*?(nghị\s*định|nđ|luật|thông\s*tư|tt|qcvn|tcvn)\s*(?:số\s*)?([0-9]+)(?:[\/_]([0-9]{4}))?/gi;
+    let citeMatch;
+    while ((citeMatch = p1.exec(query)) !== null) {
+      explicitCitations.push({
+        rawType: citeMatch[4],
+        point: citeMatch[1] || null,
+        clause: citeMatch[2] || null,
+        article: citeMatch[3] || null,
+        docNum: citeMatch[5],
+        docYear: citeMatch[6] || null
+      });
+    }
+
+    const p2 = /(nghị\s*định|nđ|luật|thông\s*tư|tt|qcvn|tcvn)\s*(?:số\s*)?([0-9]+)(?:[\/_]([0-9]{4}))?[^,;.\n]*?(?:(?:khoản|khoản)\s+([0-9]+[a-z]?)\s+)?(?:Điều|Điều)\s+([0-9]+[a-z]?)/gi;
+    while ((citeMatch = p2.exec(query)) !== null) {
+      if (!explicitCitations.some(c => c.docNum === citeMatch[2] && c.article === citeMatch[5])) {
+        explicitCitations.push({
+          rawType: citeMatch[1],
+          docNum: citeMatch[2],
+          docYear: citeMatch[3] || null,
+          clause: citeMatch[4] || null,
+          article: citeMatch[5] || null,
+          point: null
+        });
+      }
+    }
+
+    const p3 = /(nghị\s*định|nđ|thông\s*tư|tt)\s*(?:số\s*)?([0-9]+)(?:[\/_]([0-9]{4}))?/gi;
+    while ((citeMatch = p3.exec(query)) !== null) {
+      if (!explicitCitations.some(c => c.docNum === citeMatch[2])) {
+        explicitCitations.push({
+          rawType: citeMatch[1],
+          docNum: citeMatch[2],
+          docYear: citeMatch[3] || null,
+          article: null,
+          clause: null,
+          point: null
+        });
+      }
+    }
+
+    // Direct match for explicit statutory citations
+    for (const cite of explicitCitations) {
+      const numInt = parseInt(cite.docNum, 10);
+      const numPattern = new RegExp(`(?:^|[^0-9])0*${numInt}(?:$|[^0-9])`, "i");
+
+      const isND = /nghị\s*định|nđ/i.test(cite.rawType || "");
+      const isTT = /thông\s*tư|tt/i.test(cite.rawType || "");
+      const isLuat = /luật|bộ\s*luật/i.test(cite.rawType || "");
+
+      const matchedDocs = searchIndex.filter(d => {
+        const code = (d.docCode || "").toLowerCase();
+        const id = (d.id || "").toLowerCase();
+        const matchNum = numPattern.test(code) || numPattern.test(id);
+        if (!matchNum) return false;
+        if (isND && !/nd|nđ/i.test(code + id)) return false;
+        if (isTT && !/tt|thông/i.test(code + id)) return false;
+        if (isLuat && !/luat|qh/i.test(code + id)) return false;
+        return true;
+      });
+
+      for (const doc of matchedDocs) {
+        if (cite.article && doc.articles) {
+          const art = doc.articles.find(a => 
+            (a.number && a.number.toString().toLowerCase() === cite.article.toLowerCase()) ||
+            (a.rawNumber && a.rawNumber.toString().toLowerCase() === cite.article.toLowerCase())
+          );
+          if (art) {
+            candidates.push({
+              docId: doc.id,
+              docCode: doc.docCode,
+              docTitle: doc.title,
+              isTCVN: doc.scope === "tcvn",
+              articleNumber: art.number,
+              articleTitle: art.title,
+              snippet: art.snippet,
+              requestedClause: cite.clause,
+              requestedPoint: cite.point,
+              isExactMatch: true,
+              score: 100000 + (cite.clause ? 5000 : 0)
+            });
+          }
+        } else if (doc.articles && doc.articles.length > 0) {
+          doc.articles.slice(0, 3).forEach(art => {
+            candidates.push({
+              docId: doc.id,
+              docCode: doc.docCode,
+              docTitle: doc.title,
+              isTCVN: doc.scope === "tcvn",
+              articleNumber: art.number,
+              articleTitle: art.title,
+              snippet: art.snippet,
+              isExactMatch: true,
+              score: 50000
+            });
+          });
+        }
+      }
+    }
 
     // Direct code normalization for exact document lookup (e.g. "QCVN 02:2022/BXD")
     function normCode(str) { return (str || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
@@ -2188,8 +2479,19 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
       }
     }
 
-    candidates.sort((a, b) => b.score - a.score);
-    const topMatches = candidates.slice(0, limit);
+    // Deduplicate candidates by docId + articleNumber
+    const uniqueCandidates = [];
+    const seenArtKeys = new Set();
+    for (const c of candidates) {
+      const key = `${c.docId}_${c.articleNumber || c.articleTitle}`;
+      if (!seenArtKeys.has(key)) {
+        seenArtKeys.add(key);
+        uniqueCandidates.push(c);
+      }
+    }
+
+    uniqueCandidates.sort((a, b) => b.score - a.score);
+    const topMatches = uniqueCandidates.slice(0, limit);
 
     // Fetch full article content for top matches from docCache / data/docs/${docId}.json
     for (const m of topMatches) {
@@ -2211,6 +2513,7 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
           if (fullArt) {
             m.content = fullArt.content || fullArt.snippet || m.snippet;
             m.articleId = fullArt.id;
+            m.clauses = fullArt.clauses || [];
           }
         }
       } catch (e) {
@@ -2223,13 +2526,29 @@ Bạn là Cố vấn Pháp lý & Kỹ thuật Xây dựng cấp cao dành cho Ba
 
   // Build standard RAG prompt
   function buildRAGPrompt(question, persona, searchResults) {
+    const workingContext = (typeof CaseWorkingMemory !== "undefined") ? CaseWorkingMemory.getWorkingContextForPrompt() : "";
+
     const contextItems = searchResults.slice(0, 8).map((r, i) => {
       const art = r.articleNumber ? `Điều ${r.articleNumber}. ${r.articleTitle}` : (r.articleTitle || r.docTitle);
-      const cleanContent = (r.content || r.snippet || "").slice(0, 1500);
+      let cleanContent = r.content || r.snippet || "";
+
+      // If a specific clause was requested, highlight and place it upfront
+      if (r.requestedClause && r.clauses && r.clauses.length > 0) {
+        const targetCl = r.clauses.find(c => c.number?.toString() === r.requestedClause.toString());
+        if (targetCl && targetCl.content) {
+          cleanContent = `[KHOẢN ${r.requestedClause} ĐƯỢC TRA CỨU TRỰC TIẾP TỪ ${r.docCode}]:\n${targetCl.content}\n\n[TOÀN VĂN ĐIỀU KHOẢN]:\n${cleanContent}`;
+        }
+      }
+
+      // Allow generous context so long articles (e.g. Điều 78 NĐ 214) are NOT truncated prematurely
+      const maxLen = (r.score >= 50000 || r.isExactMatch) ? 12000 : 5000;
+      cleanContent = cleanContent.slice(0, maxLen);
       return `[Tài liệu ${i + 1}]: ${r.docCode} — ${r.docTitle}\n[Vị trí điều khoản]: ${art}\n[Nội dung trích xuất]:\n${cleanContent}`;
     }).join("\n\n" + "=".repeat(50) + "\n\n");
 
-    return `Dưới đây là các tài liệu pháp lý, quy chuẩn và tiêu chuẩn kỹ thuật được trích xuất trực tiếp từ Cơ sở dữ liệu Pháp lý Ban QLDA 2026:
+    const memoryHeader = workingContext ? `${workingContext}\n\n` : "";
+
+    return `${memoryHeader}Dưới đây là các tài liệu pháp lý, quy chuẩn và tiêu chuẩn kỹ thuật được trích xuất trực tiếp từ Cơ sở dữ liệu Pháp lý Ban QLDA 2026:
 
 ==================================================
 NGỮ CẢNH PHÁP LÝ & TIÊU CHUẨN TRÍCH XUẤT TỪ THƯ VIỆN PMU:
@@ -2237,7 +2556,7 @@ NGỮ CẢNH PHÁP LÝ & TIÊU CHUẨN TRÍCH XUẤT TỪ THƯ VIỆN PMU:
 ${contextItems}
 
 ==================================================
-CÂU HỎI NGHIỆP VỤ:
+CÂU HỎI / TRAO ĐỔI NGHIỆP VỤ LƯỢT NÀY:
 "${question}"
 
 ==================================================
@@ -3676,11 +3995,14 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
     return md;
   }
 
-  // LLM API Caller with Multi-Provider Support
-  async function callLlmApi(prompt, provider, apiKey, model, systemPrompt) {
+  // LLM API Caller with Multi-Provider Support & Multi-turn Conversation Continuity
+  async function callLlmApi(prompt, provider, apiKey, model, systemPrompt, history = []) {
     if (provider === "pmu") {
       return "";
     }
+
+    // Lấy tối đa 4 lượt trao đổi gần nhất (2 cặp Q&A) để duy trì dòng suy luận
+    const recentHistory = (history || []).slice(-4);
 
     if (provider === "gemini") {
       let targetModel = (model || "").trim() || "gemini-2.0-flash";
@@ -3688,10 +4010,27 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
       const cleanKey = (apiKey || "").trim();
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${cleanKey}`;
       
+      const contents = [];
+      for (const turn of recentHistory) {
+        const cleanText = turn.role === "assistant" 
+          ? (turn.content || "").replace(/<[^>]+>/g, "").slice(0, 1500)
+          : (turn.content || "").slice(0, 1000);
+        if (cleanText) {
+          contents.push({
+            role: turn.role === "assistant" ? "model" : "user",
+            parts: [{ text: cleanText }]
+          });
+        }
+      }
+
+      // Lượt hiện tại kèm toàn bộ RAG context & chỉ dẫn duy trì vụ việc
+      contents.push({
+        role: "user",
+        parts: [{ text: prompt }]
+      });
+
       const payload = {
-        contents: [
-          { role: "user", parts: [{ text: prompt }] }
-        ],
+        contents,
         systemInstruction: systemPrompt ? {
           parts: [{ text: systemPrompt }]
         } : undefined,
@@ -3742,6 +4081,21 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
       const targetModel = model || (provider === "agnes" ? "agnes-2.5-flash" : (provider === "deepseek" ? "deepseek-chat" : "gpt-4o-mini"));
       const messages = [];
       if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
+
+      // Đưa các lượt hội thoại trước vào chuỗi messages của OpenAI/Agnes format
+      for (const turn of recentHistory) {
+        const cleanText = turn.role === "assistant" 
+          ? (turn.content || "").replace(/<[^>]+>/g, "").slice(0, 1500)
+          : (turn.content || "").slice(0, 1000);
+        if (cleanText) {
+          messages.push({
+            role: turn.role,
+            content: cleanText
+          });
+        }
+      }
+
+      // Lượt hiện tại với prompt RAG đầy đủ
       messages.push({ role: "user", content: prompt });
 
       const headers = { "Content-Type": "application/json" };
@@ -3766,12 +4120,18 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
     if (provider === "ollama") {
       const endpoint = "http://localhost:11434/api/generate";
       const targetModel = model || "qwen2.5:14b";
+      let fullPrompt = (systemPrompt ? `${systemPrompt}\n\n` : "");
+      for (const turn of recentHistory) {
+        fullPrompt += `[${turn.role === "assistant" ? "TRỢ LÝ" : "NGƯỜI DÙNG"}]: ${(turn.content || "").slice(0, 1000)}\n\n`;
+      }
+      fullPrompt += prompt;
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: targetModel,
-          prompt: (systemPrompt ? `${systemPrompt}\n\n` : "") + prompt,
+          prompt: fullPrompt,
           stream: false
         })
       });
@@ -3785,7 +4145,7 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
     throw new Error(`Nhà cung cấp AI "${provider}" chưa được hỗ trợ.`);
   }
 
-  // Send Message with Jev-style Agentic Control Loop
+  // Send Message with Jev-style Agentic Control Loop & Working Context Continuity
   async function sendMessage(message) {
     appendUserMessage(message);
 
@@ -3799,8 +4159,20 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
       // 2. DECISION CHOICE: Determine next action & retrieval strategy
       const decision = LegalDecisionEngine.choice(state);
 
-      // 3. EXECUTION LAYER: Domain-steered context retrieval
-      const matches = await searchLegalContext(message, 8, decision);
+      // Tái ngữ cảnh hóa truy vấn tìm kiếm nếu là câu hỏi nối tiếp / phản biện ngắn
+      let enrichedQuery = message;
+      if (CaseWorkingMemory.state.active) {
+        const isFollowUp = message.split(/\s+/).length < 22 || /đã|sao|thế nào|được không|vậy|hạn mức|ngưỡng|mức|bao nhiêu|áp dụng|điều chỉnh|sửa đổi/i.test(message);
+        if (isFollowUp) {
+          const contextKeywords = CaseWorkingMemory.getRetrievalKeywords();
+          if (contextKeywords) {
+            enrichedQuery = `${message} ${contextKeywords}`;
+          }
+        }
+      }
+
+      // 3. EXECUTION LAYER: Domain-steered context retrieval with contextualized query
+      const matches = await searchLegalContext(enrichedQuery, 8, decision);
 
       // 4. EVALUATION: SCORE (Context Confidence Rating)
       const contextScore = LegalDecisionEngine.score(state, matches);
@@ -3824,7 +4196,7 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
       // If user selected Cloud LLM (not PMU) and has API Key or Ollama
       if (aiConfig.provider !== "pmu" && (aiConfig.apiKey || aiConfig.provider === "ollama")) {
         try {
-          let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt);
+          let llmReply = await callLlmApi(ragPrompt, aiConfig.provider, aiConfig.apiKey, aiConfig.model, systemPrompt, chatSessionHistory);
           
           // 4. EVALUATION: NOUL (Verification & Termination Check)
           const isFulfillGoal = LegalDecisionEngine.noul(state, llmReply, contextScore);
@@ -3852,6 +4224,11 @@ Số liệu từ QCVN 02:2022/BXD đóng vai trò là "dữ liệu gốc đầu 
         // Fallback / PMU Built-in Dynamic Synthesis
         finalAnswer = synthesizeDynamicAnswer(message, activePersona, matches);
       }
+
+      // Cập nhật Ngân hàng Ký ức Vụ việc & Lịch sử Hội thoại liên tục
+      CaseWorkingMemory.extractFacts(message, finalAnswer);
+      chatSessionHistory.push({ role: "user", content: message });
+      chatSessionHistory.push({ role: "assistant", content: finalAnswer });
 
       // 5. ATTACH DECISION AUDIT TRAIL
       finalAnswer = LegalDecisionEngine.formatVerificationFooter(finalAnswer, state, contextScore);
